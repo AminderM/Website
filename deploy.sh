@@ -85,9 +85,12 @@ sudo cp /tmp/server.js "$APP_DIR/server.js"
 sudo cp /tmp/package.json "$APP_DIR/package.json"
 sudo cp /tmp/package-lock.json "$APP_DIR/package-lock.json" 2>/dev/null || echo "⚠️  package-lock.json not found, will use package.json"
 
+echo "🔐 Fixing file permissions..."
+sudo chown -R $USER:$USER "$APP_DIR/ecosystem.config.js" "$APP_DIR/server.js" "$APP_DIR/package.json" "$APP_DIR/package-lock.json" 2>/dev/null || true
+
 echo "📥 Installing Node.js dependencies..."
 cd "$APP_DIR"
-npm install --production --legacy-peer-deps
+npm install --production --legacy-peer-deps --no-package-lock
 if [ $? -ne 0 ]; then
     echo "❌ ERROR: Failed to install dependencies"
     exit 1
