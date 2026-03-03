@@ -3,25 +3,16 @@ const path = require('path');
 const app = express();
 
 const PORT = process.env.PORT || 3003;
-const BUILD_DIR = process.env.BUILD_DIR || path.join(__dirname, 'build');
+const BUILD_DIR = path.join(__dirname, 'build');
 
-app.use('/', express.static(BUILD_DIR));
+// Serve static files FIRST
+app.use(express.static(BUILD_DIR));
 
-app.get('/', (req, res) => {
+// React fallback route (ONLY for non-static routes)
+app.get('*', (req, res) => {
   res.sendFile(path.join(BUILD_DIR, 'index.html'));
-});
-
-app.get('/*', (req, res) => {
-  res.sendFile(path.join(BUILD_DIR, 'index.html'));
-});
-
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', port: PORT, buildDir: BUILD_DIR });
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log(`Serving React app from ${BUILD_DIR}`);
-  console.log(`App available at http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
-
