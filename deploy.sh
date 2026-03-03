@@ -73,25 +73,26 @@ sudo mkdir -p "$LOG_DIR"
 sudo chown -R $USER:$USER "$LOG_DIR"
 sudo chmod -R 755 "$LOG_DIR"
 
-if ! command -v serve &> /dev/null; then
-    echo "📥 Installing serve..."
-    sudo npm install -g serve
-fi
-
-SERVE_PATH=$(which serve)
-if [ -z "$SERVE_PATH" ]; then
-    echo "❌ ERROR: serve command not found after installation"
-    exit 1
-fi
-echo "✅ serve found at: $SERVE_PATH"
-
 if ! command -v pm2 &> /dev/null; then
     echo "📥 Installing PM2..."
     sudo npm install -g pm2
     sudo pm2 startup systemd -u $USER --hp /home/$USER
 fi
 
+echo "📦 Copying server files..."
 sudo cp /tmp/ecosystem.config.js "$APP_DIR/ecosystem.config.js"
+sudo cp /tmp/server.js "$APP_DIR/server.js"
+sudo cp /tmp/package.json "$APP_DIR/package.json"
+sudo cp /tmp/package-lock.json "$APP_DIR/package-lock.json" 2>/dev/null || echo "⚠️  package-lock.json not found, will use package.json"
+
+echo "📥 Installing Node.js dependencies..."
+cd "$APP_DIR"
+npm install --production --legacy-peer-deps
+if [ $? -ne 0 ]; then
+    echo "❌ ERROR: Failed to install dependencies"
+    exit 1
+fi
+echo "✅ Dependencies installed successfully"
 
 if [ ! -f "$BUILD_DIR/index.html" ]; then
     echo "❌ ERROR: index.html not found in build directory"
@@ -162,14 +163,16 @@ else
     echo "   (Deployment info not available)"
 fi
 echo ""
-echo "🌐 Application should be running on port 3001"
+echo "🌐 Application should be running on port 3003"
 echo "📝 View logs with: pm2 logs $APP_NAME"
 echo ""
 echo "🔍 To verify deployment on server, run:"
 echo "   # Check deployed commit:"
 echo "   cat $APP_DIR/deployment-info.txt"
-echo "   # Check what JS file is being served:"
-echo "   curl http://localhost:3001 | grep -o 'main\.[^.]*\.js' | head -1"
+echo "   # Check if server is responding:"
+echo "   curl http://localhost:3003/api/site"
+echo "   # Check health endpoint:"
+echo "   curl http://localhost:3003/health"
 echo ""
 echo "⚠️  IMPORTANT: If you see old content in browser:"
 echo "   1. Hard refresh: Ctrl+Shift+R (Windows/Linux) or Cmd+Shift+R (Mac)"

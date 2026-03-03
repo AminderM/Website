@@ -2,8 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'web-portal-staging',
-      script: 'npx',
-      args: 'serve -s /var/www/web-portal/build -l 3003 --no-clipboard',
+      script: 'server.js',
       instances: 1,
       exec_mode: 'fork',
       watch: false,
@@ -11,7 +10,8 @@ module.exports = {
       cwd: '/var/www/web-portal',
       env: {
         NODE_ENV: 'production',
-        PORT: 3003
+        PORT: 3003,
+        BUILD_DIR: '/var/www/web-portal/build'
       },
       error_file: '/var/www/web-portal/logs/pm2-error.log',
       out_file: '/var/www/web-portal/logs/pm2-out.log',

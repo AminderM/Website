@@ -75,7 +75,7 @@ jobs:
       - name: Create deployment archive
         run: |
           tar -czf build.tar.gz build/
-          tar -czf deploy.tar.gz build.tar.gz ecosystem.config.js deploy.sh deployment-info.txt
+          tar -czf deploy.tar.gz build.tar.gz ecosystem.config.js server.js package.json package-lock.json deploy.sh deployment-info.txt
 
       - name: Deploy to EC2
         uses: appleboy/scp-action@v0.1.7
