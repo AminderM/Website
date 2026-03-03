@@ -13,7 +13,7 @@ import './index.css';
 function App() {
   return (
     <ThemeProvider>
-      <Router basename="/api/site">
+      <Router basename="">
         <div className="min-h-screen bg-dark dark:bg-dark light:bg-white flex flex-col transition-colors duration-300">
           <Navbar />
           <main className="flex-grow">
