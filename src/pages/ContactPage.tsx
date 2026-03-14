@@ -76,27 +76,35 @@ const ContactPage: React.FC = () => {
                 <h2 className={`text-2xl font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}>Get in Touch</h2>
                 <p className={`mb-8 ${isDark ? 'text-zinc-400' : 'text-gray-600'}`}>Have questions? Our team is here to help you find the right solution.</p>
                 <div className="space-y-6">
-                  {[
-                    { icon: Mail, title: 'Email', content: 'sales@integratedsct.com', href: 'mailto:sales@integratedsct.com' },
-                    { icon: Phone, title: 'Phone', content: '1-800-555-1234', href: 'tel:+18005551234' },
-                  ].map((item, idx) => (
-                    <div key={idx} className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-primary-600/20 flex items-center justify-center flex-shrink-0">
-                        <item.icon className="w-5 h-5 text-primary-500" />
-                      </div>
-                      <div>
-                        <h3 className={`font-medium mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>{item.title}</h3>
-                        <a href={item.href} className={`transition-colors ${isDark ? 'text-zinc-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>{item.content}</a>
-                      </div>
+                  {/* Email */}
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-primary-600/20 flex items-center justify-center flex-shrink-0">
+                      <Mail className="w-5 h-5 text-primary-500" />
                     </div>
-                  ))}
+                    <div>
+                      <h3 className={`font-medium mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>Email</h3>
+                      <a href="mailto:demo@integratedtech.ca" className={`block transition-colors ${isDark ? 'text-zinc-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`} data-testid="contact-email-demo">demo@integratedtech.ca</a>
+                      <a href="mailto:feedback@integratedtech.ca" className={`block transition-colors ${isDark ? 'text-zinc-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`} data-testid="contact-email-feedback">feedback@integratedtech.ca</a>
+                    </div>
+                  </div>
+                  {/* Phone */}
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-primary-600/20 flex items-center justify-center flex-shrink-0">
+                      <Phone className="w-5 h-5 text-primary-500" />
+                    </div>
+                    <div>
+                      <h3 className={`font-medium mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>Phone</h3>
+                      <a href="tel:+16477844618" className={`transition-colors ${isDark ? 'text-zinc-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`} data-testid="contact-phone-number">647-784-4618</a>
+                    </div>
+                  </div>
+                  {/* Office */}
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-xl bg-primary-600/20 flex items-center justify-center flex-shrink-0">
                       <MapPin className="w-5 h-5 text-primary-500" />
                     </div>
                     <div>
                       <h3 className={`font-medium mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>Office</h3>
-                      <p className={isDark ? 'text-zinc-400' : 'text-gray-600'}>123 Logistics Way<br />Suite 500<br />Chicago, IL 60601</p>
+                      <p className={isDark ? 'text-zinc-400' : 'text-gray-600'}>King Street<br />Toronto, ON</p>
                     </div>
                   </div>
                 </div>
