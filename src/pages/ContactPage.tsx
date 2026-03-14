@@ -109,12 +109,40 @@ const ContactPage: React.FC = () => {
                   </div>
                 </div>
                 <div className={`mt-12 p-6 rounded-xl border ${isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'}`}>
-                  <h3 className={`font-medium mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Support Hours</h3>
+                  <h3 className={`font-medium mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Human Support</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className={isDark ? 'text-zinc-400' : 'text-gray-600'}>Monday - Sunday</span>
-                      <span className={isDark ? 'text-zinc-300' : 'text-gray-900'}>24/7</span>
+                      <span className={isDark ? 'text-zinc-400' : 'text-gray-600'}>Monday</span>
+                      <span className={isDark ? 'text-zinc-300' : 'text-gray-900'}>9am - 5pm EST</span>
                     </div>
+                    <div className="flex justify-between">
+                      <span className={isDark ? 'text-zinc-400' : 'text-gray-600'}>Tuesday</span>
+                      <span className={isDark ? 'text-zinc-300' : 'text-gray-900'}>9am - 5pm EST</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className={isDark ? 'text-zinc-400' : 'text-gray-600'}>Wednesday</span>
+                      <span className={isDark ? 'text-zinc-300' : 'text-gray-900'}>9am - 5pm EST</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className={isDark ? 'text-zinc-400' : 'text-gray-600'}>Thursday</span>
+                      <span className={isDark ? 'text-zinc-300' : 'text-gray-900'}>9am - 5pm EST</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className={isDark ? 'text-zinc-400' : 'text-gray-600'}>Friday</span>
+                      <span className={isDark ? 'text-zinc-300' : 'text-gray-900'}>9am - 5pm EST</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className={isDark ? 'text-zinc-400' : 'text-gray-600'}>Saturday</span>
+                      <span className={isDark ? 'text-zinc-300' : 'text-gray-900'}>10am - 2pm EST</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className={isDark ? 'text-zinc-400' : 'text-gray-600'}>Sunday</span>
+                      <span className={isDark ? 'text-zinc-300' : 'text-gray-900'}>OFF</span>
+                    </div>
+                  </div>
+                  <h3 className={`font-medium mb-2 mt-6 ${isDark ? 'text-white' : 'text-gray-900'}`}>AI Support</h3>
+                  <div className="text-sm">
+                    <span className={isDark ? 'text-zinc-300' : 'text-gray-900'}>24/7</span>
                   </div>
                 </div>
               </div>
