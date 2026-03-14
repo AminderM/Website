@@ -61,7 +61,7 @@ const ContactPage: React.FC = () => {
               Let's <span className="text-gradient-primary">Connect</span>
             </h1>
             <p className={`text-lg ${isDark ? 'text-zinc-400' : 'text-gray-600'}`}>
-              Ready to transform your logistics operations? Fill out the form below and our team will reach out to schedule a personalized demo.
+              Book a demo to learn how we can automate 90% of your tasks while your Humans can focus on Customer Experience and Service Delivery.
             </p>
           </div>
         </div>
