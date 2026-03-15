@@ -2,7 +2,7 @@
   "name": "marketing-frontend",
   "version": "0.1.0",
   "private": true,
-  "homepage": "/api/site",
+  "homepage": "/",
   "dependencies": {
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
@@ -19,7 +19,8 @@
     "react-router-dom": "^7.13.0",
     "react-scripts": "5.0.1",
     "typescript": "^4.9.5",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "express": "^4.18.2"
   },
   "scripts": {
     "start": "react-scripts start",

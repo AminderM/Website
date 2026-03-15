@@ -1,9 +1,9 @@
-name: Deploy to Web Portal Staging (EC2)
+name: Deploy to Web Portal Production (EC2)
 
 on:
   push:
     branches:
-      - staging
+      - main
   workflow_dispatch:
 
 env:
@@ -11,21 +11,22 @@ env:
 
 jobs:
   deploy:
-    name: Web Portal Staging Deployment
+    name: Web Portal Production Deployment
     runs-on: ubuntu-latest
-    
+    environment: production
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch all history to get commit info
+          fetch-depth: 0
 
       - name: Display Git Information
         run: |
           CURRENT_BRANCH=$(git branch --show-current)
           echo "📋 Git Information:"
           echo "   Branch: $CURRENT_BRANCH"
-          echo "   Expected Branch: staging"
+          echo "   Expected Branch: main"
           echo "   Commit: $(git rev-parse HEAD)"
           echo "   Commit Short: $(git rev-parse --short HEAD)"
           echo "   Commit Message: $(git log -1 --pretty=%B)"
@@ -35,12 +36,10 @@ jobs:
           echo "🔍 Latest commits on current branch:"
           git log --oneline -5
           echo ""
-          # Verify we're on staging branch
-          if [ "$CURRENT_BRANCH" != "staging" ]; then
-            echo "⚠️  WARNING: Not on staging branch! Current branch is: $CURRENT_BRANCH"
-            echo "   This workflow should only run on staging branch"
+          if [ "$CURRENT_BRANCH" != "main" ]; then
+            echo "⚠️  WARNING: Not on main branch! Current branch is: $CURRENT_BRANCH"
           else
-            echo "✅ Verified: Building from staging branch"
+            echo "✅ Verified: Building from main branch"
           fi
 
       - name: Setup Node.js
@@ -61,6 +60,7 @@ jobs:
         run: |
           echo "Deployment Information" > deployment-info.txt
           echo "=====================" >> deployment-info.txt
+          echo "Environment: PRODUCTION" >> deployment-info.txt
           echo "Branch: $(git branch --show-current)" >> deployment-info.txt
           echo "Commit Hash: $(git rev-parse HEAD)" >> deployment-info.txt
           echo "Commit Short: $(git rev-parse --short HEAD)" >> deployment-info.txt
@@ -75,7 +75,7 @@ jobs:
       - name: Create deployment archive
         run: |
           tar -czf build.tar.gz build/
-          tar -czf deploy.tar.gz build.tar.gz ecosystem.config.js server.js package.json package-lock.json deploy.sh deployment-info.txt
+          tar -czf deploy.tar.gz build.tar.gz ecosystem.config.prod.js server.js package.json package-lock.json deploy-prod.sh deployment-info.txt
 
       - name: Deploy to EC2
         uses: appleboy/scp-action@v0.1.7
@@ -97,6 +97,8 @@ jobs:
           script: |
             cd /tmp
             tar -xzf deploy.tar.gz
+            mv ecosystem.config.prod.js ecosystem.config.js
+            mv deploy-prod.sh deploy.sh
             chmod +x deploy.sh
             ./deploy.sh
 
@@ -109,4 +111,3 @@ jobs:
           port: ${{ secrets.EC2_PORT }}
           script: |
             rm -f /tmp/deploy.tar.gz /tmp/build.tar.gz /tmp/ecosystem.config.js /tmp/deploy.sh /tmp/deployment-info.txt
-

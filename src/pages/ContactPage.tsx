@@ -13,7 +13,7 @@ const ContactPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
-  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.staging.integratedtech.ca';
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -61,7 +61,7 @@ const ContactPage: React.FC = () => {
               Let's <span className="text-gradient-primary">Connect</span>
             </h1>
             <p className={`text-lg ${isDark ? 'text-zinc-400' : 'text-gray-600'}`}>
-              Ready to transform your logistics operations? Fill out the form below and our team will reach out to schedule a personalized demo.
+              Book a demo to learn how we can automate 90% of your tasks while your Humans can focus on Customer Experience and Service Delivery.
             </p>
           </div>
         </div>
@@ -76,37 +76,73 @@ const ContactPage: React.FC = () => {
                 <h2 className={`text-2xl font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}>Get in Touch</h2>
                 <p className={`mb-8 ${isDark ? 'text-zinc-400' : 'text-gray-600'}`}>Have questions? Our team is here to help you find the right solution.</p>
                 <div className="space-y-6">
-                  {[
-                    { icon: Mail, title: 'Email', content: 'sales@integratedsct.com', href: 'mailto:sales@integratedsct.com' },
-                    { icon: Phone, title: 'Phone', content: '1-800-555-1234', href: 'tel:+18005551234' },
-                  ].map((item, idx) => (
-                    <div key={idx} className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-primary-600/20 flex items-center justify-center flex-shrink-0">
-                        <item.icon className="w-5 h-5 text-primary-500" />
-                      </div>
-                      <div>
-                        <h3 className={`font-medium mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>{item.title}</h3>
-                        <a href={item.href} className={`transition-colors ${isDark ? 'text-zinc-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>{item.content}</a>
-                      </div>
+                  {/* Email */}
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-primary-600/20 flex items-center justify-center flex-shrink-0">
+                      <Mail className="w-5 h-5 text-primary-500" />
                     </div>
-                  ))}
+                    <div>
+                      <h3 className={`font-medium mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>Email</h3>
+                      <a href="mailto:demo@integratedtech.ca" className={`block transition-colors ${isDark ? 'text-zinc-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`} data-testid="contact-email-demo">demo@integratedtech.ca</a>
+                      <a href="mailto:feedback@integratedtech.ca" className={`block transition-colors ${isDark ? 'text-zinc-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`} data-testid="contact-email-feedback">feedback@integratedtech.ca</a>
+                    </div>
+                  </div>
+                  {/* Phone */}
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-primary-600/20 flex items-center justify-center flex-shrink-0">
+                      <Phone className="w-5 h-5 text-primary-500" />
+                    </div>
+                    <div>
+                      <h3 className={`font-medium mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>Phone</h3>
+                      <a href="tel:+16477844618" className={`transition-colors ${isDark ? 'text-zinc-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`} data-testid="contact-phone-number">647-784-4618</a>
+                    </div>
+                  </div>
+                  {/* Office */}
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-xl bg-primary-600/20 flex items-center justify-center flex-shrink-0">
                       <MapPin className="w-5 h-5 text-primary-500" />
                     </div>
                     <div>
                       <h3 className={`font-medium mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>Office</h3>
-                      <p className={isDark ? 'text-zinc-400' : 'text-gray-600'}>123 Logistics Way<br />Suite 500<br />Chicago, IL 60601</p>
+                      <p className={isDark ? 'text-zinc-400' : 'text-gray-600'}>King Street<br />Toronto, ON</p>
                     </div>
                   </div>
                 </div>
                 <div className={`mt-12 p-6 rounded-xl border ${isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'}`}>
-                  <h3 className={`font-medium mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Support Hours</h3>
+                  <h3 className={`font-medium mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Human Support</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className={isDark ? 'text-zinc-400' : 'text-gray-600'}>Monday - Sunday</span>
-                      <span className={isDark ? 'text-zinc-300' : 'text-gray-900'}>24/7</span>
+                      <span className={isDark ? 'text-zinc-400' : 'text-gray-600'}>Monday</span>
+                      <span className={isDark ? 'text-zinc-300' : 'text-gray-900'}>9am - 5pm EST</span>
                     </div>
+                    <div className="flex justify-between">
+                      <span className={isDark ? 'text-zinc-400' : 'text-gray-600'}>Tuesday</span>
+                      <span className={isDark ? 'text-zinc-300' : 'text-gray-900'}>9am - 5pm EST</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className={isDark ? 'text-zinc-400' : 'text-gray-600'}>Wednesday</span>
+                      <span className={isDark ? 'text-zinc-300' : 'text-gray-900'}>9am - 5pm EST</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className={isDark ? 'text-zinc-400' : 'text-gray-600'}>Thursday</span>
+                      <span className={isDark ? 'text-zinc-300' : 'text-gray-900'}>9am - 5pm EST</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className={isDark ? 'text-zinc-400' : 'text-gray-600'}>Friday</span>
+                      <span className={isDark ? 'text-zinc-300' : 'text-gray-900'}>9am - 5pm EST</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className={isDark ? 'text-zinc-400' : 'text-gray-600'}>Saturday</span>
+                      <span className={isDark ? 'text-zinc-300' : 'text-gray-900'}>10am - 2pm EST</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className={isDark ? 'text-zinc-400' : 'text-gray-600'}>Sunday</span>
+                      <span className={isDark ? 'text-zinc-300' : 'text-gray-900'}>OFF</span>
+                    </div>
+                  </div>
+                  <h3 className={`font-medium mb-2 mt-6 ${isDark ? 'text-white' : 'text-gray-900'}`}>AI Support</h3>
+                  <div className="text-sm">
+                    <span className={isDark ? 'text-zinc-300' : 'text-gray-900'}>24/7</span>
                   </div>
                 </div>
               </div>
