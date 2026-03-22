@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Truck } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, Truck, LogOut } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const location = useLocation();
   const { theme } = useTheme();
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
   const isDark = theme === 'dark';
 
   useEffect(() => {
@@ -28,6 +32,7 @@ const Navbar: React.FC = () => {
     { name: 'Use Cases', path: '/use-cases' },
     { name: 'About', path: '/about' },
     { name: 'Contact', path: '/contact' },
+    ...(isAuthenticated ? [{ name: 'BOL Generator', path: '/bol-generator' }] : []),
   ];
 
   return (
@@ -82,13 +87,70 @@ const Navbar: React.FC = () => {
           {/* CTA Button + Theme Toggle */}
           <div className="hidden md:flex items-center gap-4">
             <ThemeToggle />
-            <Link
-              to="/contact"
-              className="btn-primary text-sm"
-              data-testid="nav-demo-btn"
-            >
-              Request a Demo
-            </Link>
+            {isAuthenticated ? (
+              <div className="relative">
+                <button
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                    isDark
+                      ? 'bg-dark-300 text-white hover:bg-dark-200'
+                      : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                  }`}
+                  data-testid="user-menu-btn"
+                >
+                  {user?.email || 'Account'}
+                </button>
+                {isUserMenuOpen && (
+                  <div
+                    className={`absolute right-0 mt-2 w-48 rounded-lg shadow-lg border z-50 ${
+                      isDark
+                        ? 'bg-dark-300 border-gray-700'
+                        : 'bg-white border-gray-200'
+                    }`}
+                  >
+                    <div className={`px-4 py-3 border-b ${isDark ? 'border-gray-700' : 'border-gray-100'}`}>
+                      <p className="text-xs text-gray-500">Signed in as</p>
+                      <p className="text-sm font-medium">{user?.email}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        logout();
+                        setIsUserMenuOpen(false);
+                        navigate('/');
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:opacity-75 transition ${
+                        isDark ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                      data-testid="logout-btn"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                    isDark
+                      ? 'text-white hover:text-gray-300'
+                      : 'text-gray-900 hover:text-gray-700'
+                  }`}
+                  data-testid="nav-login-btn"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/signup"
+                  className="btn-primary text-sm"
+                  data-testid="nav-signup-btn"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -136,12 +198,34 @@ const Navbar: React.FC = () => {
               {link.name}
             </Link>
           ))}
-          <Link
-            to="/contact"
-            className="block btn-primary text-center mt-4"
-          >
-            Request a Demo
-          </Link>
+          {isAuthenticated ? (
+            <button
+              onClick={() => {
+                logout();
+                setIsMobileMenuOpen(false);
+                navigate('/');
+              }}
+              className="block w-full text-left px-4 py-2 text-base font-medium text-red-600 hover:text-red-500 transition-colors mt-4 border-t pt-4"
+              data-testid="mobile-logout-btn"
+            >
+              Sign Out
+            </button>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className="block text-center px-4 py-2 text-base font-medium rounded-lg transition-colors border"
+              >
+                Sign In
+              </Link>
+              <Link
+                to="/signup"
+                className="block btn-primary text-center mt-4"
+              >
+                Sign Up
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </nav>
