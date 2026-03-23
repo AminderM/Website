@@ -91,6 +91,17 @@ const Input = (props: any & { isDark: boolean }) => {
 const BOLGeneratorPage: React.FC = () => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const previewRef = React.useRef<HTMLDivElement>(null);
+  const [previewScale, setPreviewScale] = React.useState(0.25);
+
+  React.useEffect(() => {
+    if (!previewRef.current) return;
+    const ob = new ResizeObserver(entries => {
+      setPreviewScale(entries[0].contentRect.width / 2480);
+    });
+    ob.observe(previewRef.current);
+    return () => ob.disconnect();
+  }, []);
   const [commodities, setCommodities] = useState<Commodity[]>([]);
   const [form, setForm] = useState<BOLFormState>({
     bolNumber: '',
@@ -240,10 +251,46 @@ const BOLGeneratorPage: React.FC = () => {
   };
 
   return (
-    <div className={`pt-32 pb-20 px-4 ${isDark ? 'bg-dark-400' : 'bg-gray-50'}`}>
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-12">
+    <>
+      <style type="text/css" media="print">
+        {`
+          @page { size: 2480px 3508px; margin: 0; }
+          body, html, #root, .min-h-screen { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white !important; background-color: white !important; }
+          nav, header, footer { display: none !important; }
+          .no-print { display: none !important; }
+          
+          .bol-preview-container .pdf-native-wrapper {
+            transform: none !important;
+          }
+          .print-reset { 
+            padding: 0 !important; 
+            margin: 0 !important; 
+            background: white !important; 
+            display: block !important; 
+            width: 100% !important;
+            max-width: none !important;
+            min-height: 0 !important;
+          }
+          .bol-preview-container {
+            width: 2480px !important;
+            height: 3508px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            border: none !important;
+            box-shadow: none !important;
+            margin: 0 auto !important;
+            border-radius: 0 !important;
+            box-sizing: border-box !important;
+            position: relative !important;
+            top: 0 !important;
+            left: 0 !important;
+          }
+        `}
+      </style>
+      <div className={`pt-32 pb-20 px-4 print-reset ${isDark ? 'bg-dark-400' : 'bg-gray-50'}`}>
+        <div className="max-w-6xl mx-auto print-reset">
+          {/* Header */}
+          <div className="mb-12 no-print">
           <h1 className={`text-3xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
             📋 BOL Generator
           </h1>
@@ -253,9 +300,9 @@ const BOLGeneratorPage: React.FC = () => {
         </div>
 
         {/* Main Layout: Form (left) + Preview (right) */}
-        <div className="grid grid-cols-2 gap-8 lg:grid-cols-1">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start print-reset">
           {/* ===== FORM PANEL ===== */}
-          <div className={`rounded-lg border ${
+          <div className={`rounded-lg border no-print ${
             isDark ? 'bg-dark-300 border-gray-700' : 'bg-white border-gray-200'
           } p-8`}>
 
@@ -662,10 +709,12 @@ const BOLGeneratorPage: React.FC = () => {
           </div>
 
           {/* ===== PREVIEW PANEL ===== */}
-          <div className={`rounded-lg border overflow-hidden sticky top-32 ${
+          <div className={`bol-preview-container rounded-lg border overflow-hidden sticky top-32 ${
             isDark ? 'bg-white border-gray-200' : 'bg-white border-gray-200'
-          } shadow-lg`} style={{ aspectRatio: '8.5 / 11', height: '750px', display: 'flex', flexDirection: 'column' }}>
-            {/* BOL with watermark stripes */}
+          } shadow-lg`} ref={previewRef} style={{ width: '100%', aspectRatio: '2480 / 3508', position: 'relative', overflow: 'hidden' }}>
+            
+            <div className="pdf-native-wrapper" style={{ width: '2480px', height: '3508px', transformOrigin: 'top left', transform: `scale(${previewScale})`, backgroundColor: '#fff' }}>
+{/* BOL with watermark stripes */}
             <div style={{ position: 'relative', backgroundColor: '#ffffff', minHeight: 'auto', display: 'flex', flexDirection: 'column', pageBreakAfter: 'avoid', height: '100%' }}>
               {/* Left Watermark Stripe */}
               <div style={{
@@ -673,9 +722,9 @@ const BOLGeneratorPage: React.FC = () => {
                 left: 0,
                 top: 0,
                 bottom: 0,
-                width: '18px',
+                width: '63px',
                 background: '#dff4fd',
-                borderRight: '1px solid #9dd8f0',
+                borderRight: '3px solid #9dd8f0',
                 zIndex: 10,
                 pointerEvents: 'none',
                 overflow: 'hidden'
@@ -684,14 +733,14 @@ const BOLGeneratorPage: React.FC = () => {
                   writingMode: 'vertical-rl',
                   textOrientation: 'mixed',
                   fontFamily: 'Arial',
-                  fontSize: '6.5px',
+                  fontSize: '23px',
                   fontWeight: 700,
-                  letterSpacing: '2px',
+                  letterSpacing: '7px',
                   color: '#00AEEF',
                   textTransform: 'uppercase',
                   whiteSpace: 'nowrap',
-                  lineHeight: '18px',
-                  padding: '10px 0',
+                  lineHeight: '63px',
+                  padding: '35px 0',
                   userSelect: 'none',
                   transform: 'rotate(180deg)'
                 }}>
@@ -705,9 +754,9 @@ const BOLGeneratorPage: React.FC = () => {
                 right: 0,
                 top: 0,
                 bottom: 0,
-                width: '18px',
+                width: '63px',
                 background: '#dff4fd',
-                borderLeft: '1px solid #9dd8f0',
+                borderLeft: '3px solid #9dd8f0',
                 zIndex: 10,
                 pointerEvents: 'none',
                 overflow: 'hidden'
@@ -716,14 +765,14 @@ const BOLGeneratorPage: React.FC = () => {
                   writingMode: 'vertical-rl',
                   textOrientation: 'mixed',
                   fontFamily: 'Arial',
-                  fontSize: '6.5px',
+                  fontSize: '23px',
                   fontWeight: 700,
-                  letterSpacing: '2px',
+                  letterSpacing: '7px',
                   color: '#00AEEF',
                   textTransform: 'uppercase',
                   whiteSpace: 'nowrap',
-                  lineHeight: '18px',
-                  padding: '10px 0',
+                  lineHeight: '63px',
+                  padding: '35px 0',
                   userSelect: 'none'
                 }}>
                   BOL GENERATED USING INTEGRATEDTECH.CA
@@ -732,10 +781,10 @@ const BOLGeneratorPage: React.FC = () => {
 
               {/* BOL Content */}
               <div style={{
-                padding: '16px 26px',
+                padding: '56px 91px',
                 backgroundColor: '#ffffff',
                 color: '#0A1628',
-                fontSize: '13px',
+                fontSize: '45px',
                 fontFamily: 'Arial, sans-serif',
                 flex: 1,
                 marginLeft: '0',
@@ -744,81 +793,81 @@ const BOLGeneratorPage: React.FC = () => {
                 flexDirection: 'column'
               }}>
                 {/* Header */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: '14px', borderBottom: '3px solid #0A1628', marginBottom: '28px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: '49px', borderBottom: '10px solid #0A1628', marginBottom: '98px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '49px' }}>
                     {form.logoSrc && (
-                      <img src={form.logoSrc} alt="Logo" style={{ maxHeight: '48px', maxWidth: '125px', objectFit: 'contain' }} />
+                      <img src={form.logoSrc} alt="Logo" style={{ maxHeight: '167px', maxWidth: '435px', objectFit: 'contain' }} />
                     )}
                     <div>
-                      <div style={{ fontSize: '18px', fontWeight: 900, color: '#0A1628', letterSpacing: '-0.3px' }}>
+                      <div style={{ fontSize: '63px', fontWeight: 900, color: '#0A1628', letterSpacing: '-1px' }}>
                         {form.carrierName || 'Your Company Name'}
                       </div>
-                      <div style={{ fontSize: '8px', color: '#888', textTransform: 'uppercase', letterSpacing: '1.5px', marginTop: '2px' }}>
+                      <div style={{ fontSize: '28px', color: '#888', textTransform: 'uppercase', letterSpacing: '5px', marginTop: '7px' }}>
                         Straight Bill of Lading
                       </div>
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '21px', fontWeight: 900, color: '#0A1628', textTransform: 'uppercase', letterSpacing: '-0.5px' }}>
+                    <div style={{ fontSize: '73px', fontWeight: 900, color: '#0A1628', textTransform: 'uppercase', letterSpacing: '-2px' }}>
                       Bill of Lading
                     </div>
-                    <div style={{ fontSize: '8px', color: '#999', letterSpacing: '0.5px', marginTop: '2px' }}>
+                    <div style={{ fontSize: '28px', color: '#999', letterSpacing: '2px', marginTop: '7px' }}>
                       Not Negotiable · Original
                     </div>
-                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#00AEEF', fontFamily: 'Courier New, monospace', marginTop: '4px' }}>
+                    <div style={{ fontSize: '38px', fontWeight: 700, color: '#00AEEF', fontFamily: 'Courier New, monospace', marginTop: '14px' }}>
                       BOL #: {form.bolNumber || '—'}
                     </div>
-                    <div style={{ fontSize: '9px', color: '#aaa', marginTop: '2px' }}>
+                    <div style={{ fontSize: '31px', color: '#aaa', marginTop: '7px' }}>
                       Date: {form.bolDate ? new Date(form.bolDate + 'T12:00:00').toLocaleDateString('en-CA', {year: 'numeric', month: 'short', day: 'numeric'}) : '—'}
                     </div>
                   </div>
                 </div>
 
                 {/* Quick Ref Box */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px', marginBottom: '28px' }}>
-                  <div style={{ border: '1px solid #ccdde8', borderRadius: '3px', overflow: 'hidden' }}>
-                    <div style={{ background: '#0A1628', color: '#00AEEF', fontSize: '7.5px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', padding: '4px 8px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '21px', marginBottom: '98px' }}>
+                  <div style={{ border: '3px solid #ccdde8', borderRadius: '10px', overflow: 'hidden' }}>
+                    <div style={{ background: '#0A1628', color: '#00AEEF', fontSize: '26px', fontWeight: 700, letterSpacing: '7px', textTransform: 'uppercase', padding: '14px 28px' }}>
                       Pro / Ref #
                     </div>
-                    <div style={{ padding: '10px 8px', minHeight: '40px', fontSize: '10px', color: '#0A1628' }}>
+                    <div style={{ padding: '35px 28px', minHeight: '139px', fontSize: '35px', color: '#0A1628' }}>
                       {form.proNum || '—'}
                     </div>
                   </div>
-                  <div style={{ border: '1px solid #ccdde8', borderRadius: '3px', overflow: 'hidden' }}>
-                    <div style={{ background: '#0A1628', color: '#00AEEF', fontSize: '7.5px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', padding: '4px 8px' }}>
+                  <div style={{ border: '3px solid #ccdde8', borderRadius: '10px', overflow: 'hidden' }}>
+                    <div style={{ background: '#0A1628', color: '#00AEEF', fontSize: '26px', fontWeight: 700, letterSpacing: '7px', textTransform: 'uppercase', padding: '14px 28px' }}>
                       PO #
                     </div>
-                    <div style={{ padding: '10px 8px', minHeight: '40px', fontSize: '10px', color: '#0A1628' }}>
+                    <div style={{ padding: '35px 28px', minHeight: '139px', fontSize: '35px', color: '#0A1628' }}>
                       {form.poNum || '—'}
                     </div>
                   </div>
-                  <div style={{ border: '1px solid #ccdde8', borderRadius: '3px', overflow: 'hidden' }}>
-                    <div style={{ background: '#0A1628', color: '#00AEEF', fontSize: '7.5px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', padding: '4px 8px' }}>
+                  <div style={{ border: '3px solid #ccdde8', borderRadius: '10px', overflow: 'hidden' }}>
+                    <div style={{ background: '#0A1628', color: '#00AEEF', fontSize: '26px', fontWeight: 700, letterSpacing: '7px', textTransform: 'uppercase', padding: '14px 28px' }}>
                       Freight Terms
                     </div>
-                    <div style={{ padding: '10px 8px', minHeight: '40px', fontSize: '10px', color: '#0A1628' }}>
+                    <div style={{ padding: '35px 28px', minHeight: '139px', fontSize: '35px', color: '#0A1628' }}>
                       {form.fTerms || 'Prepaid'}
                     </div>
                   </div>
                 </div>
 
                 {/* Shipper/Consignee */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '28px' }}>
-                  <div style={{ border: '1px solid #ccdde8', borderRadius: '3px', overflow: 'hidden' }}>
-                    <div style={{ background: '#0A1628', color: '#00AEEF', fontSize: '7.5px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', padding: '4px 8px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '21px', marginBottom: '98px' }}>
+                  <div style={{ border: '3px solid #ccdde8', borderRadius: '10px', overflow: 'hidden' }}>
+                    <div style={{ background: '#0A1628', color: '#00AEEF', fontSize: '26px', fontWeight: 700, letterSpacing: '7px', textTransform: 'uppercase', padding: '14px 28px' }}>
                       Shipper / Consignor
                     </div>
-                    <div style={{ padding: '10px 8px', minHeight: '90px', fontSize: '9px' }}>
+                    <div style={{ padding: '35px 28px', minHeight: '313px', fontSize: '31px' }}>
                       <div dangerouslySetInnerHTML={{
                         __html: formatAddr(form.sName, form.sAddr, form.sCity, form.sState, form.sZip, form.sCountry, form.sContact, form.sPhone)
                       }} />
                     </div>
                   </div>
-                  <div style={{ border: '1px solid #ccdde8', borderRadius: '3px', overflow: 'hidden' }}>
-                    <div style={{ background: '#0A1628', color: '#00AEEF', fontSize: '7.5px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', padding: '4px 8px' }}>
+                  <div style={{ border: '3px solid #ccdde8', borderRadius: '10px', overflow: 'hidden' }}>
+                    <div style={{ background: '#0A1628', color: '#00AEEF', fontSize: '26px', fontWeight: 700, letterSpacing: '7px', textTransform: 'uppercase', padding: '14px 28px' }}>
                       Consignee / Receiver
                     </div>
-                    <div style={{ padding: '10px 8px', minHeight: '90px', fontSize: '9px' }}>
+                    <div style={{ padding: '35px 28px', minHeight: '313px', fontSize: '31px' }}>
                       <div dangerouslySetInnerHTML={{
                         __html: formatAddr(form.cName, form.cAddr, form.cCity, form.cState, form.cZip, form.cCountry, form.cContact, form.cPhone)
                       }} />
@@ -827,49 +876,49 @@ const BOLGeneratorPage: React.FC = () => {
                 </div>
 
                 {/* Carrier Info */}
-                <div style={{ border: '1px solid #ccdde8', borderRadius: '3px', overflow: 'hidden', marginBottom: '26px' }}>
-                  <div style={{ background: '#0A1628', color: '#00AEEF', fontSize: '7.5px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', padding: '4px 8px' }}>
+                <div style={{ border: '3px solid #ccdde8', borderRadius: '10px', overflow: 'hidden', marginBottom: '91px' }}>
+                  <div style={{ background: '#0A1628', color: '#00AEEF', fontSize: '26px', fontWeight: 700, letterSpacing: '7px', textTransform: 'uppercase', padding: '14px 28px' }}>
                     Carrier Information
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr' }}>
-                    <div style={{ padding: '6px 8px', borderRight: '1px solid #ccdde8' }}>
-                      <div style={{ fontSize: '7.5px', color: '#999', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '3px' }}>Carrier</div>
-                      <div style={{ fontSize: '10px', color: '#0A1628' }}>{form.carrierName || '—'}</div>
-                      <div style={{ fontSize: '7.5px', color: '#999', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '5px', marginBottom: '3px' }}>MC/DOT</div>
-                      <div style={{ fontSize: '10px', color: '#0A1628' }}>{form.carrierMC || '—'}</div>
+                    <div style={{ padding: '21px 28px', borderRight: '3px solid #ccdde8' }}>
+                      <div style={{ fontSize: '26px', color: '#999', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '10px' }}>Carrier</div>
+                      <div style={{ fontSize: '35px', color: '#0A1628' }}>{form.carrierName || '—'}</div>
+                      <div style={{ fontSize: '26px', color: '#999', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', marginTop: '17px', marginBottom: '10px' }}>MC/DOT</div>
+                      <div style={{ fontSize: '35px', color: '#0A1628' }}>{form.carrierMC || '—'}</div>
                     </div>
-                    <div style={{ padding: '6px 8px', borderRight: '1px solid #ccdde8' }}>
-                      <div style={{ fontSize: '7.5px', color: '#999', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '3px' }}>Driver</div>
-                      <div style={{ fontSize: '10px', color: '#0A1628' }}>{form.driverName || '—'}</div>
+                    <div style={{ padding: '21px 28px', borderRight: '3px solid #ccdde8' }}>
+                      <div style={{ fontSize: '26px', color: '#999', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '10px' }}>Driver</div>
+                      <div style={{ fontSize: '35px', color: '#0A1628' }}>{form.driverName || '—'}</div>
                     </div>
-                    <div style={{ padding: '6px 8px', borderRight: '1px solid #ccdde8' }}>
-                      <div style={{ fontSize: '7.5px', color: '#999', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '3px' }}>Truck</div>
-                      <div style={{ fontSize: '10px', color: '#0A1628' }}>{form.truckNum || '—'}</div>
+                    <div style={{ padding: '21px 28px', borderRight: '3px solid #ccdde8' }}>
+                      <div style={{ fontSize: '26px', color: '#999', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '10px' }}>Truck</div>
+                      <div style={{ fontSize: '35px', color: '#0A1628' }}>{form.truckNum || '—'}</div>
                     </div>
-                    <div style={{ padding: '6px 8px' }}>
-                      <div style={{ fontSize: '7.5px', color: '#999', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '3px' }}>Trailer</div>
-                      <div style={{ fontSize: '10px', color: '#0A1628' }}>{form.trailerNum || '—'}</div>
+                    <div style={{ padding: '21px 28px' }}>
+                      <div style={{ fontSize: '26px', color: '#999', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '10px' }}>Trailer</div>
+                      <div style={{ fontSize: '35px', color: '#0A1628' }}>{form.trailerNum || '—'}</div>
                     </div>
                   </div>
                 </div>
 
                 {/* Commodities Table */}
-                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '26px', fontSize: '10px' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '91px', fontSize: '35px' }}>
                   <thead>
                     <tr style={{ background: '#0A1628', color: '#00AEEF' }}>
-                      <th style={{ border: '1px solid #0A1628', padding: '6px 8px', textAlign: 'left', fontWeight: 700, fontSize: '8.5px', letterSpacing: '1.5px', textTransform: 'uppercase' }}>
+                      <th style={{ border: '3px solid #0A1628', padding: '21px 28px', textAlign: 'left', fontWeight: 700, fontSize: '30px', letterSpacing: '5px', textTransform: 'uppercase' }}>
                         Description of Articles
                       </th>
-                      <th style={{ border: '1px solid #0A1628', padding: '6px 8px', textAlign: 'left', fontWeight: 700, fontSize: '8.5px', letterSpacing: '1.5px', textTransform: 'uppercase' }}>
+                      <th style={{ border: '3px solid #0A1628', padding: '21px 28px', textAlign: 'left', fontWeight: 700, fontSize: '30px', letterSpacing: '5px', textTransform: 'uppercase' }}>
                         Qty
                       </th>
-                      <th style={{ border: '1px solid #0A1628', padding: '6px 8px', textAlign: 'left', fontWeight: 700, fontSize: '8.5px', letterSpacing: '1.5px', textTransform: 'uppercase' }}>
+                      <th style={{ border: '3px solid #0A1628', padding: '21px 28px', textAlign: 'left', fontWeight: 700, fontSize: '30px', letterSpacing: '5px', textTransform: 'uppercase' }}>
                         Weight
                       </th>
-                      <th style={{ border: '1px solid #0A1628', padding: '6px 8px', textAlign: 'left', fontWeight: 700, fontSize: '8.5px', letterSpacing: '1.5px', textTransform: 'uppercase' }}>
+                      <th style={{ border: '3px solid #0A1628', padding: '21px 28px', textAlign: 'left', fontWeight: 700, fontSize: '30px', letterSpacing: '5px', textTransform: 'uppercase' }}>
                         Class
                       </th>
-                      <th style={{ border: '1px solid #0A1628', padding: '6px 8px', textAlign: 'left', fontWeight: 700, fontSize: '8.5px', letterSpacing: '1.5px', textTransform: 'uppercase' }}>
+                      <th style={{ border: '3px solid #0A1628', padding: '21px 28px', textAlign: 'left', fontWeight: 700, fontSize: '30px', letterSpacing: '5px', textTransform: 'uppercase' }}>
                         NMFC / Hazmat UN #
                       </th>
                     </tr>
@@ -877,27 +926,27 @@ const BOLGeneratorPage: React.FC = () => {
                   <tbody>
                     {commodities.length === 0 ? (
                       <tr style={{ background: '#f5f9fc', color: '#999' }}>
-                        <td colSpan={5} style={{ border: '1px solid #ccdde8', padding: '6px 8px', textAlign: 'center', fontStyle: 'italic' }}>
+                        <td colSpan={5} style={{ border: '3px solid #ccdde8', padding: '21px 28px', textAlign: 'center', fontStyle: 'italic' }}>
                           No freight added yet
                         </td>
                       </tr>
                     ) : (
                       commodities.map((com, idx) => (
                         <tr style={{ background: idx % 2 === 0 ? '#f5f9fc' : '#ffffff' }}>
-                          <td style={{ border: '1px solid #ccdde8', padding: '5px 8px', color: '#0A1628' }}>{com.description || '—'}</td>
-                          <td style={{ border: '1px solid #ccdde8', padding: '5px 8px', color: '#0A1628' }}>{com.qty || '—'}</td>
-                          <td style={{ border: '1px solid #ccdde8', padding: '5px 8px', color: '#0A1628' }}>{com.weight || '—'}</td>
-                          <td style={{ border: '1px solid #ccdde8', padding: '5px 8px', color: '#0A1628' }}>{com.class || '—'}</td>
-                          <td style={{ border: '1px solid #ccdde8', padding: '4px 6px', color: '#ccc', fontStyle: 'italic', fontSize: '8.5px' }}>—</td>
+                          <td style={{ border: '3px solid #ccdde8', padding: '17px 28px', color: '#0A1628' }}>{com.description || '—'}</td>
+                          <td style={{ border: '3px solid #ccdde8', padding: '17px 28px', color: '#0A1628' }}>{com.qty || '—'}</td>
+                          <td style={{ border: '3px solid #ccdde8', padding: '17px 28px', color: '#0A1628' }}>{com.weight || '—'}</td>
+                          <td style={{ border: '3px solid #ccdde8', padding: '17px 28px', color: '#0A1628' }}>{com.class || '—'}</td>
+                          <td style={{ border: '3px solid #ccdde8', padding: '14px 21px', color: '#ccc', fontStyle: 'italic', fontSize: '30px' }}>—</td>
                         </tr>
                       ))
                     )}
                   </tbody>
                   <tfoot>
-                    <tr style={{ background: '#eaf2f8', fontWeight: 700, fontSize: '8.5px' }}>
-                      <td colSpan={2} style={{ border: '1px solid #0A1628', padding: '5px 8px' }}>Totals</td>
-                      <td style={{ border: '1px solid #0A1628', padding: '5px 8px', color: '#0A1628' }}>{form.totalWt || '—'} {form.wtUnit}</td>
-                      <td colSpan={2} style={{ border: '1px solid #0A1628', padding: '5px 8px', color: '#0A1628', fontSize: '8.5px' }}>
+                    <tr style={{ background: '#eaf2f8', fontWeight: 700, fontSize: '30px' }}>
+                      <td colSpan={2} style={{ border: '3px solid #0A1628', padding: '17px 28px' }}>Totals</td>
+                      <td style={{ border: '3px solid #0A1628', padding: '17px 28px', color: '#0A1628' }}>{form.totalWt || '—'} {form.wtUnit}</td>
+                      <td colSpan={2} style={{ border: '3px solid #0A1628', padding: '17px 28px', color: '#0A1628', fontSize: '30px' }}>
                         Declared Value: <strong>{form.declVal || '—'}</strong>
                       </td>
                     </tr>
@@ -905,27 +954,27 @@ const BOLGeneratorPage: React.FC = () => {
                 </table>
 
                 {/* Special Handling */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px', marginBottom: '26px' }}>
-                  <div style={{ border: '1px solid #ccdde8', borderRadius: '3px', padding: '4px 6px', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '8px', color: '#555' }}>
-                    <div style={{ width: '11px', height: '11px', border: '1.5px solid #aaa', borderRadius: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 900 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px', marginBottom: '91px' }}>
+                  <div style={{ border: '3px solid #ccdde8', borderRadius: '10px', padding: '14px 21px', display: 'flex', alignItems: 'center', gap: '17px', fontSize: '28px', color: '#555' }}>
+                    <div style={{ width: '38px', height: '38px', border: '5px solid #aaa', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', fontWeight: 900 }}>
                       {form.sHazmat ? '✓' : ''}
                     </div>
                     Hazardous Mat.
                   </div>
-                  <div style={{ border: '1px solid #ccdde8', borderRadius: '3px', padding: '4px 6px', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '8px', color: '#555' }}>
-                    <div style={{ width: '11px', height: '11px', border: '1.5px solid #aaa', borderRadius: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 900 }}>
+                  <div style={{ border: '3px solid #ccdde8', borderRadius: '10px', padding: '14px 21px', display: 'flex', alignItems: 'center', gap: '17px', fontSize: '28px', color: '#555' }}>
+                    <div style={{ width: '38px', height: '38px', border: '5px solid #aaa', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', fontWeight: 900 }}>
                       {form.sLiftgate ? '✓' : ''}
                     </div>
                     Liftgate
                   </div>
-                  <div style={{ border: '1px solid #ccdde8', borderRadius: '3px', padding: '4px 6px', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '8px', color: '#555' }}>
-                    <div style={{ width: '11px', height: '11px', border: '1.5px solid #aaa', borderRadius: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 900 }}>
+                  <div style={{ border: '3px solid #ccdde8', borderRadius: '10px', padding: '14px 21px', display: 'flex', alignItems: 'center', gap: '17px', fontSize: '28px', color: '#555' }}>
+                    <div style={{ width: '38px', height: '38px', border: '5px solid #aaa', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', fontWeight: 900 }}>
                       {form.sAppt ? '✓' : ''}
                     </div>
                     Appointment
                   </div>
-                  <div style={{ border: '1px solid #ccdde8', borderRadius: '3px', padding: '4px 6px', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '8px', color: '#555' }}>
-                    <div style={{ width: '11px', height: '11px', border: '1.5px solid #aaa', borderRadius: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 900 }}>
+                  <div style={{ border: '3px solid #ccdde8', borderRadius: '10px', padding: '14px 21px', display: 'flex', alignItems: 'center', gap: '17px', fontSize: '28px', color: '#555' }}>
+                    <div style={{ width: '38px', height: '38px', border: '5px solid #aaa', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', fontWeight: 900 }}>
                       {form.sRefer ? '✓' : ''}
                     </div>
                     Temp. Controlled
@@ -933,48 +982,48 @@ const BOLGeneratorPage: React.FC = () => {
                 </div>
 
                 {/* Special Instructions */}
-                <div style={{ border: '1px solid #ccdde8', borderRadius: '3px', overflow: 'hidden', marginBottom: '26px' }}>
-                  <div style={{ background: '#0A1628', color: '#00AEEF', fontSize: '7.5px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', padding: '4px 8px' }}>
+                <div style={{ border: '3px solid #ccdde8', borderRadius: '10px', overflow: 'hidden', marginBottom: '91px' }}>
+                  <div style={{ background: '#0A1628', color: '#00AEEF', fontSize: '26px', fontWeight: 700, letterSpacing: '7px', textTransform: 'uppercase', padding: '14px 28px' }}>
                     Special Instructions / Handling Notes
                   </div>
-                  <div style={{ padding: '8px 8px', minHeight: '36px' }}>
-                    <span style={{ fontSize: '9px', color: form.instrTxt ? '#0A1628' : '#ccc', whiteSpace: 'pre-wrap', lineHeight: 1.6, fontStyle: form.instrTxt ? 'normal' : 'italic' }}>
+                  <div style={{ padding: '28px 28px', minHeight: '125px' }}>
+                    <span style={{ fontSize: '31px', color: form.instrTxt ? '#0A1628' : '#ccc', whiteSpace: 'pre-wrap', lineHeight: 1.6, fontStyle: form.instrTxt ? 'normal' : 'italic' }}>
                       {form.instrTxt || 'No special instructions'}
                     </span>
                   </div>
                 </div>
 
                 {/* Liability Statement */}
-                <div style={{ background: '#fffbea', border: '1px solid #f0d060', borderRadius: '3px', padding: '6px 8px', fontSize: '7.5px', color: '#6b4d00', lineHeight: 1.7, marginBottom: '26px' }}>
+                <div style={{ background: '#fffbea', border: '3px solid #f0d060', borderRadius: '10px', padding: '21px 28px', fontSize: '26px', color: '#6b4d00', lineHeight: 1.7, marginBottom: '91px' }}>
                   <strong>RECEIVED</strong>, subject to individually determined rates or contracts agreed upon in writing between carrier and shipper. The carrier shall not make delivery without payment of freight and all other lawful charges. Declared value: <strong>$___________</strong>
                 </div>
 
                 {/* Signatures */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px', marginTop: '26px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '49px', marginTop: '91px' }}>
                   <div>
-                    <div style={{ borderTop: '1.5px solid #0A1628', paddingTop: '3px', marginBottom: '12px' }}></div>
-                    <div style={{ fontSize: '7.5px', color: '#888', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>Shipper Signature & Date</div>
-                    <div style={{ fontSize: '8px', color: '#bbb', fontStyle: 'italic', marginTop: '10px' }}>X ____________________</div>
-                    <div style={{ fontSize: '8px', color: '#bbb', fontStyle: 'italic', marginTop: '4px' }}>Date: ________________</div>
+                    <div style={{ borderTop: '5px solid #0A1628', paddingTop: '10px', marginBottom: '42px' }}></div>
+                    <div style={{ fontSize: '26px', color: '#888', textTransform: 'uppercase', letterSpacing: '3px', fontWeight: 700 }}>Shipper Signature & Date</div>
+                    <div style={{ fontSize: '28px', color: '#bbb', fontStyle: 'italic', marginTop: '35px' }}>X ____________________</div>
+                    <div style={{ fontSize: '28px', color: '#bbb', fontStyle: 'italic', marginTop: '14px' }}>Date: ________________</div>
                   </div>
                   <div>
-                    <div style={{ borderTop: '1.5px solid #0A1628', paddingTop: '3px', marginBottom: '12px' }}></div>
-                    <div style={{ fontSize: '7.5px', color: '#888', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>Carrier Signature & Date</div>
-                    <div style={{ fontSize: '8px', color: '#bbb', fontStyle: 'italic', marginTop: '10px' }}>X ____________________</div>
-                    <div style={{ fontSize: '8px', color: '#bbb', fontStyle: 'italic', marginTop: '4px' }}>Date: ________________</div>
+                    <div style={{ borderTop: '5px solid #0A1628', paddingTop: '10px', marginBottom: '42px' }}></div>
+                    <div style={{ fontSize: '26px', color: '#888', textTransform: 'uppercase', letterSpacing: '3px', fontWeight: 700 }}>Carrier Signature & Date</div>
+                    <div style={{ fontSize: '28px', color: '#bbb', fontStyle: 'italic', marginTop: '35px' }}>X ____________________</div>
+                    <div style={{ fontSize: '28px', color: '#bbb', fontStyle: 'italic', marginTop: '14px' }}>Date: ________________</div>
                   </div>
                   <div>
-                    <div style={{ borderTop: '1.5px solid #0A1628', paddingTop: '3px', marginBottom: '12px' }}></div>
-                    <div style={{ fontSize: '7.5px', color: '#888', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>Consignee Signature & Date</div>
-                    <div style={{ fontSize: '8px', color: '#bbb', fontStyle: 'italic', marginTop: '10px' }}>X ____________________</div>
-                    <div style={{ fontSize: '8px', color: '#bbb', fontStyle: 'italic', marginTop: '4px' }}>Date: ________________</div>
+                    <div style={{ borderTop: '5px solid #0A1628', paddingTop: '10px', marginBottom: '42px' }}></div>
+                    <div style={{ fontSize: '26px', color: '#888', textTransform: 'uppercase', letterSpacing: '3px', fontWeight: 700 }}>Consignee Signature & Date</div>
+                    <div style={{ fontSize: '28px', color: '#bbb', fontStyle: 'italic', marginTop: '35px' }}>X ____________________</div>
+                    <div style={{ fontSize: '28px', color: '#bbb', fontStyle: 'italic', marginTop: '14px' }}>Date: ________________</div>
                   </div>
                 </div>
 
                 {/* Footer */}
-                <div style={{ background: '#eaf2f8', borderTop: '2px solid #0A1628', padding: '6px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginLeft: '-26px', marginRight: '-26px', marginBottom: '-16px', marginTop: 'auto', fontSize: '8px' }}>
+                <div style={{ background: '#eaf2f8', borderTop: '7px solid #0A1628', padding: '21px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginLeft: '-91px', marginRight: '-91px', marginBottom: '-56px', marginTop: 'auto', fontSize: '28px' }}>
                   <div style={{ color: '#888' }}>Generated by Integra AI · integratedtech.ca · Free BOL Generator</div>
-                  <div style={{ color: '#0A1628', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Straight BOL · Not Negotiable · Original</div>
+                  <div style={{ color: '#0A1628', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '3px' }}>Straight BOL · Not Negotiable · Original</div>
                 </div>
               </div>
             </div>
@@ -982,111 +1031,11 @@ const BOLGeneratorPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Print Styles */}
-      <style>{`
-        @media print {
-          /* Reset all spacing */
-          * {
-            margin: 0 !important;
-            padding: 0 !important;
-          }
-
-          /* Global print setup */
-          html, body {
-            background: white !important;
-            height: 100% !important;
-            overflow: visible !important;
-            width: 100% !important;
-          }
-
-          /* Hide everything except preview */
-          nav, footer, header, .pt-32::before {
-            display: none !important;
-          }
-
-          /* Container adjustments */
-          .pt-32 {
-            padding: 0 !important;
-            background: white !important;
-            margin: 0 !important;
-          }
-
-          .pb-20 {
-            padding: 0 !important;
-          }
-
-          .px-4 {
-            padding: 0 !important;
-          }
-
-          .max-w-6xl {
-            max-width: 100% !important;
-            width: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-          }
-
-          /* Hide title section */
-          .max-w-6xl > div:first-of-type {
-            display: none !important;
-          }
-
-          /* Main grid - show only preview */
-          .grid.grid-cols-2 {
-            display: block !important;
-            width: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-          }
-
-          /* Hide form (first grid item) */
-          .grid.grid-cols-2 > div:first-child {
-            display: none !important;
-          }
-
-          /* Preview (second grid item) - full width */
-          .grid.grid-cols-2 > div:last-child {
-            position: static !important;
-            top: 0 !important;
-            width: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            border: none !important;
-            display: block !important;
-          }
-
-          /* Remove sticky positioning */
-          .sticky {
-            position: static !important;
-          }
-
-          /* Clean up rounded corners */
-          .rounded-lg {
-            border-radius: 0 !important;
-            box-shadow: none !important;
-          }
-
-          /* Page setup */
-          @page {
-            size: letter;
-            margin: 0;
-            padding: 0;
-          }
-
-          body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-          }
-
-          /* Prevent margin collapse */
-          div {
-            margin-collapse: discard;
-          }
-        }
-      `}</style>
+      
+            </div>
+{/* Deleted secondary print styles to prevent collision */}
     </div>
+    </>
   );
 };
 
