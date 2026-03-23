@@ -79,7 +79,7 @@ const Input = (props: any & { isDark: boolean }) => {
   return (
     <input
       {...inputProps}
-      className={`px-3 py-2 rounded border text-sm ${
+      className={`w-full px-3 py-2 rounded border text-sm ${
         isDark
           ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
@@ -188,13 +188,13 @@ const BOLGeneratorPage: React.FC = () => {
     phone: string
   ) => {
     let html = '';
-    if (name) html += `<div style="font-weight:bold;margin-bottom:4px;">${name}</div>`;
-    if (addr) html += `<div style="font-size:9px;">Addr: ${addr}</div>`;
-    if (city || state || zip) html += `<div style="font-size:9px;">${[city, state, zip].filter(Boolean).join(', ')}</div>`;
-    if (country) html += `<div style="font-size:9px;">Country: ${country}</div>`;
-    if (contact) html += `<div style="font-size:9px;">Contact: ${contact}</div>`;
-    if (phone) html += `<div style="font-size:9px;">Phone: ${phone}</div>`;
-    if (!html) html = `<div style="font-style:italic;color:#999;">— Not filled in yet —</div>`;
+    if (name) html += `<div style="font-weight:bold;margin-bottom:14px;font-size:38px;">${name}</div>`;
+    if (addr) html += `<div style="font-size:31px;">Addr: ${addr}</div>`;
+    if (city || state || zip) html += `<div style="font-size:31px;">${[city, state, zip].filter(Boolean).join(', ')}</div>`;
+    if (country) html += `<div style="font-size:31px;">Country: ${country}</div>`;
+    if (contact) html += `<div style="font-size:31px;">Contact: ${contact}</div>`;
+    if (phone) html += `<div style="font-size:31px;">Phone: ${phone}</div>`;
+    if (!html) html = `<div style="font-style:italic;color:#999;font-size:31px;">— Not filled in yet —</div>`;
     return html;
   };
 
