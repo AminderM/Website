@@ -47,15 +47,15 @@ const AppSidebar: React.FC = () => {
       id: 'fuel-surcharge', 
       name: 'Fuel Surcharge Calculator', 
       icon: Fuel, 
-      path: '/tools?tab=fuel',
+      path: '/fuel-surcharge',
       color: 'text-orange-500',
       bgColor: 'bg-orange-500/20'
     },
     { 
-      id: 'ifta', 
+      id: 'ifta-calculator', 
       name: 'IFTA Tax Calculator', 
       icon: Calculator, 
-      path: '/tools?tab=ifta',
+      path: '/ifta-calculator',
       color: 'text-green-500',
       bgColor: 'bg-green-500/20'
     },

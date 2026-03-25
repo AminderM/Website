@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Navbar from './components/Navbar';
@@ -14,7 +14,8 @@ import ContactPage from './pages/ContactPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import BOLGeneratorPage from './pages/BOLGeneratorPage';
-import ToolsPage from './pages/ToolsPage';
+import FuelSurchargePage from './pages/FuelSurchargePage';
+import IFTACalculatorPage from './pages/IFTACalculatorPage';
 import './index.css';
 
 // Layout wrapper to handle sidebar spacing
@@ -50,7 +51,10 @@ function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
               <Route path="/bol-generator" element={<ProtectedRoute component={BOLGeneratorPage} />} />
-              <Route path="/tools" element={<ProtectedRoute component={ToolsPage} />} />
+              <Route path="/fuel-surcharge" element={<ProtectedRoute component={FuelSurchargePage} />} />
+              <Route path="/ifta-calculator" element={<ProtectedRoute component={IFTACalculatorPage} />} />
+              {/* Redirect old tools route */}
+              <Route path="/tools" element={<Navigate to="/fuel-surcharge" replace />} />
             </Routes>
           </AppLayout>
         </Router>
