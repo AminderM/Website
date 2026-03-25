@@ -5,6 +5,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
+import QuickToolsSidebar from './components/QuickToolsSidebar';
 import HomePage from './pages/HomePage';
 import ProductPage from './pages/ProductPage';
 import UseCasesPage from './pages/UseCasesPage';
@@ -13,6 +14,7 @@ import ContactPage from './pages/ContactPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import BOLGeneratorPage from './pages/BOLGeneratorPage';
+import ToolsPage from './pages/ToolsPage';
 import './index.css';
 
 function App() {
@@ -32,9 +34,11 @@ function App() {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/signup" element={<SignupPage />} />
                 <Route path="/bol-generator" element={<ProtectedRoute component={BOLGeneratorPage} />} />
+                <Route path="/tools" element={<ProtectedRoute component={ToolsPage} />} />
               </Routes>
             </main>
             <Footer />
+            <QuickToolsSidebar />
           </div>
         </Router>
       </AuthProvider>

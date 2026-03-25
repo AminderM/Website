@@ -16,7 +16,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [error, setError] = useState<string | null>(null);
 
   const BACKEND_URL =
-    process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001';
+    process.env.REACT_APP_BACKEND_URL || '';
 
   // Auto-login from localStorage on app load
   useEffect(() => {

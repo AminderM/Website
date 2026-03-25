@@ -32,7 +32,10 @@ const Navbar: React.FC = () => {
     { name: 'Use Cases', path: '/use-cases' },
     { name: 'About', path: '/about' },
     { name: 'Contact', path: '/contact' },
-    ...(isAuthenticated ? [{ name: 'BOL Generator', path: '/bol-generator' }] : []),
+    ...(isAuthenticated ? [
+      { name: 'BOL Generator', path: '/bol-generator' },
+      { name: 'Tools', path: '/tools' },
+    ] : []),
   ];
 
   return (
