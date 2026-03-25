@@ -1,11 +1,12 @@
-from fastapi import FastAPI, HTTPException, Depends, Header
+from fastapi import FastAPI, HTTPException, Depends, Header, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Literal
 import jwt
 import os
 from datetime import datetime, timedelta
 from pymongo import MongoClient
+from bson import ObjectId
 
 app = FastAPI(title="Integrated Supply Chain API")
 
@@ -262,44 +263,98 @@ def save_bol(bol: BOLData, payload: dict = Depends(verify_token)):
     return {"success": True, "id": str(result.inserted_id)}
 
 @app.get("/api/history")
-def get_history(payload: dict = Depends(verify_token)):
+def get_history(
+    payload: dict = Depends(verify_token),
+    type: Optional[Literal["fuel_surcharge", "ifta", "bol"]] = Query(None, description="Filter by type"),
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(20, ge=1, le=100, description="Items per page")
+):
     user_id = payload.get("userId")
+    skip = (page - 1) * limit
     
-    # Get all history items for user
-    fuel_surcharge_items = list(fuel_surcharge_collection.find(
-        {"user_id": user_id}, {"_id": 0}
-    ).sort("created_at", -1).limit(20))
-    
-    ifta_items = list(ifta_collection.find(
-        {"user_id": user_id}, {"_id": 0}
-    ).sort("created_at", -1).limit(20))
-    
-    bol_items = list(bol_collection.find(
-        {"user_id": user_id}, {"_id": 0}
-    ).sort("created_at", -1).limit(20))
-    
-    # Combine and sort by date
     all_items = []
-    for item in fuel_surcharge_items:
-        all_items.append({
-            "type": "fuel_surcharge",
-            "data": item.get("data"),
-            "created_at": item.get("created_at")
-        })
-    for item in ifta_items:
-        all_items.append({
-            "type": "ifta",
-            "data": item.get("data"),
-            "created_at": item.get("created_at")
-        })
-    for item in bol_items:
-        all_items.append({
-            "type": "bol",
-            "data": item.get("data"),
-            "created_at": item.get("created_at")
-        })
+    total_count = 0
     
-    # Sort by created_at descending
+    # Helper to add items from collection
+    def fetch_from_collection(collection, item_type):
+        nonlocal total_count
+        query = {"user_id": user_id}
+        count = collection.count_documents(query)
+        total_count += count
+        
+        items = list(collection.find(query).sort("created_at", -1))
+        for item in items:
+            all_items.append({
+                "id": str(item["_id"]),
+                "type": item_type,
+                "data": item.get("data"),
+                "created_at": item.get("created_at")
+            })
+    
+    # Fetch based on type filter
+    if type is None or type == "fuel_surcharge":
+        fetch_from_collection(fuel_surcharge_collection, "fuel_surcharge")
+    if type is None or type == "ifta":
+        fetch_from_collection(ifta_collection, "ifta")
+    if type is None or type == "bol":
+        fetch_from_collection(bol_collection, "bol")
+    
+    # Sort combined results by date
     all_items.sort(key=lambda x: x.get("created_at", ""), reverse=True)
     
-    return {"history": all_items[:50]}
+    # Apply pagination
+    paginated_items = all_items[skip:skip + limit]
+    has_more = len(all_items) > skip + limit
+    
+    return {
+        "history": paginated_items,
+        "total": len(all_items),
+        "page": page,
+        "limit": limit,
+        "has_more": has_more
+    }
+
+@app.get("/api/history/{item_id}")
+def get_history_item(item_id: str, payload: dict = Depends(verify_token)):
+    """Get a single history item by ID"""
+    user_id = payload.get("userId")
+    
+    try:
+        obj_id = ObjectId(item_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid ID format")
+    
+    # Search in all collections
+    for collection, item_type in [
+        (fuel_surcharge_collection, "fuel_surcharge"),
+        (ifta_collection, "ifta"),
+        (bol_collection, "bol")
+    ]:
+        item = collection.find_one({"_id": obj_id, "user_id": user_id})
+        if item:
+            return {
+                "id": str(item["_id"]),
+                "type": item_type,
+                "data": item.get("data"),
+                "created_at": item.get("created_at")
+            }
+    
+    raise HTTPException(status_code=404, detail="History item not found")
+
+@app.delete("/api/history/{item_id}")
+def delete_history_item(item_id: str, payload: dict = Depends(verify_token)):
+    """Delete a history item by ID"""
+    user_id = payload.get("userId")
+    
+    try:
+        obj_id = ObjectId(item_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid ID format")
+    
+    # Try to delete from each collection
+    for collection in [fuel_surcharge_collection, ifta_collection, bol_collection]:
+        result = collection.delete_one({"_id": obj_id, "user_id": user_id})
+        if result.deleted_count > 0:
+            return {"success": True, "message": "Item deleted"}
+    
+    raise HTTPException(status_code=404, detail="History item not found")
