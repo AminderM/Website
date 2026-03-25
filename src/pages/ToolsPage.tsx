@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { Fuel, Calculator, TrendingUp, DollarSign, Truck, MapPin } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { Fuel, Calculator, TrendingUp, DollarSign, Truck, MapPin, Save, CheckCircle } from 'lucide-react';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
 // Fuel Surcharge Calculator Component
-const FuelSurchargeCalculator: React.FC<{ isDark: boolean }> = ({ isDark }) => {
+const FuelSurchargeCalculator: React.FC<{ isDark: boolean; token: string | null }> = ({ isDark, token }) => {
   const [currentFuelPrice, setCurrentFuelPrice] = useState('');
   const [baseFuelPrice, setBaseFuelPrice] = useState('2.50');
   const [baseRate, setBaseRate] = useState('');
@@ -15,6 +18,7 @@ const FuelSurchargeCalculator: React.FC<{ isDark: boolean }> = ({ isDark }) => {
     totalWithSurcharge: number;
     cpmSurcharge: number;
   } | null>(null);
+  const [saved, setSaved] = useState(false);
 
   const calculateSurcharge = () => {
     const current = parseFloat(currentFuelPrice);
@@ -26,13 +30,8 @@ const FuelSurchargeCalculator: React.FC<{ isDark: boolean }> = ({ isDark }) => {
       return;
     }
 
-    // Standard DOE fuel surcharge calculation
-    // Surcharge % = (Current Price - Base Price) / Base Price * 100
-    // Or using CPM method: (Current - Base) * MPG factor
     const priceDiff = current - base;
     const surchargePercent = (priceDiff / base) * 100;
-    
-    // CPM calculation (assuming 6 MPG average for trucks)
     const mpg = 6;
     const cpmSurcharge = priceDiff / mpg;
 
@@ -45,12 +44,47 @@ const FuelSurchargeCalculator: React.FC<{ isDark: boolean }> = ({ isDark }) => {
 
     const totalWithSurcharge = rate + surchargeAmount;
 
-    setResult({
+    const newResult = {
       surchargePercent: Math.max(0, surchargePercent),
       surchargeAmount: Math.max(0, surchargeAmount),
       totalWithSurcharge,
       cpmSurcharge: Math.max(0, cpmSurcharge),
-    });
+    };
+    
+    setResult(newResult);
+    setSaved(false);
+  };
+
+  const saveToHistory = async () => {
+    if (!result || !token) return;
+    
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/history/fuel-surcharge`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          current_fuel_price: parseFloat(currentFuelPrice),
+          base_fuel_price: parseFloat(baseFuelPrice),
+          base_rate: parseFloat(baseRate),
+          miles: parseFloat(miles) || 0,
+          surcharge_method: surchargeMethod,
+          surcharge_percent: result.surchargePercent,
+          surcharge_amount: result.surchargeAmount,
+          total_with_surcharge: result.totalWithSurcharge,
+          cpm_surcharge: result.cpmSurcharge
+        })
+      });
+      
+      if (response.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      }
+    } catch (error) {
+      console.error('Failed to save:', error);
+    }
   };
 
   const inputClass = `w-full px-4 py-3 rounded-lg border text-sm ${
@@ -163,7 +197,21 @@ const FuelSurchargeCalculator: React.FC<{ isDark: boolean }> = ({ isDark }) => {
 
       {result && (
         <div className={`rounded-lg p-4 ${isDark ? 'bg-dark-400' : 'bg-gray-50'}`} data-testid="fuel-surcharge-result">
-          <h4 className={`font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>Results</h4>
+          <div className="flex items-center justify-between mb-3">
+            <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Results</h4>
+            <button
+              onClick={saveToHistory}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                saved 
+                  ? 'bg-green-500/20 text-green-500' 
+                  : isDark ? 'bg-dark-300 text-gray-300 hover:bg-dark-200' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+              data-testid="save-fuel-surcharge"
+            >
+              {saved ? <CheckCircle className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+              {saved ? 'Saved!' : 'Save to History'}
+            </button>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Surcharge %</p>
@@ -197,7 +245,7 @@ const FuelSurchargeCalculator: React.FC<{ isDark: boolean }> = ({ isDark }) => {
 };
 
 // IFTA Fuel Tax Estimator Component
-const IFTAFuelTaxEstimator: React.FC<{ isDark: boolean }> = ({ isDark }) => {
+const IFTAFuelTaxEstimator: React.FC<{ isDark: boolean; token: string | null }> = ({ isDark, token }) => {
   const [jurisdictions, setJurisdictions] = useState<Array<{
     id: number;
     state: string;
@@ -224,6 +272,44 @@ const IFTAFuelTaxEstimator: React.FC<{ isDark: boolean }> = ({ isDark }) => {
     }>;
     totalTaxDue: number;
   } | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  const saveToHistory = async () => {
+    if (!result || !token) return;
+    
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/history/ifta`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          mpg: parseFloat(mpg),
+          total_fuel_purchased: parseFloat(totalFuelPurchased) || 0,
+          total_miles: result.totalMiles,
+          total_fuel_used: result.totalFuelUsed,
+          jurisdictions: result.jurisdictionResults.map(j => ({
+            state: j.state,
+            miles: j.miles,
+            fuel_purchased: j.fuelPurchased,
+            tax_rate: j.taxRate,
+            fuel_used: j.fuelUsed,
+            net_taxable_fuel: j.netTaxableFuel,
+            tax_due: j.taxDue
+          })),
+          total_tax_due: result.totalTaxDue
+        })
+      });
+      
+      if (response.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      }
+    } catch (error) {
+      console.error('Failed to save:', error);
+    }
+  };
 
   // Common IFTA tax rates (cents per gallon) - 2024 rates
   const stateRates: { [key: string]: number } = {
@@ -441,7 +527,21 @@ const IFTAFuelTaxEstimator: React.FC<{ isDark: boolean }> = ({ isDark }) => {
 
       {result && (
         <div className={`rounded-lg p-4 ${isDark ? 'bg-dark-400' : 'bg-gray-50'}`} data-testid="ifta-result">
-          <h4 className={`font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>IFTA Summary</h4>
+          <div className="flex items-center justify-between mb-3">
+            <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>IFTA Summary</h4>
+            <button
+              onClick={saveToHistory}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                saved 
+                  ? 'bg-green-500/20 text-green-500' 
+                  : isDark ? 'bg-dark-300 text-gray-300 hover:bg-dark-200' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+              data-testid="save-ifta"
+            >
+              {saved ? <CheckCircle className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+              {saved ? 'Saved!' : 'Save to History'}
+            </button>
+          </div>
           
           <div className="grid grid-cols-3 gap-4 mb-4">
             <div>
@@ -498,6 +598,7 @@ const IFTAFuelTaxEstimator: React.FC<{ isDark: boolean }> = ({ isDark }) => {
 
 const ToolsPage: React.FC = () => {
   const { theme } = useTheme();
+  const { token } = useAuth();
   const isDark = theme === 'dark';
 
   return (
@@ -515,8 +616,8 @@ const ToolsPage: React.FC = () => {
 
         {/* Tools Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <FuelSurchargeCalculator isDark={isDark} />
-          <IFTAFuelTaxEstimator isDark={isDark} />
+          <FuelSurchargeCalculator isDark={isDark} token={token} />
+          <IFTAFuelTaxEstimator isDark={isDark} token={token} />
         </div>
       </div>
     </div>

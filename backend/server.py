@@ -1,12 +1,24 @@
 from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, List, Any
 import jwt
 import os
 from datetime import datetime, timedelta
+from pymongo import MongoClient
 
 app = FastAPI(title="Integrated Supply Chain API")
+
+# MongoDB Connection
+MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
+DB_NAME = os.environ.get("DB_NAME", "integrated_supply_chain")
+client = MongoClient(MONGO_URL)
+db = client[DB_NAME]
+
+# Collections
+fuel_surcharge_collection = db["fuel_surcharge_calculations"]
+ifta_collection = db["ifta_calculations"]
+bol_collection = db["bol_documents"]
 
 # CORS
 app.add_middleware(
@@ -163,3 +175,131 @@ def seed_test_user():
             "created_at": datetime.utcnow().isoformat() + "Z"
         }
         print(f"✅ Test user seeded: {test_email}")
+
+# ============================================
+# History Models
+# ============================================
+class FuelSurchargeCalc(BaseModel):
+    current_fuel_price: float
+    base_fuel_price: float
+    base_rate: float
+    miles: Optional[float] = 0
+    surcharge_method: str
+    surcharge_percent: float
+    surcharge_amount: float
+    total_with_surcharge: float
+    cpm_surcharge: float
+
+class JurisdictionData(BaseModel):
+    state: str
+    miles: float
+    fuel_purchased: float
+    tax_rate: float
+    fuel_used: float
+    net_taxable_fuel: float
+    tax_due: float
+
+class IFTACalc(BaseModel):
+    mpg: float
+    total_fuel_purchased: float
+    total_miles: float
+    total_fuel_used: float
+    jurisdictions: List[JurisdictionData]
+    total_tax_due: float
+
+class BOLData(BaseModel):
+    bol_number: str
+    bol_date: str
+    shipper_name: str
+    consignee_name: str
+    carrier_name: str
+    total_weight: Optional[str] = ""
+    freight_terms: Optional[str] = "Prepaid"
+
+class HistoryItem(BaseModel):
+    id: str
+    type: str
+    data: Any
+    created_at: str
+
+# ============================================
+# History Endpoints
+# ============================================
+@app.post("/api/history/fuel-surcharge")
+def save_fuel_surcharge(calc: FuelSurchargeCalc, payload: dict = Depends(verify_token)):
+    user_id = payload.get("userId")
+    doc = {
+        "user_id": user_id,
+        "type": "fuel_surcharge",
+        "data": calc.dict(),
+        "created_at": datetime.utcnow().isoformat() + "Z"
+    }
+    result = fuel_surcharge_collection.insert_one(doc)
+    return {"success": True, "id": str(result.inserted_id)}
+
+@app.post("/api/history/ifta")
+def save_ifta(calc: IFTACalc, payload: dict = Depends(verify_token)):
+    user_id = payload.get("userId")
+    doc = {
+        "user_id": user_id,
+        "type": "ifta",
+        "data": calc.dict(),
+        "created_at": datetime.utcnow().isoformat() + "Z"
+    }
+    result = ifta_collection.insert_one(doc)
+    return {"success": True, "id": str(result.inserted_id)}
+
+@app.post("/api/history/bol")
+def save_bol(bol: BOLData, payload: dict = Depends(verify_token)):
+    user_id = payload.get("userId")
+    doc = {
+        "user_id": user_id,
+        "type": "bol",
+        "data": bol.dict(),
+        "created_at": datetime.utcnow().isoformat() + "Z"
+    }
+    result = bol_collection.insert_one(doc)
+    return {"success": True, "id": str(result.inserted_id)}
+
+@app.get("/api/history")
+def get_history(payload: dict = Depends(verify_token)):
+    user_id = payload.get("userId")
+    
+    # Get all history items for user
+    fuel_surcharge_items = list(fuel_surcharge_collection.find(
+        {"user_id": user_id}, {"_id": 0}
+    ).sort("created_at", -1).limit(20))
+    
+    ifta_items = list(ifta_collection.find(
+        {"user_id": user_id}, {"_id": 0}
+    ).sort("created_at", -1).limit(20))
+    
+    bol_items = list(bol_collection.find(
+        {"user_id": user_id}, {"_id": 0}
+    ).sort("created_at", -1).limit(20))
+    
+    # Combine and sort by date
+    all_items = []
+    for item in fuel_surcharge_items:
+        all_items.append({
+            "type": "fuel_surcharge",
+            "data": item.get("data"),
+            "created_at": item.get("created_at")
+        })
+    for item in ifta_items:
+        all_items.append({
+            "type": "ifta",
+            "data": item.get("data"),
+            "created_at": item.get("created_at")
+        })
+    for item in bol_items:
+        all_items.append({
+            "type": "bol",
+            "data": item.get("data"),
+            "created_at": item.get("created_at")
+        })
+    
+    # Sort by created_at descending
+    all_items.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+    
+    return {"history": all_items[:50]}
