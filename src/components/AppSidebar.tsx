@@ -10,12 +10,12 @@ import {
   ChevronLeft, 
   ChevronRight,
   Clock,
-  DollarSign,
   Truck
 } from 'lucide-react';
 
 interface HistoryItem {
-  type: 'fuel_surcharge' | 'ifta' | 'bol';
+  id: string;
+  type: 'fuel-surcharge' | 'ifta' | 'bol';
   data: any;
   created_at: string;
 }
@@ -75,7 +75,7 @@ const AppSidebar: React.FC = () => {
       
       if (response.ok) {
         const data = await response.json();
-        setHistory(data.history || []);
+        setHistory(data.records || []);
       }
     } catch (error) {
       console.error('Failed to fetch history:', error);
@@ -109,7 +109,7 @@ const AppSidebar: React.FC = () => {
 
   const getHistoryIcon = (type: string) => {
     switch (type) {
-      case 'fuel_surcharge': return <Fuel className="w-4 h-4 text-orange-500" />;
+      case 'fuel-surcharge': return <Fuel className="w-4 h-4 text-orange-500" />;
       case 'ifta': return <Calculator className="w-4 h-4 text-green-500" />;
       case 'bol': return <FileText className="w-4 h-4 text-blue-500" />;
       default: return <Clock className="w-4 h-4 text-gray-500" />;
@@ -118,7 +118,7 @@ const AppSidebar: React.FC = () => {
 
   const getHistoryTitle = (item: HistoryItem) => {
     switch (item.type) {
-      case 'fuel_surcharge':
+      case 'fuel-surcharge':
         return `Fuel: ${item.data.surcharge_percent?.toFixed(1)}% surcharge`;
       case 'ifta':
         return `IFTA: $${item.data.total_tax_due?.toFixed(2)} tax`;
@@ -131,7 +131,7 @@ const AppSidebar: React.FC = () => {
 
   const getHistorySubtitle = (item: HistoryItem) => {
     switch (item.type) {
-      case 'fuel_surcharge':
+      case 'fuel-surcharge':
         return `$${item.data.current_fuel_price}/gal → $${item.data.surcharge_amount?.toFixed(2)}`;
       case 'ifta':
         return `${item.data.total_miles?.toLocaleString()} mi, ${item.data.jurisdictions?.length || 0} states`;
@@ -252,7 +252,7 @@ const AppSidebar: React.FC = () => {
                     >
                       <div className="flex items-start gap-3">
                         <div className={`p-2 rounded-lg ${
-                          item.type === 'fuel_surcharge' ? 'bg-orange-500/20' :
+                          item.type === 'fuel-surcharge' ? 'bg-orange-500/20' :
                           item.type === 'ifta' ? 'bg-green-500/20' : 'bg-blue-500/20'
                         }`}>
                           {getHistoryIcon(item.type)}

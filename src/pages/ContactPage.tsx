@@ -34,9 +34,10 @@ const ContactPage: React.FC = () => {
         setSubmitStatus('success');
         setFormData({ firstName: '', lastName: '', email: '', company: '', phone: '', role: '', fleetSize: '', message: '' });
       } else {
-        const errorData = await response.json();
+        const contentType = response.headers.get('content-type') || '';
+        const errorData = contentType.includes('application/json') ? await response.json() : {};
         setSubmitStatus('error');
-        setErrorMessage(errorData.detail || 'Failed to submit.');
+        setErrorMessage(errorData.detail || 'Failed to submit. Please try again.');
       }
     } catch (error) {
       setSubmitStatus('error');
