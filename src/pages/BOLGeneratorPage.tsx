@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
+import { Save, CheckCircle } from 'lucide-react';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
 interface Commodity {
   id: number;
@@ -90,9 +94,41 @@ const Input = (props: any & { isDark: boolean }) => {
 
 const BOLGeneratorPage: React.FC = () => {
   const { theme } = useTheme();
+  const { token } = useAuth();
   const isDark = theme === 'dark';
   const previewRef = React.useRef<HTMLDivElement>(null);
   const [previewScale, setPreviewScale] = React.useState(0.25);
+  const [saved, setSaved] = useState(false);
+
+  const saveBOLToHistory = async () => {
+    if (!token || !form.bolNumber) return;
+    
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/history/bol`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          bol_number: form.bolNumber,
+          bol_date: form.bolDate,
+          shipper_name: form.sName,
+          consignee_name: form.cName,
+          carrier_name: form.carrierName,
+          total_weight: form.totalWt,
+          freight_terms: form.fTerms
+        })
+      });
+      
+      if (response.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      }
+    } catch (error) {
+      console.error('Failed to save BOL:', error);
+    }
+  };
 
   React.useEffect(() => {
     if (!previewRef.current) return;
@@ -678,16 +714,30 @@ const BOLGeneratorPage: React.FC = () => {
             </FormSection>
 
             {/* Actions */}
-            <div className="flex gap-3 pt-8 border-t border-gray-700">
+            <div className="flex flex-wrap gap-3 pt-8 border-t border-gray-700">
+              <button
+                onClick={saveBOLToHistory}
+                className={`flex-1 min-w-[140px] px-4 py-3 rounded-lg font-semibold border transition flex items-center justify-center gap-2 ${
+                  saved
+                    ? 'bg-green-500/20 border-green-500 text-green-500'
+                    : isDark
+                      ? 'bg-dark-400 border-gray-600 text-white hover:bg-dark-300'
+                      : 'bg-gray-100 border-gray-300 text-gray-900 hover:bg-gray-200'
+                }`}
+                data-testid="save-bol-btn"
+              >
+                {saved ? <CheckCircle className="w-5 h-5" /> : <Save className="w-5 h-5" />}
+                {saved ? 'Saved!' : 'Save BOL'}
+              </button>
               <button
                 onClick={downloadBOL}
-                className="flex-1 btn-primary py-3 rounded-lg font-semibold transition"
+                className="flex-1 min-w-[140px] btn-primary py-3 rounded-lg font-semibold transition"
               >
                 ⬇ Download PDF
               </button>
               <button
                 onClick={() => window.print()}
-                className={`flex-1 px-4 py-3 rounded-lg font-semibold border transition ${
+                className={`flex-1 min-w-[140px] px-4 py-3 rounded-lg font-semibold border transition ${
                   isDark
                     ? 'bg-dark-400 border-gray-600 text-white hover:bg-dark-300'
                     : 'bg-gray-100 border-gray-300 text-gray-900 hover:bg-gray-200'
@@ -697,7 +747,7 @@ const BOLGeneratorPage: React.FC = () => {
               </button>
               <button
                 onClick={clearForm}
-                className={`flex-1 px-4 py-3 rounded-lg font-semibold border transition ${
+                className={`flex-1 min-w-[140px] px-4 py-3 rounded-lg font-semibold border transition ${
                   isDark
                     ? 'bg-dark-400 border-gray-600 text-white hover:bg-dark-300'
                     : 'bg-gray-100 border-gray-300 text-gray-900 hover:bg-gray-200'
