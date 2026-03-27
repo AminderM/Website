@@ -20,7 +20,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Auto-login from localStorage on app load
   useEffect(() => {
-    const storedToken = localStorage.getItem('auth-token');
+    const storedToken = localStorage.getItem('access_token');
     if (storedToken) {
       setToken(storedToken);
       // Verify token is still valid
@@ -33,7 +33,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const verifyTokenFn = async (tok: string) => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/auth/user`, {
+      const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -76,8 +76,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       const authData: AuthResponse = await response.json();
-      localStorage.setItem('auth-token', authData.token);
-      setToken(authData.token);
+      localStorage.setItem('access_token', authData.access_token);
+      setToken(authData.access_token);
       setUser(authData.user);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Signup failed';
@@ -106,8 +106,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       const authData: AuthResponse = await response.json();
-      localStorage.setItem('auth-token', authData.token);
-      setToken(authData.token);
+      if (authData.registration_status && authData.registration_status !== 'verified') {
+        throw new Error('Please verify your email before logging in.');
+      }
+      localStorage.setItem('access_token', authData.access_token);
+      setToken(authData.access_token);
       setUser(authData.user);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed';
@@ -119,7 +122,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = () => {
-    localStorage.removeItem('auth-token');
+    localStorage.removeItem('access_token');
     setToken(null);
     setUser(null);
     setError(null);

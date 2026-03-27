@@ -111,13 +111,15 @@ const BOLGeneratorPage: React.FC = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          bol_number: form.bolNumber,
-          bol_date: form.bolDate,
           shipper_name: form.sName,
+          shipper_address: `${form.sAddr}, ${form.sCity} ${form.sState}`,
           consignee_name: form.cName,
-          carrier_name: form.carrierName,
-          total_weight: form.totalWt,
-          freight_terms: form.fTerms
+          consignee_address: `${form.cAddr}, ${form.cCity} ${form.cState}`,
+          carrier_name: form.carrierName || undefined,
+          pro_number: form.proNum || undefined,
+          weight: parseFloat(form.totalWt) || undefined,
+          special_instructions: form.instrTxt || undefined,
+          reference_number: form.poNum || undefined,
         })
       });
       

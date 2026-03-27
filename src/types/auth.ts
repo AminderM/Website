@@ -4,6 +4,8 @@ export interface User {
   name?: string;
   tier?: 'free' | 'paid';
   created_at?: string;
+  registration_status?: string;
+  allowed_workspaces?: string[];
 }
 
 export interface SignupData {
@@ -18,8 +20,11 @@ export interface LoginData {
 }
 
 export interface AuthResponse {
-  token: string;
+  access_token: string;
+  token_type?: string;
   user: User;
+  registration_status?: string;
+  allowed_workspaces?: string[];
 }
 
 export interface AuthContextType {
