@@ -2,6 +2,9 @@ export interface User {
   id: string;
   email: string;
   name?: string;
+  full_name?: string;
+  auth_provider?: string;
+  email_verified?: boolean;
   tier?: 'free' | 'paid';
   created_at?: string;
   registration_status?: string;
@@ -11,7 +14,14 @@ export interface User {
 export interface SignupData {
   email: string;
   password: string;
-  name?: string;
+  full_name?: string;
+  phone?: string;
+}
+
+export interface OtpSignupResponse {
+  message: string;
+  user_id: string;
+  status: 'otp_sent';
 }
 
 export interface LoginData {
@@ -33,9 +43,14 @@ export interface AuthContextType {
   error: string | null;
   token: string | null;
   isAuthenticated: boolean;
-  signup: (data: SignupData) => Promise<void>;
+  pendingEmail: string | null;
+  signup: (data: SignupData) => Promise<{ needsVerification: boolean; email: string }>;
   login: (data: LoginData) => Promise<void>;
   logout: () => void;
+  verifyOtp: (email: string, otp: string) => Promise<void>;
+  resendOtp: (email: string) => Promise<void>;
+  googleLogin: (idToken: string) => Promise<void>;
+  appleLogin: (idToken: string, fullName?: string) => Promise<void>;
 }
 
 export interface BOL {
