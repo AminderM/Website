@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Navbar from './components/Navbar';
@@ -13,6 +14,7 @@ import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import VerifyOTPPage from './pages/VerifyOTPPage';
 import BOLGeneratorPage from './pages/BOLGeneratorPage';
 import FuelSurchargePage from './pages/FuelSurchargePage';
 import IFTACalculatorPage from './pages/IFTACalculatorPage';
@@ -38,6 +40,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 function App() {
   return (
+    <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID || ''}>
     <ThemeProvider>
       <AuthProvider>
         <Router basename="">
@@ -50,6 +53,7 @@ function App() {
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
+              <Route path="/verify-otp" element={<VerifyOTPPage />} />
               <Route path="/bol-generator" element={<ProtectedRoute component={BOLGeneratorPage} />} />
               <Route path="/fuel-surcharge" element={<ProtectedRoute component={FuelSurchargePage} />} />
               <Route path="/ifta-calculator" element={<ProtectedRoute component={IFTACalculatorPage} />} />
@@ -60,6 +64,7 @@ function App() {
         </Router>
       </AuthProvider>
     </ThemeProvider>
+    </GoogleOAuthProvider>
   );
 }
 
