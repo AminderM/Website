@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
-import { Fuel, Save, CheckCircle } from 'lucide-react';
+import { Fuel, Save, CheckCircle, Lock } from 'lucide-react';
+import { isPaidUser } from '../types/auth';
+import { parseApiError } from '../utils/apiFetch';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
 const FuelSurchargePage: React.FC = () => {
   const { theme } = useTheme();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const isDark = theme === 'dark';
 
   const [currentFuelPrice, setCurrentFuelPrice] = useState('');
@@ -22,6 +24,7 @@ const FuelSurchargePage: React.FC = () => {
     cpmSurcharge: number;
   } | null>(null);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   const calculateSurcharge = () => {
     const current = parseFloat(currentFuelPrice);
@@ -58,7 +61,11 @@ const FuelSurchargePage: React.FC = () => {
 
   const saveToHistory = async () => {
     if (!result || !token) return;
-    
+    if (!isPaidUser(user)) {
+      setSaveError('Upgrade to a paid plan to save calculations to history.');
+      return;
+    }
+    setSaveError('');
     try {
       const response = await fetch(`${BACKEND_URL}/api/history/fuel-surcharge`, {
         method: 'POST',
@@ -78,13 +85,17 @@ const FuelSurchargePage: React.FC = () => {
           cpm_surcharge: result.cpmSurcharge
         })
       });
-      
       if (response.ok) {
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
+      } else if (response.status === 403) {
+        setSaveError('Upgrade to a paid plan to save calculations to history.');
+      } else {
+        const err = await response.json().catch(() => ({}));
+        setSaveError(parseApiError(err));
       }
     } catch (error) {
-      console.error('Failed to save:', error);
+      setSaveError('Network error. Please try again.');
     }
   };
 
@@ -204,18 +215,23 @@ const FuelSurchargePage: React.FC = () => {
             <div className={`rounded-xl p-6 ${isDark ? 'bg-dark-400' : 'bg-gray-50'}`} data-testid="fuel-surcharge-result">
               <div className="flex items-center justify-between mb-4">
                 <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Results</h3>
-                <button
-                  onClick={saveToHistory}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${
-                    saved 
-                      ? 'bg-green-500/20 text-green-500' 
-                      : isDark ? 'bg-dark-300 text-gray-300 hover:bg-dark-200' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                  data-testid="save-fuel-surcharge"
-                >
-                  {saved ? <CheckCircle className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-                  {saved ? 'Saved!' : 'Save to History'}
-                </button>
+                <div className="flex flex-col items-end gap-1">
+                  <button
+                    onClick={saveToHistory}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${
+                      saved
+                        ? 'bg-green-500/20 text-green-500'
+                        : !isPaidUser(user)
+                          ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/30'
+                          : isDark ? 'bg-dark-300 text-gray-300 hover:bg-dark-200' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                    data-testid="save-fuel-surcharge"
+                  >
+                    {saved ? <CheckCircle className="w-4 h-4" /> : !isPaidUser(user) ? <Lock className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                    {saved ? 'Saved!' : !isPaidUser(user) ? 'Paid Plan Required' : 'Save to History'}
+                  </button>
+                  {saveError && <p className="text-xs text-red-400">{saveError}</p>}
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-6">
                 <div className={`p-4 rounded-lg ${isDark ? 'bg-dark-300' : 'bg-white'}`}>

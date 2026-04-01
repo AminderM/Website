@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
-import { Save, CheckCircle } from 'lucide-react';
+import { Save, CheckCircle, Lock } from 'lucide-react';
+import { isPaidUser } from '../types/auth';
+import { parseApiError } from '../utils/apiFetch';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -94,15 +96,20 @@ const Input = (props: any & { isDark: boolean }) => {
 
 const BOLGeneratorPage: React.FC = () => {
   const { theme } = useTheme();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const isDark = theme === 'dark';
   const previewRef = React.useRef<HTMLDivElement>(null);
   const [previewScale, setPreviewScale] = React.useState(0.25);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   const saveBOLToHistory = async () => {
     if (!token || !form.bolNumber) return;
-    
+    if (!isPaidUser(user)) {
+      setSaveError('Upgrade to a paid plan to save BOLs to history.');
+      return;
+    }
+    setSaveError('');
     try {
       const response = await fetch(`${BACKEND_URL}/api/history/bol`, {
         method: 'POST',
@@ -122,13 +129,17 @@ const BOLGeneratorPage: React.FC = () => {
           reference_number: form.poNum || undefined,
         })
       });
-      
       if (response.ok) {
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
+      } else if (response.status === 403) {
+        setSaveError('Upgrade to a paid plan to save BOLs to history.');
+      } else {
+        const err = await response.json().catch(() => ({}));
+        setSaveError(parseApiError(err));
       }
     } catch (error) {
-      console.error('Failed to save BOL:', error);
+      setSaveError('Network error. Please try again.');
     }
   };
 
@@ -717,19 +728,26 @@ const BOLGeneratorPage: React.FC = () => {
 
             {/* Actions */}
             <div className="flex flex-wrap gap-3 pt-8 border-t border-gray-700">
+              {saveError && (
+                <div className="w-full px-4 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+                  {saveError}
+                </div>
+              )}
               <button
                 onClick={saveBOLToHistory}
                 className={`flex-1 min-w-[140px] px-4 py-3 rounded-lg font-semibold border transition flex items-center justify-center gap-2 ${
                   saved
                     ? 'bg-green-500/20 border-green-500 text-green-500'
-                    : isDark
-                      ? 'bg-dark-400 border-gray-600 text-white hover:bg-dark-300'
-                      : 'bg-gray-100 border-gray-300 text-gray-900 hover:bg-gray-200'
+                    : !isPaidUser(user)
+                      ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400 cursor-not-allowed'
+                      : isDark
+                        ? 'bg-dark-400 border-gray-600 text-white hover:bg-dark-300'
+                        : 'bg-gray-100 border-gray-300 text-gray-900 hover:bg-gray-200'
                 }`}
                 data-testid="save-bol-btn"
               >
-                {saved ? <CheckCircle className="w-5 h-5" /> : <Save className="w-5 h-5" />}
-                {saved ? 'Saved!' : 'Save BOL'}
+                {saved ? <CheckCircle className="w-5 h-5" /> : !isPaidUser(user) ? <Lock className="w-5 h-5" /> : <Save className="w-5 h-5" />}
+                {saved ? 'Saved!' : !isPaidUser(user) ? 'Paid Plan Required' : 'Save BOL'}
               </button>
               <button
                 onClick={downloadBOL}
