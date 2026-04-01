@@ -3,6 +3,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Calculator, Save, CheckCircle, Lock } from 'lucide-react';
 import { isPaidUser } from '../types/auth';
+import { parseApiError } from '../utils/apiFetch';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -158,7 +159,7 @@ const IFTACalculatorPage: React.FC = () => {
         setSaveError('Upgrade to a paid plan to save calculations to history.');
       } else {
         const err = await response.json().catch(() => ({}));
-        setSaveError(err.detail || 'Failed to save. Please try again.');
+        setSaveError(parseApiError(err));
       }
     } catch (error) {
       setSaveError('Network error. Please try again.');

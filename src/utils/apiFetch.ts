@@ -1,5 +1,18 @@
 const API_BASE = `${process.env.REACT_APP_BACKEND_URL || ''}/api`;
 
+/** Safely extracts a string message from a FastAPI error response body */
+export function parseApiError(err: any): string {
+  if (!err) return 'Something went wrong.';
+  // FastAPI validation errors: detail is an array of {type, loc, msg, input}
+  if (Array.isArray(err.detail)) {
+    return err.detail.map((e: any) => e.msg || JSON.stringify(e)).join(', ');
+  }
+  if (typeof err.detail === 'string') return err.detail;
+  if (typeof err.error === 'string') return err.error;
+  if (typeof err.message === 'string') return err.message;
+  return 'Failed to save. Please try again.';
+}
+
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem('access_token');
   const res = await fetch(`${API_BASE}${path}`, {
