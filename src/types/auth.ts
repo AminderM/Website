@@ -5,11 +5,20 @@ export interface User {
   full_name?: string;
   auth_provider?: string;
   email_verified?: boolean;
+  role?: string;
   tier?: 'free' | 'paid';
   created_at?: string;
   registration_status?: string;
   allowed_workspaces?: string[];
 }
+
+/** Returns true for any paying/admin role — false for free 'viewer' accounts */
+export const isPaidUser = (user: User | null): boolean => {
+  if (!user) return false;
+  if (user.tier === 'paid') return true;
+  const freeRoles = ['viewer'];
+  return !freeRoles.includes(user.role ?? 'viewer');
+};
 
 export interface SignupData {
   email: string;
