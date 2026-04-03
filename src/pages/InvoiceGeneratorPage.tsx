@@ -35,7 +35,6 @@ const DOC_TYPES = [
   { id: 'general_invoice',   label: 'General Invoice' },
 ];
 
-const UNITS         = ['load', 'mile', 'hour', 'flat', 'cwt', 'day', 'trip'];
 const PAYMENT_TERMS = ['Net 15', 'Net 30', 'Net 45', 'Net 60', 'Due on Receipt', 'COD'];
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -232,17 +231,19 @@ const InvoiceGeneratorPage: React.FC = () => {
     if (!validate()) { setSubmitError('Please fill in all required fields highlighted in red.'); return; }
     setSubmitting(true); setSubmitError('');
     try {
+      // Strip logoBase64 and aiSuggestions — not needed in backend storage
+      const { logoBase64: _logo, aiSuggestions: _ai, ...sendData } = data;
       const res = await fetch(`${BACKEND_URL}/api/invoice/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ ...data, totals: { ...data.totals, subtotal, taxAmount, discountAmount, total } }),
+        body: JSON.stringify({ ...sendData, totals: { ...sendData.totals, subtotal, taxAmount, discountAmount, total } }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.details?.join(', ') || json.error || 'Generation failed');
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.details?.join(', ') || json.detail || json.error || `Server error (${res.status})`);
       setFinalized(true);
       setSavedHistory(false);
     } catch (e: any) {
-      setSubmitError(parseApiError(e));
+      setSubmitError(e.message || 'Failed to generate invoice. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -283,7 +284,7 @@ const InvoiceGeneratorPage: React.FC = () => {
   // ── Shared field styles ──────────────────────────────────────────────────────
   const inp = (err?: boolean) =>
     `w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 transition-colors ${
-      isDark ? 'bg-dark-400 text-white placeholder-gray-500 focus:ring-primary-500' : 'bg-white text-gray-900 placeholder-gray-400 focus:ring-primary-400'
+      isDark ? 'bg-gray-800 text-white placeholder-gray-500 focus:ring-primary-500' : 'bg-white text-gray-900 placeholder-gray-400 focus:ring-primary-400'
     } ${err ? 'border-red-500 focus:ring-red-400' : isDark ? 'border-gray-600' : 'border-gray-300'}`;
 
   const lbl = `block text-xs font-semibold uppercase tracking-wider mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`;
@@ -297,12 +298,97 @@ const InvoiceGeneratorPage: React.FC = () => {
   return (
     <>
       <style>{`
+        @page { margin: 0; size: A4 portrait; }
         @media print {
           body * { visibility: hidden; }
-          #invoice-print-doc, #invoice-print-doc * { visibility: visible; }
-          #invoice-print-doc { position: fixed; top: 0; left: 0; width: 100%; background: white; }
+          #invoice-print-root { visibility: visible; position: absolute; top: 0; left: 0; width: 100%; background: white; padding: 12mm; box-sizing: border-box; }
+          #invoice-print-root * { visibility: visible; }
         }
       `}</style>
+
+      {/* Hidden print-only invoice — NOT inside the scaled preview container */}
+      <div id="invoice-print-root" style={{ display: 'none' }}>
+        <div style={{ fontFamily: "'Segoe UI', sans-serif", color: '#111', width: '100%' }}>
+          {/* Header */}
+          <div style={{ background: '#1e293b', color: 'white', padding: '24px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 0 }}>
+            <div>
+              {data.logoBase64 ? <img src={data.logoBase64} alt="logo" style={{ height: 40, marginBottom: 6, objectFit: 'contain' }} /> : null}
+              <div style={{ fontSize: data.logoBase64 ? 16 : 20, fontWeight: 900, marginBottom: 2 }}>{data.vendor.name || 'Your Company Name'}</div>
+              <div style={{ fontSize: 11, color: '#94a3b8' }}>{[data.vendor.address, data.vendor.city, data.vendor.state, data.vendor.zip].filter(Boolean).join(', ')}</div>
+              {data.vendor.phone && <div style={{ fontSize: 11, color: '#94a3b8' }}>{data.vendor.phone}</div>}
+              {data.vendor.email && <div style={{ fontSize: 11, color: '#94a3b8' }}>{data.vendor.email}</div>}
+              {(data.vendor.mc || data.vendor.dot) && <div style={{ fontSize: 10, color: '#64748b', marginTop: 3 }}>{data.vendor.mc && `MC# ${data.vendor.mc}`}{data.vendor.mc && data.vendor.dot && ' · '}{data.vendor.dot && `DOT# ${data.vendor.dot}`}</div>}
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: 24, fontWeight: 900, color: '#a78bfa', marginBottom: 4 }}>{getDocLabel(data.documentType).toUpperCase()}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#cbd5e1' }}>{data.invoice.number}</div>
+              {data.invoice.date && <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>Date: {data.invoice.date}</div>}
+              {data.invoice.dueDate && <div style={{ fontSize: 11, color: '#64748b' }}>Due: {data.invoice.dueDate}</div>}
+            </div>
+          </div>
+          {/* Bill To + Meta */}
+          <div style={{ padding: '20px 32px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, borderBottom: '1px solid #e2e8f0' }}>
+            <div>
+              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2, color: '#94a3b8', marginBottom: 6 }}>Bill To</div>
+              <div style={{ fontWeight: 700, fontSize: 14 }}>{data.billTo.name || '—'}</div>
+              {data.billTo.address && <div style={{ fontSize: 12, color: '#64748b' }}>{data.billTo.address}</div>}
+              {(data.billTo.city || data.billTo.state) && <div style={{ fontSize: 12, color: '#64748b' }}>{[data.billTo.city, data.billTo.state, data.billTo.zip].filter(Boolean).join(', ')}</div>}
+              {data.billTo.phone && <div style={{ fontSize: 12, color: '#64748b' }}>{data.billTo.phone}</div>}
+              {data.billTo.email && <div style={{ fontSize: 12, color: '#64748b' }}>{data.billTo.email}</div>}
+            </div>
+            <div style={{ fontSize: 12 }}>
+              {data.invoice.poNumber && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}><span style={{ color: '#94a3b8' }}>PO #</span><span style={{ fontWeight: 600 }}>{data.invoice.poNumber}</span></div>}
+              {data.invoice.bolNumber && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}><span style={{ color: '#94a3b8' }}>BOL #</span><span style={{ fontWeight: 600 }}>{data.invoice.bolNumber}</span></div>}
+              {data.invoice.loadNumber && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}><span style={{ color: '#94a3b8' }}>Load #</span><span style={{ fontWeight: 600 }}>{data.invoice.loadNumber}</span></div>}
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#94a3b8' }}>Terms</span><span style={{ fontWeight: 600 }}>{data.paymentTerms}</span></div>
+            </div>
+          </div>
+          {/* Line Items */}
+          <div style={{ padding: '0 32px' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
+                  {['Description', 'Category', 'Qty', 'Unit', 'Rate', 'Amount'].map(h => (
+                    <th key={h} style={{ textAlign: (h === 'Description' || h === 'Category') ? 'left' : 'right', padding: '10px 6px 7px', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, color: '#94a3b8' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {data.lineItems.map((item, i) => (
+                  <tr key={item.id || i} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '9px 6px' }}>{item.description}</td>
+                    <td style={{ padding: '9px 6px' }}><span style={{ background: getCatColor(item.category) + '22', color: getCatColor(item.category), padding: '2px 7px', borderRadius: 99, fontSize: 10, fontWeight: 700 }}>{CATEGORIES.find(c => c.id === item.category)?.label || item.category}</span></td>
+                    <td style={{ padding: '9px 6px', textAlign: 'right' }}>{item.quantity}</td>
+                    <td style={{ padding: '9px 6px', textAlign: 'right', color: '#64748b' }}>{item.unit}</td>
+                    <td style={{ padding: '9px 6px', textAlign: 'right' }}>{fmtc(item.rate)}</td>
+                    <td style={{ padding: '9px 6px', textAlign: 'right', fontWeight: 700 }}>{fmtc(item.quantity * item.rate)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {/* Totals */}
+          <div style={{ padding: '14px 32px 20px', display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ width: 220 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 5, color: '#64748b' }}><span>Subtotal</span><span>{fmtc(subtotal)}</span></div>
+              {taxAmount > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 5, color: '#64748b' }}><span>Tax ({data.totals.taxRate}%)</span><span>{fmtc(taxAmount)}</span></div>}
+              {discountAmount > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 5, color: '#16a34a' }}><span>Discount</span><span>-{fmtc(discountAmount)}</span></div>}
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 16, fontWeight: 900, borderTop: '2px solid #111', paddingTop: 8, marginTop: 3 }}><span>TOTAL</span><span style={{ color: '#7c3aed' }}>{fmtc(total)}</span></div>
+            </div>
+          </div>
+          {/* Notes */}
+          {data.notes && (
+            <div style={{ padding: '0 32px 20px', borderTop: '1px solid #f1f5f9', paddingTop: 14 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2, color: '#94a3b8', marginBottom: 5 }}>Notes</div>
+              <div style={{ fontSize: 12, color: '#64748b' }}>{data.notes}</div>
+            </div>
+          )}
+          {/* Footer */}
+          <div style={{ background: '#f8fafc', borderTop: '1px solid #e2e8f0', padding: '12px 32px', textAlign: 'center', fontSize: 10, color: '#94a3b8' }}>
+            Thank you for your business{data.vendor.name ? ` · ${data.vendor.name}` : ''}
+          </div>
+        </div>
+      </div>
 
       <div className={`min-h-screen pb-12 ${isDark ? 'bg-dark-200' : 'bg-gray-50'}`}>
         {/* Page Header */}
