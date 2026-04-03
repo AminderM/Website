@@ -242,6 +242,8 @@ const InvoiceGeneratorPage: React.FC = () => {
       if (!res.ok) throw new Error(json.detail || json.error || `Server error (${res.status})`);
       setFinalized(true);
       setSavedHistory(false);
+      // Cache full invoice data locally so history Download can reproduce the exact PDF
+      try { localStorage.setItem(`invoice_cache_${data.invoice.number}`, JSON.stringify(data)); } catch {}
     } catch (e: any) {
       setSubmitError(e.message || 'Failed to generate invoice. Please try again.');
     } finally {
