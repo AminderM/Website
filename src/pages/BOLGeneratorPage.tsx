@@ -306,6 +306,9 @@ const BOLGeneratorPage: React.FC = () => {
           @page { size: 2480px 3508px; margin: 0; }
           body, html, #root, .min-h-screen { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white !important; background-color: white !important; }
           nav, header, footer { display: none !important; }
+          aside { display: none !important; }
+          [data-testid="app-sidebar"] { display: none !important; }
+          main { margin-left: 0 !important; padding-top: 0 !important; }
           .no-print { display: none !important; }
           
           .bol-preview-container .pdf-native-wrapper {
@@ -349,9 +352,9 @@ const BOLGeneratorPage: React.FC = () => {
         </div>
 
         {/* Main Layout: Form (left) + Preview (right) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start print-reset">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start print-reset">
           {/* ===== FORM PANEL ===== */}
-          <div className={`rounded-lg border no-print ${
+          <div className={`lg:col-span-2 rounded-lg border no-print ${
             isDark ? 'bg-dark-300 border-gray-700' : 'bg-white border-gray-200'
           } p-8`}>
 
@@ -779,7 +782,7 @@ const BOLGeneratorPage: React.FC = () => {
           </div>
 
           {/* ===== PREVIEW PANEL ===== */}
-          <div className={`bol-preview-container rounded-lg border overflow-hidden sticky top-32 ${
+          <div className={`lg:col-span-3 bol-preview-container rounded-lg border overflow-hidden sticky top-24 ${
             isDark ? 'bg-white border-gray-200' : 'bg-white border-gray-200'
           } shadow-lg`} ref={previewRef} style={{ width: '100%', aspectRatio: '2480 / 3508', position: 'relative', overflow: 'hidden' }}>
             
@@ -802,7 +805,7 @@ const BOLGeneratorPage: React.FC = () => {
                 <div style={{
                   writingMode: 'vertical-rl',
                   textOrientation: 'mixed',
-                  fontFamily: 'Arial',
+                  fontFamily: "'Inter', system-ui, sans-serif",
                   fontSize: '23px',
                   fontWeight: 700,
                   letterSpacing: '7px',
@@ -834,7 +837,7 @@ const BOLGeneratorPage: React.FC = () => {
                 <div style={{
                   writingMode: 'vertical-rl',
                   textOrientation: 'mixed',
-                  fontFamily: 'Arial',
+                  fontFamily: "'Inter', system-ui, sans-serif",
                   fontSize: '23px',
                   fontWeight: 700,
                   letterSpacing: '7px',
@@ -855,7 +858,7 @@ const BOLGeneratorPage: React.FC = () => {
                 backgroundColor: '#ffffff',
                 color: '#0A1628',
                 fontSize: '45px',
-                fontFamily: 'Arial, sans-serif',
+                fontFamily: "'Inter', system-ui, sans-serif",
                 flex: 1,
                 marginLeft: '0',
                 marginRight: '0',
