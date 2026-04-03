@@ -18,6 +18,7 @@ import VerifyOTPPage from './pages/VerifyOTPPage';
 import BOLGeneratorPage from './pages/BOLGeneratorPage';
 import FuelSurchargePage from './pages/FuelSurchargePage';
 import IFTACalculatorPage from './pages/IFTACalculatorPage';
+import InvoiceGeneratorPage from './pages/InvoiceGeneratorPage';
 import './index.css';
 
 // Layout wrapper to handle sidebar spacing
@@ -29,7 +30,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <Navbar />
       <div className="flex flex-1">
         <AppSidebar />
-        <main className={`flex-grow transition-all duration-300 ${isAuthenticated ? 'ml-72' : ''}`}>
+        <main className={`flex-grow transition-all duration-300 pt-20 ${isAuthenticated ? 'ml-72' : ''}`}>
           {children}
         </main>
       </div>
@@ -57,6 +58,7 @@ function App() {
               <Route path="/bol-generator" element={<ProtectedRoute component={BOLGeneratorPage} />} />
               <Route path="/fuel-surcharge" element={<ProtectedRoute component={FuelSurchargePage} />} />
               <Route path="/ifta-calculator" element={<ProtectedRoute component={IFTACalculatorPage} />} />
+              <Route path="/invoice-generator" element={<ProtectedRoute component={InvoiceGeneratorPage} />} />
               {/* Redirect old tools route */}
               <Route path="/tools" element={<Navigate to="/fuel-surcharge" replace />} />
             </Routes>

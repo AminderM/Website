@@ -2,20 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-  FileText, 
-  Fuel, 
-  Calculator, 
-  History, 
-  ChevronLeft, 
+import {
+  FileText,
+  Fuel,
+  Calculator,
+  History,
+  ChevronLeft,
   ChevronRight,
   Clock,
-  Truck
+  Truck,
+  Receipt
 } from 'lucide-react';
 
 interface HistoryItem {
   id: string;
-  type: 'fuel-surcharge' | 'ifta' | 'bol';
+  type: 'fuel-surcharge' | 'ifta' | 'bol' | 'invoice';
   data: any;
   created_at: string;
 }
@@ -51,13 +52,21 @@ const AppSidebar: React.FC = () => {
       color: 'text-orange-500',
       bgColor: 'bg-orange-500/20'
     },
-    { 
-      id: 'ifta-calculator', 
-      name: 'IFTA Tax Calculator', 
-      icon: Calculator, 
+    {
+      id: 'ifta-calculator',
+      name: 'IFTA Tax Calculator',
+      icon: Calculator,
       path: '/ifta-calculator',
       color: 'text-green-500',
       bgColor: 'bg-green-500/20'
+    },
+    {
+      id: 'invoice-generator',
+      name: 'Invoice Generator',
+      icon: Receipt,
+      path: '/invoice-generator',
+      color: 'text-purple-500',
+      bgColor: 'bg-purple-500/20'
     },
   ];
 
@@ -112,6 +121,7 @@ const AppSidebar: React.FC = () => {
       case 'fuel-surcharge': return <Fuel className="w-4 h-4 text-orange-500" />;
       case 'ifta': return <Calculator className="w-4 h-4 text-green-500" />;
       case 'bol': return <FileText className="w-4 h-4 text-blue-500" />;
+      case 'invoice': return <Receipt className="w-4 h-4 text-purple-500" />;
       default: return <Clock className="w-4 h-4 text-gray-500" />;
     }
   };
@@ -124,6 +134,8 @@ const AppSidebar: React.FC = () => {
         return `IFTA: $${item.data.total_tax_due?.toFixed(2)} tax`;
       case 'bol':
         return `BOL: ${item.data.bol_number}`;
+      case 'invoice':
+        return `Invoice: ${item.data.invoice_number}`;
       default:
         return 'Unknown';
     }
@@ -137,6 +149,8 @@ const AppSidebar: React.FC = () => {
         return `${item.data.total_miles?.toLocaleString()} mi, ${item.data.jurisdictions?.length || 0} states`;
       case 'bol':
         return `${item.data.shipper_name || 'Shipper'} → ${item.data.consignee_name || 'Consignee'}`;
+      case 'invoice':
+        return `${item.data.vendor_name || ''} → ${item.data.bill_to_name || ''} • $${item.data.total?.toFixed(2) || '0.00'}`;
       default:
         return '';
     }
@@ -253,7 +267,8 @@ const AppSidebar: React.FC = () => {
                       <div className="flex items-start gap-3">
                         <div className={`p-2 rounded-lg ${
                           item.type === 'fuel-surcharge' ? 'bg-orange-500/20' :
-                          item.type === 'ifta' ? 'bg-green-500/20' : 'bg-blue-500/20'
+                          item.type === 'ifta' ? 'bg-green-500/20' :
+                          item.type === 'invoice' ? 'bg-purple-500/20' : 'bg-blue-500/20'
                         }`}>
                           {getHistoryIcon(item.type)}
                         </div>
