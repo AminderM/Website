@@ -238,8 +238,8 @@ const InvoiceGeneratorPage: React.FC = () => {
         headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ ...sendData, totals: { ...sendData.totals, subtotal, taxAmount, discountAmount, total } }),
       });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.details?.join(', ') || json.detail || json.error || `Server error (${res.status})`);
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.detail || json.error || `Server error (${res.status})`);
       setFinalized(true);
       setSavedHistory(false);
     } catch (e: any) {
