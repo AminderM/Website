@@ -322,10 +322,12 @@ const InvoiceGeneratorPage: React.FC = () => {
 <head>
   <meta charset="utf-8"/>
   <title>${data.invoice.number}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
   <style>
     @page { margin: 0; size: A4 portrait; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; color: #111; background: white; }
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #111; background: white; }
     table { border-collapse: collapse; width: 100%; }
   </style>
 </head>
@@ -403,7 +405,7 @@ const InvoiceGeneratorPage: React.FC = () => {
       Thank you for your business${data.vendor.name ? ` · ${data.vendor.name}` : ''}
     </div>
   </div>
-  <script>window.onload = function(){ window.print(); window.onafterprint = function(){ window.close(); }; }</script>
+  <script>window.onload = function(){ setTimeout(function(){ window.print(); window.onafterprint = function(){ window.close(); }; }, 600); }</script>
 </body>
 </html>`;
 
@@ -429,7 +431,7 @@ const InvoiceGeneratorPage: React.FC = () => {
     <>
       {/* Print-only invoice content — rendered off-screen for reference */}
       <div style={{ position: 'absolute', left: -9999, top: 0, width: 0, height: 0, overflow: 'hidden' }}>
-        <div style={{ fontFamily: "'Segoe UI', sans-serif", color: '#111', width: '100%' }}>
+        <div style={{ fontFamily: "'Inter', system-ui, sans-serif", color: '#111', width: '100%' }}>
           {/* Header */}
           <div style={{ background: '#1e293b', color: 'white', padding: '24px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 0 }}>
             <div>
@@ -876,7 +878,7 @@ const InvoiceGeneratorPage: React.FC = () => {
                 style={{ height: `${900 * previewScale * 1.414}px` }}>
                 <div style={{ transform: `scale(${previewScale})`, transformOrigin: 'top left', width: 900, height: 900 * 1.414 }}>
                   {/* ── Invoice Document (900px wide source of truth) ── */}
-                  <div id="invoice-print-doc" style={{ width: 900, background: 'white', fontFamily: "'Segoe UI', sans-serif", color: '#111' }}>
+                  <div id="invoice-print-doc" style={{ width: 900, background: 'white', fontFamily: "'Inter', system-ui, sans-serif", color: '#111' }}>
 
                     {/* Header */}
                     <div style={{ background: '#1e293b', color: 'white', padding: '32px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
