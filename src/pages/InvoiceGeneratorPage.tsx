@@ -281,6 +281,136 @@ const InvoiceGeneratorPage: React.FC = () => {
     });
   };
 
+  // ── Print — opens a new window with pure HTML, no CSS cascade issues ─────────
+  const handlePrint = () => {
+    const cat = (id: string) => CATEGORIES.find(c => c.id === id)?.label || id;
+    const catColor = (id: string) => getCatColor(id);
+
+    const lineItemRows = data.lineItems.map(item => `
+      <tr>
+        <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;">${item.description}</td>
+        <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;">
+          <span style="background:${catColor(item.category)}22;color:${catColor(item.category)};padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;">${cat(item.category)}</span>
+        </td>
+        <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;text-align:right;">${item.quantity}</td>
+        <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;text-align:right;color:#64748b;">${item.unit}</td>
+        <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;text-align:right;">${fmtc(item.rate)}</td>
+        <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:700;">${fmtc(item.quantity * item.rate)}</td>
+      </tr>`).join('');
+
+    const vendorAddr = [data.vendor.address, data.vendor.city, data.vendor.state, data.vendor.zip].filter(Boolean).join(', ');
+    const billToAddr = [data.billTo.city, data.billTo.state, data.billTo.zip].filter(Boolean).join(', ');
+    const mcDot = [data.vendor.mc ? `MC# ${data.vendor.mc}` : '', data.vendor.dot ? `DOT# ${data.vendor.dot}` : ''].filter(Boolean).join(' · ');
+
+    const logoHtml = data.logoBase64
+      ? `<img src="${data.logoBase64}" style="height:44px;margin-bottom:6px;object-fit:contain;display:block;" />`
+      : '';
+
+    const taxRow    = taxAmount > 0    ? `<tr><td style="padding:4px 0;color:#64748b;">Tax (${data.totals.taxRate}%)</td><td style="padding:4px 0;text-align:right;">${fmtc(taxAmount)}</td></tr>` : '';
+    const discRow   = discountAmount > 0 ? `<tr><td style="padding:4px 0;color:#16a34a;">Discount</td><td style="padding:4px 0;text-align:right;color:#16a34a;">-${fmtc(discountAmount)}</td></tr>` : '';
+    const poRow     = data.invoice.poNumber   ? `<tr><td style="color:#94a3b8;padding:3px 0;">PO #</td><td style="text-align:right;font-weight:600;padding:3px 0;">${data.invoice.poNumber}</td></tr>` : '';
+    const bolRow    = data.invoice.bolNumber  ? `<tr><td style="color:#94a3b8;padding:3px 0;">BOL #</td><td style="text-align:right;font-weight:600;padding:3px 0;">${data.invoice.bolNumber}</td></tr>` : '';
+    const loadRow   = data.invoice.loadNumber ? `<tr><td style="color:#94a3b8;padding:3px 0;">Load #</td><td style="text-align:right;font-weight:600;padding:3px 0;">${data.invoice.loadNumber}</td></tr>` : '';
+    const notesHtml = data.notes ? `
+      <div style="padding:14px 32px 20px;border-top:1px solid #e2e8f0;">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#94a3b8;margin-bottom:5px;">Notes</div>
+        <div style="font-size:12px;color:#64748b;">${data.notes}</div>
+      </div>` : '';
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>${data.invoice.number}</title>
+  <style>
+    @page { margin: 0; size: A4 portrait; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; color: #111; background: white; }
+    table { border-collapse: collapse; width: 100%; }
+  </style>
+</head>
+<body>
+  <div style="padding:12mm;">
+    <!-- Header -->
+    <div style="background:#1e293b;color:white;padding:24px 32px;display:flex;justify-content:space-between;align-items:flex-start;border-radius:8px 8px 0 0;">
+      <div>
+        ${logoHtml}
+        <div style="font-size:${data.logoBase64 ? 16 : 20}px;font-weight:900;margin-bottom:3px;">${data.vendor.name || 'Your Company'}</div>
+        ${vendorAddr ? `<div style="font-size:11px;color:#94a3b8;">${vendorAddr}</div>` : ''}
+        ${data.vendor.phone ? `<div style="font-size:11px;color:#94a3b8;">${data.vendor.phone}</div>` : ''}
+        ${data.vendor.email ? `<div style="font-size:11px;color:#94a3b8;">${data.vendor.email}</div>` : ''}
+        ${mcDot ? `<div style="font-size:10px;color:#64748b;margin-top:3px;">${mcDot}</div>` : ''}
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:26px;font-weight:900;color:#a78bfa;margin-bottom:4px;">${getDocLabel(data.documentType).toUpperCase()}</div>
+        <div style="font-size:13px;font-weight:700;color:#cbd5e1;">${data.invoice.number}</div>
+        ${data.invoice.date ? `<div style="font-size:11px;color:#94a3b8;margin-top:2px;">Date: ${data.invoice.date}</div>` : ''}
+        ${data.invoice.dueDate ? `<div style="font-size:11px;color:#94a3b8;">Due: ${data.invoice.dueDate}</div>` : ''}
+      </div>
+    </div>
+
+    <!-- Bill To + Meta -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:18px 32px;border:1px solid #e2e8f0;border-top:none;">
+      <div>
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#94a3b8;margin-bottom:6px;">Bill To</div>
+        <div style="font-weight:700;font-size:14px;margin-bottom:3px;">${data.billTo.name || '—'}</div>
+        ${data.billTo.address ? `<div style="font-size:12px;color:#64748b;">${data.billTo.address}</div>` : ''}
+        ${billToAddr ? `<div style="font-size:12px;color:#64748b;">${billToAddr}</div>` : ''}
+        ${data.billTo.phone ? `<div style="font-size:12px;color:#64748b;">${data.billTo.phone}</div>` : ''}
+        ${data.billTo.email ? `<div style="font-size:12px;color:#64748b;">${data.billTo.email}</div>` : ''}
+      </div>
+      <div>
+        <table style="font-size:12px;">
+          ${poRow}${bolRow}${loadRow}
+          <tr><td style="color:#94a3b8;padding:3px 0;">Terms</td><td style="text-align:right;font-weight:600;padding:3px 0;">${data.paymentTerms}</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Line Items -->
+    <div style="padding:0 32px;border:1px solid #e2e8f0;border-top:none;">
+      <table style="font-size:12px;">
+        <thead>
+          <tr style="border-bottom:2px solid #e2e8f0;">
+            <th style="text-align:left;padding:10px 8px 7px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;">Description</th>
+            <th style="text-align:left;padding:10px 8px 7px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;">Category</th>
+            <th style="text-align:right;padding:10px 8px 7px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;">Qty</th>
+            <th style="text-align:right;padding:10px 8px 7px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;">Unit</th>
+            <th style="text-align:right;padding:10px 8px 7px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;">Rate</th>
+            <th style="text-align:right;padding:10px 8px 7px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;">Amount</th>
+          </tr>
+        </thead>
+        <tbody>${lineItemRows}</tbody>
+      </table>
+    </div>
+
+    <!-- Totals -->
+    <div style="padding:14px 32px 20px;border:1px solid #e2e8f0;border-top:none;display:flex;justify-content:flex-end;">
+      <table style="width:220px;font-size:12px;">
+        <tr><td style="padding:4px 0;color:#64748b;">Subtotal</td><td style="padding:4px 0;text-align:right;">${fmtc(subtotal)}</td></tr>
+        ${taxRow}${discRow}
+        <tr style="border-top:2px solid #111;">
+          <td style="padding:8px 0 0;font-size:16px;font-weight:900;">TOTAL</td>
+          <td style="padding:8px 0 0;text-align:right;font-size:16px;font-weight:900;color:#7c3aed;">${fmtc(total)}</td>
+        </tr>
+      </table>
+    </div>
+
+    ${notesHtml}
+
+    <!-- Footer -->
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-top:none;padding:12px 32px;text-align:center;font-size:10px;color:#94a3b8;border-radius:0 0 8px 8px;">
+      Thank you for your business${data.vendor.name ? ` · ${data.vendor.name}` : ''}
+    </div>
+  </div>
+  <script>window.onload = function(){ window.print(); window.onafterprint = function(){ window.close(); }; }</script>
+</body>
+</html>`;
+
+    const w = window.open('', '_blank', 'width=900,height=1200');
+    if (w) { w.document.write(html); w.document.close(); }
+  };
+
   // ── Shared field styles ──────────────────────────────────────────────────────
   const inp = (err?: boolean) =>
     `w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 transition-colors ${
@@ -297,17 +427,8 @@ const InvoiceGeneratorPage: React.FC = () => {
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <>
-      <style>{`
-        @page { margin: 0; size: A4 portrait; }
-        @media print {
-          body * { visibility: hidden; }
-          #invoice-print-root { visibility: visible; position: absolute; top: 0; left: 0; width: 100%; background: white; padding: 12mm; box-sizing: border-box; }
-          #invoice-print-root * { visibility: visible; }
-        }
-      `}</style>
-
-      {/* Hidden print-only invoice — NOT inside the scaled preview container */}
-      <div id="invoice-print-root" style={{ display: 'none' }}>
+      {/* Print-only invoice content — rendered off-screen for reference */}
+      <div style={{ position: 'absolute', left: -9999, top: 0, width: 0, height: 0, overflow: 'hidden' }}>
         <div style={{ fontFamily: "'Segoe UI', sans-serif", color: '#111', width: '100%' }}>
           {/* Header */}
           <div style={{ background: '#1e293b', color: 'white', padding: '24px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 0 }}>
@@ -416,7 +537,7 @@ const InvoiceGeneratorPage: React.FC = () => {
                 <Copy className="w-3.5 h-3.5" />
                 {copied ? 'Copied!' : data.invoice.number}
               </button>
-              <button onClick={() => window.print()}
+              <button onClick={handlePrint}
                 className={`flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-medium transition-colors ${
                   isDark ? 'bg-dark-400 text-gray-300 hover:bg-dark-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}>
@@ -459,10 +580,10 @@ const InvoiceGeneratorPage: React.FC = () => {
         )}
 
         {/* Two-column layout */}
-        <div className="max-w-screen-xl mx-auto px-6 mt-5 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        <div className="max-w-screen-xl mx-auto px-6 mt-5 grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
 
           {/* ═══ LEFT: FORM ═══════════════════════════════════════════════════ */}
-          <div>
+          <div className="lg:col-span-2">
 
             {/* AI Import (collapsible) */}
             <div className={sec()}>
@@ -740,7 +861,7 @@ const InvoiceGeneratorPage: React.FC = () => {
           </div>
 
           {/* ═══ RIGHT: LIVE PREVIEW ══════════════════════════════════════════ */}
-          <div className="sticky top-24">
+          <div className="lg:col-span-3 sticky top-24">
             <div className={`rounded-xl border overflow-hidden ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
               {/* Preview toolbar */}
               <div className={`px-4 py-3 flex items-center justify-between border-b ${isDark ? 'bg-dark-300 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
@@ -750,10 +871,10 @@ const InvoiceGeneratorPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Scaled preview container */}
+              {/* Scaled preview container — A4 ratio: width × 1.414 */}
               <div ref={previewRef} className={`overflow-hidden ${isDark ? 'bg-gray-900' : 'bg-gray-200'}`}
-                style={{ height: `${900 * previewScale}px` }}>
-                <div style={{ transform: `scale(${previewScale})`, transformOrigin: 'top left', width: 900, height: 900 / previewScale }}>
+                style={{ height: `${900 * previewScale * 1.414}px` }}>
+                <div style={{ transform: `scale(${previewScale})`, transformOrigin: 'top left', width: 900, height: 900 * 1.414 }}>
                   {/* ── Invoice Document (900px wide source of truth) ── */}
                   <div id="invoice-print-doc" style={{ width: 900, background: 'white', fontFamily: "'Segoe UI', sans-serif", color: '#111' }}>
 
