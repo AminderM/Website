@@ -163,7 +163,12 @@ const InvoiceGeneratorPage: React.FC = () => {
         body: JSON.stringify(body),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Parse failed');
+      if (!res.ok) {
+        if (res.status === 401) throw new Error('Session expired. Please log in again.');
+        if (res.status === 422) throw new Error('AI could not parse the document. Try pasting the text instead.');
+        if (res.status === 502) throw new Error('AI service is temporarily unavailable. Please try again shortly.');
+        throw new Error(json.detail || json.error || 'Parse failed');
+      }
       const parsed = json.data;
       setAiConfidence(parsed.confidence ?? null);
       setData({
@@ -187,7 +192,18 @@ const InvoiceGeneratorPage: React.FC = () => {
     }
   }, [aiText, token]);
 
+  const SUPPORTED_MIME_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
   const handleFileUpload = (file: File) => {
+    if (file.name.toLowerCase().endsWith('.docx') || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      setAiError('DOCX files are not supported. Please export as PDF or paste the text instead.');
+      return;
+    }
+    if (!SUPPORTED_MIME_TYPES.includes(file.type)) {
+      setAiError(`Unsupported file type (${file.type}). Please upload a PDF, JPG, PNG, GIF, or WEBP.`);
+      return;
+    }
+    setAiError('');
     setFileName(file.name);
     const reader = new FileReader();
     reader.onload = e => {
@@ -387,7 +403,7 @@ const InvoiceGeneratorPage: React.FC = () => {
                   <div
                     onDragOver={e => { e.preventDefault(); setDragOver(true); }}
                     onDragLeave={() => setDragOver(false)}
-                    onDrop={e => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f) handleFileUpload(f); }}
+                    onDrop={e => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f) { setAiError(''); handleFileUpload(f); } }}
                     onClick={() => document.getElementById('inv-file-upload')?.click()}
                     className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${
                       dragOver ? 'border-primary-500 bg-primary-500/10'
@@ -398,8 +414,8 @@ const InvoiceGeneratorPage: React.FC = () => {
                     <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-700'}`}>
                       {fileName || 'Drop a PDF, image, or document'}
                     </p>
-                    <p className={`text-xs mt-0.5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>PDF, PNG, JPG, DOCX</p>
-                    <input id="inv-file-upload" type="file" accept=".pdf,.png,.jpg,.jpeg,.docx" className="hidden"
+                    <p className={`text-xs mt-0.5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>PDF, PNG, JPG, GIF, WEBP</p>
+                    <input id="inv-file-upload" type="file" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" className="hidden"
                       onChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(f); }} />
                   </div>
 
