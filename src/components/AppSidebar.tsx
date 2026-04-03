@@ -11,7 +11,9 @@ import {
   ChevronRight,
   Clock,
   Truck,
-  Receipt
+  Receipt,
+  Download,
+  ExternalLink
 } from 'lucide-react';
 
 interface HistoryItem {
@@ -156,6 +158,236 @@ const AppSidebar: React.FC = () => {
     }
   };
 
+  const openItem = (item: HistoryItem) => {
+    const routes: Record<string, string> = {
+      'fuel-surcharge': '/fuel-surcharge',
+      'ifta': '/ifta-calculator',
+      'bol': '/bol-generator',
+      'invoice': '/invoice-generator',
+    };
+    const path = routes[item.type];
+    if (path) navigate(path);
+  };
+
+  const printHtml = (html: string) => {
+    const w = window.open('', '_blank', 'width=900,height=1200');
+    if (w) { w.document.write(html); w.document.close(); }
+  };
+
+  const baseHtmlShell = (title: string, body: string) => `<!DOCTYPE html>
+<html><head>
+  <meta charset="utf-8"/>
+  <title>${title}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    @page { margin: 0; size: A4 portrait; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', system-ui, sans-serif; color: #111; background: white; padding: 14mm; }
+    table { border-collapse: collapse; width: 100%; }
+  </style>
+</head><body>
+${body}
+<script>window.onload=function(){ setTimeout(function(){ window.print(); window.onafterprint=function(){ window.close(); }; }, 600); }</script>
+</body></html>`;
+
+  const downloadItem = async (item: HistoryItem) => {
+    const d = item.data;
+    const date = new Date(item.created_at).toLocaleString();
+    const fmtc = (n: number) => `$${(Math.round((n + Number.EPSILON) * 100) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+    if (item.type === 'fuel-surcharge') {
+      printHtml(baseHtmlShell(`Fuel Surcharge – ${date}`, `
+        <div style="background:#1e293b;color:white;padding:24px 32px;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;align-items:center;">
+          <div><div style="font-size:20px;font-weight:900;">Fuel Surcharge Summary</div><div style="font-size:12px;color:#94a3b8;margin-top:3px;">${date}</div></div>
+          <div style="font-size:28px;font-weight:900;color:#f59e0b;">FSC</div>
+        </div>
+        <div style="border:1px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;overflow:hidden;">
+          ${[
+            ['Current Fuel Price', d.current_fuel_price != null ? `$${d.current_fuel_price}/gal` : '—'],
+            ['Base Fuel Price',    d.base_fuel_price    != null ? `$${d.base_fuel_price}/gal`    : '—'],
+            ['Surcharge %',        d.surcharge_percent  != null ? `${Number(d.surcharge_percent).toFixed(2)}%` : '—'],
+            ['Surcharge Amount',   d.surcharge_amount   != null ? fmtc(d.surcharge_amount)  : '—'],
+            d.base_rate           ? ['Base Rate',           fmtc(d.base_rate)]           : null,
+            d.total_with_surcharge ? ['Total with Surcharge', fmtc(d.total_with_surcharge)] : null,
+          ].filter(Boolean).map((row: any, i) => `
+            <div style="display:flex;justify-content:space-between;padding:12px 24px;background:${i % 2 === 0 ? '#f8fafc' : 'white'};border-bottom:1px solid #f1f5f9;">
+              <span style="font-size:13px;color:#64748b;">${row[0]}</span>
+              <span style="font-size:13px;font-weight:600;">${row[1]}</span>
+            </div>`).join('')}
+        </div>`));
+
+    } else if (item.type === 'ifta') {
+      printHtml(baseHtmlShell(`IFTA Summary – ${date}`, `
+        <div style="background:#1e293b;color:white;padding:24px 32px;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;align-items:center;">
+          <div><div style="font-size:20px;font-weight:900;">IFTA Tax Summary</div><div style="font-size:12px;color:#94a3b8;margin-top:3px;">${date}</div></div>
+          <div style="font-size:28px;font-weight:900;color:#10b981;">IFTA</div>
+        </div>
+        <div style="border:1px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;overflow:hidden;">
+          ${[
+            ['Total Miles',    d.total_miles    != null ? Number(d.total_miles).toLocaleString() : '—'],
+            ['Total Tax Due',  d.total_tax_due  != null ? fmtc(d.total_tax_due)  : '—'],
+            ['Jurisdictions',  d.jurisdictions  != null ? `${d.jurisdictions.length || 0} states/provinces` : '—'],
+          ].map((row, i) => `
+            <div style="display:flex;justify-content:space-between;padding:12px 24px;background:${i % 2 === 0 ? '#f8fafc' : 'white'};border-bottom:1px solid #f1f5f9;">
+              <span style="font-size:13px;color:#64748b;">${row[0]}</span>
+              <span style="font-size:13px;font-weight:600;">${row[1]}</span>
+            </div>`).join('')}
+        </div>`));
+
+    } else if (item.type === 'bol') {
+      printHtml(baseHtmlShell(`BOL – ${d.bol_number || ''}`, `
+        <div style="background:#1e293b;color:white;padding:24px 32px;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div style="font-size:20px;font-weight:900;">${d.shipper_name || 'Bill of Lading'}</div>
+            <div style="font-size:12px;color:#94a3b8;margin-top:3px;">${date}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:22px;font-weight:900;color:#60a5fa;">BILL OF LADING</div>
+            ${d.bol_number ? `<div style="font-size:12px;color:#94a3b8;margin-top:2px;">${d.bol_number}</div>` : ''}
+          </div>
+        </div>
+        <div style="border:1px solid #e2e8f0;border-top:none;padding:20px 32px;display:grid;grid-template-columns:1fr 1fr;gap:24px;border-bottom:1px solid #e2e8f0;">
+          <div>
+            <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#94a3b8;margin-bottom:8px;">Shipper</div>
+            <div style="font-weight:700;font-size:14px;">${d.shipper_name || '—'}</div>
+            <div style="font-size:12px;color:#64748b;margin-top:3px;">${d.shipper_address || ''}</div>
+          </div>
+          <div>
+            <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#94a3b8;margin-bottom:8px;">Consignee</div>
+            <div style="font-weight:700;font-size:14px;">${d.consignee_name || '—'}</div>
+            <div style="font-size:12px;color:#64748b;margin-top:3px;">${d.consignee_address || ''}</div>
+          </div>
+        </div>
+        <div style="border:1px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;overflow:hidden;">
+          ${[
+            d.carrier_name         ? ['Carrier',               d.carrier_name]               : null,
+            d.pro_number           ? ['PRO #',                 d.pro_number]                 : null,
+            d.weight               ? ['Weight',                `${d.weight} lbs`]            : null,
+            d.reference_number     ? ['Reference #',           d.reference_number]           : null,
+            d.special_instructions ? ['Special Instructions',  d.special_instructions]       : null,
+          ].filter(Boolean).map((row: any, i) => `
+            <div style="display:flex;justify-content:space-between;padding:11px 24px;background:${i % 2 === 0 ? '#f8fafc' : 'white'};border-bottom:1px solid #f1f5f9;">
+              <span style="font-size:13px;color:#64748b;">${row[0]}</span>
+              <span style="font-size:13px;font-weight:600;text-align:right;max-width:60%;">${row[1]}</span>
+            </div>`).join('')}
+        </div>`));
+
+    } else if (item.type === 'invoice') {
+      // Try to fetch full invoice data from backend for complete PDF
+      let fullInvoice: any = null;
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/invoice/${item.id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const json = await res.json();
+          fullInvoice = json.invoice || json;
+        }
+      } catch {}
+
+      if (fullInvoice && fullInvoice.lineItems?.length) {
+        // Full invoice — render complete document with line items
+        const fmtc2 = (n: number) => `$${(Math.round((n + Number.EPSILON) * 100) / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+        const subtotal = (fullInvoice.lineItems || []).reduce((s: number, i: any) => s + i.quantity * i.rate, 0);
+        const taxAmt   = subtotal * ((fullInvoice.totals?.taxRate || 0) / 100);
+        const discAmt  = fullInvoice.totals?.discountAmount || 0;
+        const tot      = fullInvoice.totals?.total ?? (subtotal + taxAmt - discAmt);
+        const v = fullInvoice.vendor || {};
+        const b = fullInvoice.billTo || {};
+        const inv = fullInvoice.invoice || {};
+        const docLabel = d.document_type?.replace(/_/g, ' ').toUpperCase() || 'INVOICE';
+        const vendorAddr = [v.address, v.city, v.state, v.zip].filter(Boolean).join(', ');
+        const billAddr   = [b.city, b.state, b.zip].filter(Boolean).join(', ');
+        const lineRows   = (fullInvoice.lineItems || []).map((li: any) => `
+          <tr>
+            <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;">${li.description}</td>
+            <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;text-align:right;">${li.quantity}</td>
+            <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;text-align:right;">${li.unit}</td>
+            <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;text-align:right;">${fmtc2(li.rate)}</td>
+            <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:700;">${fmtc2(li.quantity * li.rate)}</td>
+          </tr>`).join('');
+        printHtml(baseHtmlShell(d.invoice_number || 'Invoice', `
+          <div style="background:#1e293b;color:white;padding:24px 32px;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+              <div style="font-size:${v.name ? 18 : 14}px;font-weight:900;">${v.name || 'Your Company'}</div>
+              ${vendorAddr ? `<div style="font-size:11px;color:#94a3b8;">${vendorAddr}</div>` : ''}
+              ${v.phone ? `<div style="font-size:11px;color:#94a3b8;">${v.phone}</div>` : ''}
+              ${v.email ? `<div style="font-size:11px;color:#94a3b8;">${v.email}</div>` : ''}
+              ${(v.mc || v.dot) ? `<div style="font-size:10px;color:#64748b;margin-top:3px;">${[v.mc ? 'MC# '+v.mc : '', v.dot ? 'DOT# '+v.dot : ''].filter(Boolean).join(' · ')}</div>` : ''}
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:22px;font-weight:900;color:#a78bfa;">${docLabel}</div>
+              <div style="font-size:13px;font-weight:700;color:#cbd5e1;margin-top:3px;">${inv.number || d.invoice_number}</div>
+              ${inv.date ? `<div style="font-size:11px;color:#94a3b8;">Date: ${inv.date}</div>` : ''}
+              ${inv.dueDate ? `<div style="font-size:11px;color:#94a3b8;">Due: ${inv.dueDate}</div>` : ''}
+            </div>
+          </div>
+          <div style="border:1px solid #e2e8f0;border-top:none;padding:18px 32px;display:grid;grid-template-columns:1fr 1fr;gap:24px;border-bottom:1px solid #e2e8f0;">
+            <div>
+              <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#94a3b8;margin-bottom:6px;">Bill To</div>
+              <div style="font-weight:700;font-size:14px;">${b.name || '—'}</div>
+              ${b.address ? `<div style="font-size:12px;color:#64748b;">${b.address}</div>` : ''}
+              ${billAddr  ? `<div style="font-size:12px;color:#64748b;">${billAddr}</div>`  : ''}
+              ${b.phone   ? `<div style="font-size:12px;color:#64748b;">${b.phone}</div>`   : ''}
+              ${b.email   ? `<div style="font-size:12px;color:#64748b;">${b.email}</div>`   : ''}
+            </div>
+            <div style="font-size:12px;">
+              ${inv.poNumber   ? `<div style="display:flex;justify-content:space-between;margin-bottom:3px;"><span style="color:#94a3b8;">PO #</span><span style="font-weight:600;">${inv.poNumber}</span></div>`   : ''}
+              ${inv.bolNumber  ? `<div style="display:flex;justify-content:space-between;margin-bottom:3px;"><span style="color:#94a3b8;">BOL #</span><span style="font-weight:600;">${inv.bolNumber}</span></div>`  : ''}
+              ${inv.loadNumber ? `<div style="display:flex;justify-content:space-between;margin-bottom:3px;"><span style="color:#94a3b8;">Load #</span><span style="font-weight:600;">${inv.loadNumber}</span></div>` : ''}
+              <div style="display:flex;justify-content:space-between;"><span style="color:#94a3b8;">Terms</span><span style="font-weight:600;">${fullInvoice.paymentTerms || 'Net 30'}</span></div>
+            </div>
+          </div>
+          <div style="border:1px solid #e2e8f0;border-top:none;padding:0 32px;">
+            <table style="font-size:12px;">
+              <thead><tr style="border-bottom:2px solid #e2e8f0;">
+                <th style="text-align:left;padding:10px 8px 7px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;">Description</th>
+                <th style="text-align:right;padding:10px 8px 7px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;">Qty</th>
+                <th style="text-align:right;padding:10px 8px 7px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;">Unit</th>
+                <th style="text-align:right;padding:10px 8px 7px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;">Rate</th>
+                <th style="text-align:right;padding:10px 8px 7px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;">Amount</th>
+              </tr></thead>
+              <tbody>${lineRows}</tbody>
+            </table>
+          </div>
+          <div style="border:1px solid #e2e8f0;border-top:none;padding:14px 32px 20px;display:flex;justify-content:flex-end;">
+            <table style="width:220px;font-size:12px;">
+              <tr><td style="padding:4px 0;color:#64748b;">Subtotal</td><td style="padding:4px 0;text-align:right;">${fmtc2(subtotal)}</td></tr>
+              ${taxAmt > 0  ? `<tr><td style="padding:4px 0;color:#64748b;">Tax (${fullInvoice.totals?.taxRate}%)</td><td style="padding:4px 0;text-align:right;">${fmtc2(taxAmt)}</td></tr>` : ''}
+              ${discAmt > 0 ? `<tr><td style="padding:4px 0;color:#16a34a;">Discount</td><td style="padding:4px 0;text-align:right;color:#16a34a;">-${fmtc2(discAmt)}</td></tr>` : ''}
+              <tr style="border-top:2px solid #111;"><td style="padding:8px 0 0;font-size:16px;font-weight:900;">TOTAL</td><td style="padding:8px 0 0;text-align:right;font-size:16px;font-weight:900;color:#7c3aed;">${fmtc2(tot)}</td></tr>
+            </table>
+          </div>
+          ${fullInvoice.notes ? `<div style="border:1px solid #e2e8f0;border-top:none;padding:14px 32px;border-bottom:1px solid #e2e8f0;"><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#94a3b8;margin-bottom:5px;">Notes</div><div style="font-size:12px;color:#64748b;">${fullInvoice.notes}</div></div>` : ''}
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-top:none;padding:12px 32px;text-align:center;font-size:10px;color:#94a3b8;border-radius:0 0 8px 8px;">
+            Thank you for your business${v.name ? ` · ${v.name}` : ''}
+          </div>`));
+      } else {
+        // Fallback — summary PDF if full invoice fetch fails
+        printHtml(baseHtmlShell(d.invoice_number || 'Invoice', `
+          <div style="background:#1e293b;color:white;padding:24px 32px;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;align-items:center;">
+            <div><div style="font-size:20px;font-weight:900;">${d.vendor_name || 'Invoice'}</div><div style="font-size:12px;color:#94a3b8;margin-top:3px;">${date}</div></div>
+            <div style="text-align:right;"><div style="font-size:22px;font-weight:900;color:#a78bfa;">${(d.document_type || 'INVOICE').replace(/_/g,' ').toUpperCase()}</div><div style="font-size:13px;color:#94a3b8;margin-top:3px;">${d.invoice_number || ''}</div></div>
+          </div>
+          <div style="border:1px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;overflow:hidden;">
+            ${[
+              ['Invoice Number', d.invoice_number || '—'],
+              ['Vendor',        d.vendor_name    || '—'],
+              ['Bill To',       d.bill_to_name   || '—'],
+              ['Total',         d.total != null ? fmtc(d.total) : '—'],
+              ['Status',        d.status         || '—'],
+            ].map((row, i) => `
+              <div style="display:flex;justify-content:space-between;padding:12px 24px;background:${i % 2 === 0 ? '#f8fafc' : 'white'};border-bottom:1px solid #f1f5f9;">
+                <span style="font-size:13px;color:#64748b;">${row[0]}</span>
+                <span style="font-size:13px;font-weight:600;">${row[1]}</span>
+              </div>`).join('')}
+            <div style="padding:12px 24px;background:#f8fafc;font-size:11px;color:#94a3b8;text-align:center;">Full invoice detail requires backend /api/invoice/${item.id}</div>
+          </div>`));
+      }
+    }
+  };
+
   return (
     <aside 
       className={`fixed left-0 top-20 h-[calc(100vh-5rem)] z-40 transition-all duration-300 ${
@@ -259,13 +491,18 @@ const AppSidebar: React.FC = () => {
                   {history.map((item, idx) => (
                     <div
                       key={idx}
-                      className={`p-3 rounded-lg cursor-pointer transition ${
-                        isDark ? 'bg-dark-400 hover:bg-dark-200' : 'bg-gray-50 hover:bg-gray-100'
+                      className={`rounded-lg border overflow-hidden transition ${
+                        isDark ? 'bg-dark-400 border-gray-700' : 'bg-gray-50 border-gray-200'
                       }`}
                       data-testid={`history-item-${idx}`}
                     >
-                      <div className="flex items-start gap-3">
-                        <div className={`p-2 rounded-lg ${
+                      {/* Main row — click to open tool */}
+                      <button
+                        onClick={() => openItem(item)}
+                        className={`w-full p-3 flex items-start gap-3 text-left transition hover:bg-primary-500/10`}
+                        title="Open tool"
+                      >
+                        <div className={`p-2 rounded-lg flex-shrink-0 ${
                           item.type === 'fuel-surcharge' ? 'bg-orange-500/20' :
                           item.type === 'ifta' ? 'bg-green-500/20' :
                           item.type === 'invoice' ? 'bg-purple-500/20' : 'bg-blue-500/20'
@@ -283,6 +520,23 @@ const AppSidebar: React.FC = () => {
                             {formatDate(item.created_at)}
                           </p>
                         </div>
+                        <ExternalLink className={`w-3.5 h-3.5 flex-shrink-0 mt-0.5 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
+                      </button>
+
+                      {/* Action bar */}
+                      <div className={`flex border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                        <button
+                          onClick={() => downloadItem(item)}
+                          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium transition ${
+                            isDark
+                              ? 'text-gray-400 hover:text-white hover:bg-dark-200'
+                              : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
+                          }`}
+                          title="Download summary"
+                        >
+                          <Download className="w-3 h-3" />
+                          Download
+                        </button>
                       </div>
                     </div>
                   ))}
