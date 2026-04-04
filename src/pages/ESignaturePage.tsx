@@ -4,12 +4,10 @@ import {
   Upload, PenLine, Type, Download, Trash2, X,
   CheckCircle, AlertCircle, FileText, RotateCcw, MousePointer
 } from 'lucide-react';
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+import * as pdfjsLib from 'pdfjs-dist';
 import { PDFDocument } from 'pdf-lib';
 
-// Point pdfjs at the worker file we copied into /public
-(pdfjsLib as any).GlobalWorkerOptions.workerSrc =
-  `${process.env.PUBLIC_URL}/pdf.worker.min.mjs`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL}/pdf.worker.min.js`;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface RenderedPage {

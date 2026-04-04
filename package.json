@@ -19,7 +19,7 @@
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.563.0",
     "pdf-lib": "^1.17.1",
-    "pdfjs-dist": "^5.6.205",
+    "pdfjs-dist": "^3.11.174",
     "react": "^19.2.3",
     "react-apple-login": "^1.1.6",
     "react-dom": "^19.2.3",
