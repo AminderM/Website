@@ -13,7 +13,8 @@ import {
   Truck,
   Receipt,
   Download,
-  ExternalLink
+  ExternalLink,
+  FileType
 } from 'lucide-react';
 
 interface HistoryItem {
@@ -69,6 +70,22 @@ const AppSidebar: React.FC = () => {
       path: '/invoice-generator',
       color: 'text-purple-500',
       bgColor: 'bg-purple-500/20'
+    },
+    {
+      id: 'pdf-to-word',
+      name: 'PDF to Word',
+      icon: FileType,
+      path: '/pdf-to-word',
+      color: 'text-blue-400',
+      bgColor: 'bg-blue-400/20'
+    },
+    {
+      id: 'word-to-pdf',
+      name: 'Word to PDF',
+      icon: FileText,
+      path: '/word-to-pdf',
+      color: 'text-indigo-400',
+      bgColor: 'bg-indigo-400/20'
     },
   ];
 
