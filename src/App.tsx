@@ -19,6 +19,8 @@ import BOLGeneratorPage from './pages/BOLGeneratorPage';
 import FuelSurchargePage from './pages/FuelSurchargePage';
 import IFTACalculatorPage from './pages/IFTACalculatorPage';
 import InvoiceGeneratorPage from './pages/InvoiceGeneratorPage';
+import PdfToWordPage from './pages/PdfToWordPage';
+import WordToPdfPage from './pages/WordToPdfPage';
 import './index.css';
 
 // Layout wrapper to handle sidebar spacing
@@ -59,6 +61,8 @@ function App() {
               <Route path="/fuel-surcharge" element={<ProtectedRoute component={FuelSurchargePage} />} />
               <Route path="/ifta-calculator" element={<ProtectedRoute component={IFTACalculatorPage} />} />
               <Route path="/invoice-generator" element={<ProtectedRoute component={InvoiceGeneratorPage} />} />
+              <Route path="/pdf-to-word" element={<ProtectedRoute component={PdfToWordPage} />} />
+              <Route path="/word-to-pdf" element={<ProtectedRoute component={WordToPdfPage} />} />
               {/* Redirect old tools route */}
               <Route path="/tools" element={<Navigate to="/fuel-surcharge" replace />} />
             </Routes>
