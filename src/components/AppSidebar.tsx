@@ -331,7 +331,7 @@ ${body}
         const b   = inv.billTo  || {};
         const meta = inv.invoice || {};
         const lineItems: any[] = inv.lineItems || [];
-        const subtotal   = lineItems.reduce((s: number, i: any) => s + r2i(i.quantity * i.rate), 0);
+        const subtotal   = lineItems.reduce((s: number, i: any) => s + r2i(i.amount ?? (i.quantity || 0) * (i.rate || 0)), 0);
         const taxRate    = inv.totals?.taxRate || 0;
         const taxAmount  = r2i(subtotal * (taxRate / 100));
         const discAmount = inv.totals?.discountAmount || 0;
@@ -349,10 +349,8 @@ ${body}
             <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;">
               <span style="background:${invCatColor(li.category)}22;color:${invCatColor(li.category)};padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;">${invCatLabel(li.category)}</span>
             </td>
-            <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;text-align:right;">${li.quantity}</td>
-            <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;text-align:right;color:#64748b;">${li.unit}</td>
-            <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;text-align:right;">${fmtc2(li.rate)}</td>
-            <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:700;">${fmtc2(r2i(li.quantity * li.rate))}</td>
+            <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;color:#64748b;">${li.calculation || ''}</td>
+            <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:700;">${fmtc2(li.amount ?? r2i((li.quantity || 0) * (li.rate || 0)))}</td>
           </tr>`).join('');
 
         printHtml(baseHtmlShell(meta.number || d.invoice_number || 'Invoice', `
@@ -396,9 +394,7 @@ ${body}
                 <thead><tr style="border-bottom:2px solid #e2e8f0;">
                   <th style="text-align:left;padding:10px 8px 7px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;">Description</th>
                   <th style="text-align:left;padding:10px 8px 7px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;">Category</th>
-                  <th style="text-align:right;padding:10px 8px 7px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;">Qty</th>
-                  <th style="text-align:right;padding:10px 8px 7px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;">Unit</th>
-                  <th style="text-align:right;padding:10px 8px 7px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;">Rate</th>
+                  <th style="text-align:left;padding:10px 8px 7px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;">Calculation</th>
                   <th style="text-align:right;padding:10px 8px 7px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;">Amount</th>
                 </tr></thead>
                 <tbody>${lineRows}</tbody>

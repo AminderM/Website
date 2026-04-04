@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import {
-  FileText, Upload, Wand2, Plus, Trash2, Save, CheckCircle,
-  Lock, Printer, Copy, AlertCircle, Receipt, ChevronDown, ChevronUp
+  FileText, Upload, Wand2, Plus, Trash2, CheckCircle,
+  Printer, Copy, AlertCircle, Receipt, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { isPaidUser } from '../types/auth';
 import { parseApiError } from '../utils/apiFetch';
@@ -42,10 +42,8 @@ interface LineItem {
   id: string;
   description: string;
   category: string;
-  quantity: number;
-  unit: string;
-  rate: number;
-  taxable: boolean;
+  calculation: string;
+  amount: number;
 }
 
 interface InvoiceData {
@@ -69,7 +67,7 @@ const today  = () => new Date().toISOString().slice(0, 10);
 const invNum = () => `INV-${new Date().getFullYear()}-${Date.now().toString().slice(-5)}`;
 
 const blankItem = (): LineItem => ({
-  id: uid(), description: '', category: 'other', quantity: 1, unit: 'flat', rate: 0, taxable: false,
+  id: uid(), description: '', category: 'other', calculation: '', amount: 0,
 });
 
 const blankInvoice = (): InvoiceData => ({
@@ -124,7 +122,7 @@ const InvoiceGeneratorPage: React.FC = () => {
   }, []);
 
   // ── Computed totals ─────────────────────────────────────────────────────────
-  const subtotal       = data.lineItems.reduce((s, i) => s + r2(i.quantity * i.rate), 0);
+  const subtotal       = data.lineItems.reduce((s, i) => s + r2(i.amount), 0);
   const taxAmount      = r2(subtotal * (data.totals.taxRate / 100));
   const discountAmount = r2(data.totals.discountAmount);
   const total          = r2(subtotal + taxAmount - discountAmount);
@@ -226,54 +224,55 @@ const InvoiceGeneratorPage: React.FC = () => {
     return Object.keys(errors).length === 0;
   };
 
-  // ── Generate (save to backend) ───────────────────────────────────────────────
+  // ── Generate + Save to History + Print ──────────────────────────────────────
   const handleGenerate = async () => {
     if (!validate()) { setSubmitError('Please fill in all required fields highlighted in red.'); return; }
-    setSubmitting(true); setSubmitError('');
+    setSubmitting(true); setSubmitError(''); setSaveError('');
     try {
-      // Strip logoBase64 and aiSuggestions — not needed in backend storage
+      // 1. Save full invoice to backend
       const { logoBase64: _logo, aiSuggestions: _ai, ...sendData } = data;
-      const res = await fetch(`${BACKEND_URL}/api/invoice/generate`, {
+      const genRes = await fetch(`${BACKEND_URL}/api/invoice/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ ...sendData, totals: { ...sendData.totals, subtotal, taxAmount, discountAmount, total } }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.detail || json.error || `Server error (${res.status})`);
-      setFinalized(true);
-      setSavedHistory(false);
-      // Cache full invoice data locally so history Download can reproduce the exact PDF
+      const genJson = await genRes.json();
+      if (!genRes.ok) throw new Error(genJson.detail || genJson.error || `Server error (${genRes.status})`);
+
+      // 2. Save to history (paid users only — silent skip for free users)
+      if (token && isPaidUser(user)) {
+        try {
+          const histRes = await fetch(`${BACKEND_URL}/api/history/invoice`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({
+              invoice_number: data.invoice.number,
+              document_type:  data.documentType,
+              vendor_name:    data.vendor.name,
+              bill_to_name:   data.billTo.name,
+              total,
+              status: 'finalized',
+            }),
+          });
+          const histJson = await histRes.json();
+          if (!histRes.ok) throw new Error(parseApiError(histJson));
+          setSavedHistory(true);
+        } catch (e: any) {
+          setSaveError(e.message);
+        }
+      }
+
+      // 3. Cache locally for history Download
       try { localStorage.setItem(`invoice_cache_${data.invoice.number}`, JSON.stringify(data)); } catch {}
+
+      setFinalized(true);
+
+      // 4. Open print/PDF dialog
+      handlePrint();
     } catch (e: any) {
       setSubmitError(e.message || 'Failed to generate invoice. Please try again.');
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  // ── Save to history ──────────────────────────────────────────────────────────
-  const saveToHistory = async () => {
-    if (!token) return;
-    setSaveError('');
-    if (!isPaidUser(user)) { setSaveError('Upgrade to a paid plan to save history.'); return; }
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/history/invoice`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          invoice_number: data.invoice.number,
-          document_type:  data.documentType,
-          vendor_name:    data.vendor.name,
-          bill_to_name:   data.billTo.name,
-          total,
-          status: 'finalized',
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(parseApiError(json));
-      setSavedHistory(true);
-    } catch (e: any) {
-      setSaveError(e.message);
     }
   };
 
@@ -294,10 +293,8 @@ const InvoiceGeneratorPage: React.FC = () => {
         <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;">
           <span style="background:${catColor(item.category)}22;color:${catColor(item.category)};padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;">${cat(item.category)}</span>
         </td>
-        <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;text-align:right;">${item.quantity}</td>
-        <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;text-align:right;color:#64748b;">${item.unit}</td>
-        <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;text-align:right;">${fmtc(item.rate)}</td>
-        <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:700;">${fmtc(item.quantity * item.rate)}</td>
+        <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;color:#64748b;">${item.calculation}</td>
+        <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:700;">${fmtc(item.amount)}</td>
       </tr>`).join('');
 
     const vendorAddr = [data.vendor.address, data.vendor.city, data.vendor.state, data.vendor.zip].filter(Boolean).join(', ');
@@ -378,9 +375,7 @@ const InvoiceGeneratorPage: React.FC = () => {
           <tr style="border-bottom:2px solid #e2e8f0;">
             <th style="text-align:left;padding:10px 8px 7px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;">Description</th>
             <th style="text-align:left;padding:10px 8px 7px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;">Category</th>
-            <th style="text-align:right;padding:10px 8px 7px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;">Qty</th>
-            <th style="text-align:right;padding:10px 8px 7px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;">Unit</th>
-            <th style="text-align:right;padding:10px 8px 7px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;">Rate</th>
+            <th style="text-align:left;padding:10px 8px 7px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;">Calculation</th>
             <th style="text-align:right;padding:10px 8px 7px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;">Amount</th>
           </tr>
         </thead>
@@ -473,8 +468,8 @@ const InvoiceGeneratorPage: React.FC = () => {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
                 <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-                  {['Description', 'Category', 'Qty', 'Unit', 'Rate', 'Amount'].map(h => (
-                    <th key={h} style={{ textAlign: (h === 'Description' || h === 'Category') ? 'left' : 'right', padding: '10px 6px 7px', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, color: '#94a3b8' }}>{h}</th>
+                  {['Description', 'Category', 'Calculation', 'Amount'].map(h => (
+                    <th key={h} style={{ textAlign: (h === 'Amount') ? 'right' : 'left', padding: '10px 6px 7px', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, color: '#94a3b8' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -483,10 +478,8 @@ const InvoiceGeneratorPage: React.FC = () => {
                   <tr key={item.id || i} style={{ borderBottom: '1px solid #f1f5f9' }}>
                     <td style={{ padding: '9px 6px' }}>{item.description}</td>
                     <td style={{ padding: '9px 6px' }}><span style={{ background: getCatColor(item.category) + '22', color: getCatColor(item.category), padding: '2px 7px', borderRadius: 99, fontSize: 10, fontWeight: 700 }}>{CATEGORIES.find(c => c.id === item.category)?.label || item.category}</span></td>
-                    <td style={{ padding: '9px 6px', textAlign: 'right' }}>{item.quantity}</td>
-                    <td style={{ padding: '9px 6px', textAlign: 'right', color: '#64748b' }}>{item.unit}</td>
-                    <td style={{ padding: '9px 6px', textAlign: 'right' }}>{fmtc(item.rate)}</td>
-                    <td style={{ padding: '9px 6px', textAlign: 'right', fontWeight: 700 }}>{fmtc(item.quantity * item.rate)}</td>
+                    <td style={{ padding: '9px 6px', color: '#64748b' }}>{item.calculation}</td>
+                    <td style={{ padding: '9px 6px', textAlign: 'right', fontWeight: 700 }}>{fmtc(item.amount)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -541,34 +534,19 @@ const InvoiceGeneratorPage: React.FC = () => {
                 <Copy className="w-3.5 h-3.5" />
                 {copied ? 'Copied!' : data.invoice.number}
               </button>
-              <button onClick={handlePrint}
-                className={`flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-medium transition-colors ${
-                  isDark ? 'bg-dark-400 text-gray-300 hover:bg-dark-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}>
-                <Printer className="w-3.5 h-3.5" /> Print / PDF
-              </button>
-              {savedHistory ? (
-                <span className="flex items-center gap-1.5 text-xs text-green-400 font-semibold px-3 py-2">
-                  <CheckCircle className="w-4 h-4" /> Saved
-                </span>
-              ) : isPaidUser(user) ? (
-                <button onClick={saveToHistory}
-                  className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white font-semibold transition-colors">
-                  <Save className="w-3.5 h-3.5" /> Save to History
-                </button>
-              ) : (
-                <button disabled title="Upgrade to paid plan"
-                  className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg bg-gray-500/20 text-gray-400 font-semibold cursor-not-allowed">
-                  <Lock className="w-3.5 h-3.5" /> Save to History
+              {finalized && (
+                <button onClick={handlePrint}
+                  className={`flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-medium transition-colors ${
+                    isDark ? 'bg-dark-400 text-gray-300 hover:bg-dark-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}>
+                  <Printer className="w-3.5 h-3.5" /> Print / PDF
                 </button>
               )}
-              <button onClick={handleGenerate} disabled={submitting}
-                className="flex items-center gap-1.5 text-sm px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold disabled:opacity-50 transition-colors">
-                {submitting
-                  ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  : <FileText className="w-4 h-4" />}
-                {finalized ? 'Re-generate' : 'Generate & Save'}
-              </button>
+              {savedHistory && (
+                <span className="flex items-center gap-1.5 text-xs text-green-400 font-semibold px-3 py-2">
+                  <CheckCircle className="w-4 h-4" /> Saved to History
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -770,7 +748,7 @@ const InvoiceGeneratorPage: React.FC = () => {
                 {data.lineItems.map((item, idx) => (
                   <div key={item.id} className={`p-3 rounded-lg border ${isDark ? 'border-gray-700 bg-dark-400' : 'border-gray-200 bg-gray-50'}`}>
                     <div className="grid grid-cols-12 gap-2 items-end">
-                      <div className="col-span-5">
+                      <div className="col-span-4">
                         <label className={lbl}>Description *</label>
                         <input className={inp(fieldErrors[`lineItems.${idx}.description`])}
                           value={item.description} placeholder="Linehaul - Toronto to Calgary"
@@ -783,21 +761,17 @@ const InvoiceGeneratorPage: React.FC = () => {
                           {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
                         </select>
                       </div>
-                      <div className="col-span-1">
-                        <label className={lbl}>Qty</label>
-                        <input type="number" className={inp()} value={item.quantity} min={0}
-                          onChange={e => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)} />
+                      <div className="col-span-3">
+                        <label className={lbl}>Calculation</label>
+                        <input className={inp()} value={item.calculation}
+                          placeholder="e.g. 5 days × $500"
+                          onChange={e => updateItem(item.id, 'calculation', e.target.value)} />
                       </div>
                       <div className="col-span-1">
-                        <label className={lbl}>Rate</label>
-                        <input type="number" className={inp()} value={item.rate} min={0} step="0.01"
-                          onChange={e => updateItem(item.id, 'rate', parseFloat(e.target.value) || 0)} />
-                      </div>
-                      <div className="col-span-1">
-                        <label className={lbl}>Amt</label>
-                        <p className={`text-sm font-bold pt-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                          {fmtc(item.quantity * item.rate)}
-                        </p>
+                        <label className={lbl}>Amount</label>
+                        <input type="number" className={inp()} value={item.amount === 0 ? '' : item.amount}
+                          min={0} step="0.01" placeholder="0.00"
+                          onChange={e => updateItem(item.id, 'amount', parseFloat(e.target.value) || 0)} />
                       </div>
                       <div className="col-span-1 flex justify-end pb-1">
                         {data.lineItems.length > 1 && (
@@ -859,8 +833,8 @@ const InvoiceGeneratorPage: React.FC = () => {
             <button onClick={handleGenerate} disabled={submitting}
               className="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50 transition-colors">
               {submitting
-                ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Generating...</>
-                : <><FileText className="w-5 h-5" /> {finalized ? 'Re-generate Invoice' : 'Generate & Save Invoice'}</>}
+                ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Saving & Generating PDF...</>
+                : <><FileText className="w-5 h-5" /> {finalized ? 'Re-generate & Print Invoice' : 'Generate & Save Invoice'}</>}
             </button>
           </div>
 
@@ -937,8 +911,8 @@ const InvoiceGeneratorPage: React.FC = () => {
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                         <thead>
                           <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-                            {['Description', 'Category', 'Qty', 'Unit', 'Rate', 'Amount'].map(h => (
-                              <th key={h} style={{ textAlign: h === 'Description' || h === 'Category' ? 'left' : 'right', padding: '12px 6px 8px', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, color: '#94a3b8' }}>{h}</th>
+                            {['Description', 'Category', 'Calculation', 'Amount'].map(h => (
+                              <th key={h} style={{ textAlign: h === 'Amount' ? 'right' : 'left', padding: '12px 6px 8px', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, color: '#94a3b8' }}>{h}</th>
                             ))}
                           </tr>
                         </thead>
@@ -951,10 +925,8 @@ const InvoiceGeneratorPage: React.FC = () => {
                                   {CATEGORIES.find(c => c.id === item.category)?.label || item.category}
                                 </span>
                               </td>
-                              <td style={{ padding: '10px 6px', textAlign: 'right' }}>{item.quantity}</td>
-                              <td style={{ padding: '10px 6px', textAlign: 'right', color: '#64748b' }}>{item.unit}</td>
-                              <td style={{ padding: '10px 6px', textAlign: 'right' }}>{fmtc(item.rate)}</td>
-                              <td style={{ padding: '10px 6px', textAlign: 'right', fontWeight: 700 }}>{fmtc(item.quantity * item.rate)}</td>
+                              <td style={{ padding: '10px 6px', color: '#64748b' }}>{item.calculation}</td>
+                              <td style={{ padding: '10px 6px', textAlign: 'right', fontWeight: 700 }}>{fmtc(item.amount)}</td>
                             </tr>
                           ))}
                         </tbody>
