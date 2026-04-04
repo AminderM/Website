@@ -87,6 +87,14 @@ const AppSidebar: React.FC = () => {
       color: 'text-indigo-400',
       bgColor: 'bg-indigo-400/20'
     },
+    {
+      id: 'e-signature',
+      name: 'e-Signature',
+      icon: FileType,
+      path: '/e-signature',
+      color: 'text-teal-400',
+      bgColor: 'bg-teal-400/20'
+    },
   ];
 
   const fetchHistory = async () => {
