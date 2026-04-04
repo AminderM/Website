@@ -102,7 +102,9 @@ const ESignaturePage: React.FC = () => {
     try {
       const ab = await file.arrayBuffer();
       setPdfBytes(ab);
-      const pdf = await (pdfjsLib as any).getDocument({ data: ab }).promise;
+      // Slice a copy for pdfjs — it transfers (detaches) the ArrayBuffer it receives,
+      // which would make the original unusable by pdf-lib when downloading.
+      const pdf = await (pdfjsLib as any).getDocument({ data: ab.slice(0) }).promise;
       const rendered: RenderedPage[] = [];
 
       for (let i = 1; i <= pdf.numPages; i++) {
@@ -275,7 +277,7 @@ const ESignaturePage: React.FC = () => {
     setDownloading(true);
     setPdfError('');
     try {
-      const pdfDoc  = await PDFDocument.load(pdfBytes);
+      const pdfDoc  = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
       const pdfPages = pdfDoc.getPages();
 
       for (const sig of placed) {
