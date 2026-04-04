@@ -21,6 +21,7 @@ import IFTACalculatorPage from './pages/IFTACalculatorPage';
 import InvoiceGeneratorPage from './pages/InvoiceGeneratorPage';
 import PdfToWordPage from './pages/PdfToWordPage';
 import WordToPdfPage from './pages/WordToPdfPage';
+import ESignaturePage from './pages/ESignaturePage';
 import './index.css';
 
 // Layout wrapper to handle sidebar spacing
@@ -63,6 +64,7 @@ function App() {
               <Route path="/invoice-generator" element={<ProtectedRoute component={InvoiceGeneratorPage} />} />
               <Route path="/pdf-to-word" element={<ProtectedRoute component={PdfToWordPage} />} />
               <Route path="/word-to-pdf" element={<ProtectedRoute component={WordToPdfPage} />} />
+              <Route path="/e-signature" element={<ProtectedRoute component={ESignaturePage} />} />
               {/* Redirect old tools route */}
               <Route path="/tools" element={<Navigate to="/fuel-surcharge" replace />} />
             </Routes>
