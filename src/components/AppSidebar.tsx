@@ -14,7 +14,8 @@ import {
   Receipt,
   Download,
   ExternalLink,
-  FileType
+  FileType,
+  X as XIcon
 } from 'lucide-react';
 
 interface HistoryItem {
@@ -32,6 +33,7 @@ const AppSidebar: React.FC = () => {
   const isDark = theme === 'dark';
   
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [activeSection, setActiveSection] = useState<'tools' | 'history'>('tools');
@@ -191,7 +193,7 @@ const AppSidebar: React.FC = () => {
       'invoice': '/invoice-generator',
     };
     const path = routes[item.type];
-    if (path) navigate(path);
+    if (path) { navigate(path); setIsMobileOpen(false); }
   };
 
   // Invoice category / doc-type lookups (mirrors InvoiceGeneratorPage constants)
@@ -466,21 +468,55 @@ ${body}
   };
 
   return (
-    <aside 
-      className={`fixed left-0 top-20 h-[calc(100vh-5rem)] z-40 transition-all duration-300 ${
-        isCollapsed ? 'w-16' : 'w-72'
-      } ${isDark ? 'bg-dark-300 border-gray-700' : 'bg-white border-gray-200'} border-r`}
+    <>
+      {/* ── Mobile toggle button (visible on small screens only) ── */}
+      <button
+        onClick={() => setIsMobileOpen(true)}
+        className={`md:hidden fixed bottom-5 right-5 z-50 p-3.5 rounded-full shadow-lg border transition-colors ${
+          isDark ? 'bg-dark-300 border-gray-600 text-white' : 'bg-white border-gray-200 text-gray-800'
+        }`}
+        aria-label="Open tools menu"
+      >
+        <Truck className="w-5 h-5 text-primary-500" />
+      </button>
+
+      {/* ── Mobile backdrop overlay ── */}
+      {isMobileOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+          onClick={() => setIsMobileOpen(false)}
+        />
+      )}
+
+    <aside
+      className={`fixed left-0 top-20 h-[calc(100vh-5rem)] z-40 transition-all duration-300
+        ${isCollapsed ? 'w-16' : 'w-72'}
+        ${isDark ? 'bg-dark-300 border-gray-700' : 'bg-white border-gray-200'} border-r
+        md:translate-x-0
+        ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+      `}
       data-testid="app-sidebar"
     >
-      {/* Collapse Toggle */}
+      {/* Collapse Toggle — desktop only */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className={`absolute -right-3 top-6 z-50 p-1 rounded-full border shadow-md ${
+        className={`hidden md:flex absolute -right-3 top-6 z-50 p-1 rounded-full border shadow-md ${
           isDark ? 'bg-dark-300 border-gray-600 text-gray-400' : 'bg-white border-gray-200 text-gray-600'
         } hover:scale-110 transition-transform`}
         data-testid="sidebar-toggle"
       >
         {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+      </button>
+
+      {/* Mobile close button */}
+      <button
+        onClick={() => setIsMobileOpen(false)}
+        className={`md:hidden absolute top-3 right-3 z-50 p-1.5 rounded-lg ${
+          isDark ? 'text-gray-400 hover:text-white hover:bg-dark-400' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
+        }`}
+        aria-label="Close menu"
+      >
+        <ChevronLeft className="w-4 h-4" />
       </button>
 
       <div className="flex flex-col h-full">
@@ -531,7 +567,7 @@ ${body}
                 return (
                   <button
                     key={item.id}
-                    onClick={() => navigate(item.path)}
+                    onClick={() => { navigate(item.path); setIsMobileOpen(false); }}
                     className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all ${
                       isActive
                         ? isDark ? 'bg-primary-600/20 text-primary-400' : 'bg-primary-50 text-primary-700'
@@ -637,6 +673,7 @@ ${body}
         </div>
       </div>
     </aside>
+    </>
   );
 };
 
