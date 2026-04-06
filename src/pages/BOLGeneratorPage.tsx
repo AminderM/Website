@@ -782,7 +782,7 @@ const BOLGeneratorPage: React.FC = () => {
           </div>
 
           {/* ===== PREVIEW PANEL ===== */}
-          <div className={`lg:col-span-3 bol-preview-container rounded-lg border overflow-hidden sticky top-24 ${
+          <div className={`hidden lg:block lg:col-span-3 bol-preview-container rounded-lg border overflow-hidden sticky top-24 ${
             isDark ? 'bg-white border-gray-200' : 'bg-white border-gray-200'
           } shadow-lg`} ref={previewRef} style={{ width: '100%', aspectRatio: '2480 / 3508', position: 'relative', overflow: 'hidden' }}>
             

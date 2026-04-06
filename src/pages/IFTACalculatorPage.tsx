@@ -235,7 +235,7 @@ const IFTACalculatorPage: React.FC = () => {
             <div className="space-y-4">
               {jurisdictions.map((j, idx) => (
                 <div key={j.id} className={`p-4 rounded-lg ${isDark ? 'bg-dark-400' : 'bg-gray-50'}`}>
-                  <div className="grid grid-cols-5 gap-3 items-end">
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 items-end">
                     <div>
                       <label className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>State/Province</label>
                       <input
@@ -349,17 +349,19 @@ const IFTACalculatorPage: React.FC = () => {
 
               <div className={`border-t ${isDark ? 'border-gray-600' : 'border-gray-200'} pt-4 mb-4`}>
                 <h4 className={`text-sm font-semibold mb-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>By Jurisdiction</h4>
-                <div className="space-y-2">
-                  {result.jurisdictionResults.map((j, idx) => (
-                    <div key={idx} className={`flex justify-between items-center p-3 rounded-lg ${isDark ? 'bg-dark-300' : 'bg-white'}`}>
-                      <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{j.state}</span>
-                      <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>{j.miles.toLocaleString()} mi</span>
-                      <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>{j.fuelUsed.toFixed(1)} gal used</span>
-                      <span className={`font-semibold ${j.taxDue >= 0 ? 'text-red-500' : 'text-green-500'}`}>
-                        {j.taxDue >= 0 ? '+' : ''}${j.taxDue.toFixed(2)}
-                      </span>
-                    </div>
-                  ))}
+                <div className="overflow-x-auto">
+                  <div className="space-y-2 min-w-[420px]">
+                    {result.jurisdictionResults.map((j, idx) => (
+                      <div key={idx} className={`flex justify-between items-center p-3 rounded-lg ${isDark ? 'bg-dark-300' : 'bg-white'}`}>
+                        <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{j.state}</span>
+                        <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>{j.miles.toLocaleString()} mi</span>
+                        <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>{j.fuelUsed.toFixed(1)} gal used</span>
+                        <span className={`font-semibold ${j.taxDue >= 0 ? 'text-red-500' : 'text-green-500'}`}>
+                          {j.taxDue >= 0 ? '+' : ''}${j.taxDue.toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 

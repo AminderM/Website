@@ -747,33 +747,33 @@ const InvoiceGeneratorPage: React.FC = () => {
               <div className="p-5 space-y-3">
                 {data.lineItems.map((item, idx) => (
                   <div key={item.id} className={`p-3 rounded-lg border ${isDark ? 'border-gray-700 bg-dark-400' : 'border-gray-200 bg-gray-50'}`}>
-                    <div className="grid grid-cols-12 gap-2 items-end">
-                      <div className="col-span-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-12 gap-2 items-end">
+                      <div className="col-span-2 sm:col-span-4">
                         <label className={lbl}>Description *</label>
                         <input className={inp(fieldErrors[`lineItems.${idx}.description`])}
                           value={item.description} placeholder="Linehaul - Toronto to Calgary"
                           onChange={e => updateItem(item.id, 'description', e.target.value)} />
                       </div>
-                      <div className="col-span-3">
+                      <div className="col-span-1 sm:col-span-3">
                         <label className={lbl}>Category</label>
                         <select className={inp()} value={item.category}
                           onChange={e => updateItem(item.id, 'category', e.target.value)}>
                           {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
                         </select>
                       </div>
-                      <div className="col-span-3">
+                      <div className="col-span-1 sm:col-span-3">
                         <label className={lbl}>Calculation</label>
                         <input className={inp()} value={item.calculation}
                           placeholder="e.g. 5 days × $500"
                           onChange={e => updateItem(item.id, 'calculation', e.target.value)} />
                       </div>
-                      <div className="col-span-1">
+                      <div className="col-span-1 sm:col-span-1">
                         <label className={lbl}>Amount</label>
                         <input type="number" className={inp()} value={item.amount === 0 ? '' : item.amount}
                           min={0} step="0.01" placeholder="0.00"
                           onChange={e => updateItem(item.id, 'amount', parseFloat(e.target.value) || 0)} />
                       </div>
-                      <div className="col-span-1 flex justify-end pb-1">
+                      <div className="col-span-1 sm:col-span-1 flex justify-end pb-1">
                         {data.lineItems.length > 1 && (
                           <button onClick={() => removeItem(item.id)} className="text-red-400 hover:text-red-300">
                             <Trash2 className="w-4 h-4" />
@@ -839,7 +839,7 @@ const InvoiceGeneratorPage: React.FC = () => {
           </div>
 
           {/* ═══ RIGHT: LIVE PREVIEW ══════════════════════════════════════════ */}
-          <div className="lg:col-span-3 sticky top-24">
+          <div className="hidden lg:block lg:col-span-3 sticky top-24">
             <div className={`rounded-xl border overflow-hidden ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
               {/* Preview toolbar */}
               <div className={`px-4 py-3 flex items-center justify-between border-b ${isDark ? 'bg-dark-300 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>

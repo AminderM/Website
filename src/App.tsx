@@ -33,7 +33,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <Navbar />
       <div className="flex flex-1">
         <AppSidebar />
-        <main className={`flex-grow transition-all duration-300 pt-20 ${isAuthenticated ? 'ml-72' : ''}`}>
+        <main className={`flex-grow transition-all duration-300 pt-20 ${isAuthenticated ? 'md:ml-72' : ''}`}>
           {children}
         </main>
       </div>
