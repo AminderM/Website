@@ -27,7 +27,7 @@ interface HistoryItem {
 
 const AppSidebar: React.FC = () => {
   const { theme } = useTheme();
-  const { token, isAuthenticated } = useAuth();
+  const { token, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const isDark = theme === 'dark';
@@ -671,6 +671,52 @@ ${body}
             </div>
           )}
         </div>
+
+        {/* ── User profile footer ── */}
+        {!isCollapsed && (
+          <div className={`border-t p-3 ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+            <button
+              onClick={() => { navigate('/account'); setIsMobileOpen(false); }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                isDark ? 'hover:bg-dark-400 text-gray-300' : 'hover:bg-gray-100 text-gray-700'
+              }`}
+            >
+              <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                {(user?.full_name || user?.name || user?.email || '?')[0].toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <p className={`text-xs font-semibold truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  {user?.full_name || user?.name || 'My Account'}
+                </p>
+                <p className={`text-xs truncate ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                  {user?.tier === 'paid' ? 'Pro Plan' : 'Free Plan'}
+                </p>
+              </div>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                user?.tier === 'paid'
+                  ? 'bg-primary-600/20 text-primary-400'
+                  : isDark ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-500'
+              }`}>
+                {user?.tier === 'paid' ? 'Pro' : 'Free'}
+              </span>
+            </button>
+          </div>
+        )}
+        {isCollapsed && (
+          <div className={`border-t p-2 ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+            <button
+              onClick={() => navigate('/account')}
+              className={`w-full flex items-center justify-center p-2 rounded-lg transition-colors ${
+                isDark ? 'hover:bg-dark-400' : 'hover:bg-gray-100'
+              }`}
+              title="Account Settings"
+            >
+              <div className="w-7 h-7 rounded-full bg-primary-600 flex items-center justify-center text-white text-xs font-bold">
+                {(user?.full_name || user?.name || user?.email || '?')[0].toUpperCase()}
+              </div>
+            </button>
+          </div>
+        )}
       </div>
     </aside>
     </>
