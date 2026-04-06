@@ -1,0 +1,609 @@
+import React, { useState, useEffect } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import {
+  User,
+  CreditCard,
+  Lock,
+  Settings,
+  Trash2,
+  CheckCircle,
+  Zap,
+  Star,
+  Shield,
+  Save,
+  Eye,
+  EyeOff,
+  AlertTriangle,
+} from 'lucide-react';
+
+type Tab = 'profile' | 'subscription' | 'payment' | 'security' | 'account';
+
+const AccountPage: React.FC = () => {
+  const { theme } = useTheme();
+  const { user, token, logout } = useAuth();
+  const navigate = useNavigate();
+  const isDark = theme === 'dark';
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
+
+  const [activeTab, setActiveTab] = useState<Tab>('profile');
+
+  // Profile state
+  const [profileName, setProfileName] = useState(user?.full_name || user?.name || '');
+  const [profilePhone, setProfilePhone] = useState('');
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileMsg, setProfileMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Subscription
+  const [subscription, setSubscription] = useState<any>(null);
+
+  // Password change
+  const [pwCurrent, setPwCurrent] = useState('');
+  const [pwNew, setPwNew] = useState('');
+  const [pwConfirm, setPwConfirm] = useState('');
+  const [pwShowCurrent, setPwShowCurrent] = useState(false);
+  const [pwShowNew, setPwShowNew] = useState(false);
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwMsg, setPwMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Delete account
+  const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const isPro = user?.tier === 'paid';
+  const isOAuth = user?.auth_provider === 'google' || user?.auth_provider === 'apple';
+
+  useEffect(() => {
+    fetchProfile();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'subscription' && !subscription) fetchSubscription();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  const fetchProfile = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/user/profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setProfileName(data.full_name || data.name || user?.full_name || '');
+        setProfilePhone(data.phone || '');
+      }
+    } catch {}
+  };
+
+  const fetchSubscription = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/user/subscription`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) setSubscription(await res.json());
+    } catch {}
+  };
+
+  const saveProfile = async () => {
+    if (!token) return;
+    setProfileSaving(true);
+    setProfileMsg(null);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/user/profile`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ full_name: profileName, phone: profilePhone }),
+      });
+      if (res.ok) {
+        setProfileMsg({ type: 'success', text: 'Profile updated successfully.' });
+      } else {
+        const d = await res.json().catch(() => ({}));
+        setProfileMsg({ type: 'error', text: d.error || d.detail || 'Failed to save.' });
+      }
+    } catch {
+      setProfileMsg({ type: 'error', text: 'Network error. Please try again.' });
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
+  const changePassword = async () => {
+    if (pwNew !== pwConfirm) {
+      setPwMsg({ type: 'error', text: 'New passwords do not match.' });
+      return;
+    }
+    if (pwNew.length < 8) {
+      setPwMsg({ type: 'error', text: 'New password must be at least 8 characters.' });
+      return;
+    }
+    if (!token) return;
+    setPwSaving(true);
+    setPwMsg(null);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/user/password`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ current_password: pwCurrent, new_password: pwNew }),
+      });
+      if (res.ok) {
+        setPwMsg({ type: 'success', text: 'Password updated successfully.' });
+        setPwCurrent('');
+        setPwNew('');
+        setPwConfirm('');
+      } else {
+        const d = await res.json().catch(() => ({}));
+        setPwMsg({ type: 'error', text: d.error || d.detail || 'Failed to update password.' });
+      }
+    } catch {
+      setPwMsg({ type: 'error', text: 'Network error. Please try again.' });
+    } finally {
+      setPwSaving(false);
+    }
+  };
+
+  const deleteAccount = async () => {
+    if (!token) return;
+    setDeleteLoading(true);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/user/account`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        logout();
+        navigate('/');
+      }
+    } catch {}
+    finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const initials = (user?.full_name || user?.name || user?.email || '?')
+    .split(' ')
+    .map((p: string) => p[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+
+  const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
+    { id: 'profile',      label: 'Profile',      icon: <User className="w-4 h-4" /> },
+    { id: 'subscription', label: 'Subscription', icon: <Star className="w-4 h-4" /> },
+    { id: 'payment',      label: 'Payment',      icon: <CreditCard className="w-4 h-4" /> },
+    { id: 'security',     label: 'Security',     icon: <Lock className="w-4 h-4" /> },
+    { id: 'account',      label: 'Account',      icon: <Settings className="w-4 h-4" /> },
+  ];
+
+  const card = `rounded-xl border p-6 ${isDark ? 'bg-dark-300 border-gray-700' : 'bg-white border-gray-200'}`;
+  const inp = `w-full px-3 py-2 rounded-lg border text-sm outline-none transition-colors ${
+    isDark
+      ? 'bg-dark-400 border-gray-600 text-white placeholder-gray-500 focus:border-primary-500'
+      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-primary-500'
+  }`;
+  const lbl = `block text-xs font-semibold uppercase tracking-wider mb-1.5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`;
+
+  const planRows: [string, boolean | string, boolean | string][] = [
+    ['Fuel Surcharge Calculator', true,      true],
+    ['IFTA Tax Calculator',       true,      true],
+    ['BOL Generator',             false,     true],
+    ['Invoice Generator',         false,     true],
+    ['PDF to Word',               false,     true],
+    ['Word to PDF',               false,     true],
+    ['e-Signature',               false,     true],
+    ['History (records)',         '30',      'Unlimited'],
+    ['PDF Downloads',             false,     true],
+    ['Priority Support',          false,     true],
+  ];
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+
+      {/* Page header */}
+      <div className="flex items-center gap-4 mb-8">
+        <div className="w-14 h-14 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold text-lg shrink-0">
+          {initials}
+        </div>
+        <div className="min-w-0">
+          <h1 className={`text-2xl font-bold truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {user?.full_name || user?.name || 'My Account'}
+          </h1>
+          <p className={`text-sm truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{user?.email}</p>
+        </div>
+        <span className={`ml-auto shrink-0 text-xs font-bold px-3 py-1 rounded-full ${
+          isPro
+            ? 'bg-primary-600/20 text-primary-400'
+            : isDark ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-500'
+        }`}>
+          {isPro ? 'Pro' : 'Free'}
+        </span>
+      </div>
+
+      <div className="flex flex-col md:flex-row gap-6">
+
+        {/* Tab sidebar */}
+        <aside className="md:w-48 shrink-0">
+          <div className={`rounded-xl border overflow-hidden ${isDark ? 'bg-dark-300 border-gray-700' : 'bg-white border-gray-200'}`}>
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-left transition-colors border-b last:border-b-0 ${
+                  isDark ? 'border-gray-700' : 'border-gray-100'
+                } ${
+                  activeTab === tab.id
+                    ? isDark
+                      ? 'bg-primary-600/20 text-primary-400'
+                      : 'bg-primary-50 text-primary-700'
+                    : isDark
+                    ? 'text-gray-300 hover:bg-dark-400'
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </aside>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+
+          {/* ── PROFILE ── */}
+          {activeTab === 'profile' && (
+            <div className={card}>
+              <h2 className={`text-base font-bold mb-5 ${isDark ? 'text-white' : 'text-gray-900'}`}>Profile Information</h2>
+              <div className="space-y-4">
+                <div>
+                  <label className={lbl}>Full Name</label>
+                  <input
+                    className={inp}
+                    value={profileName}
+                    onChange={e => setProfileName(e.target.value)}
+                    placeholder="Your name"
+                  />
+                </div>
+                <div>
+                  <label className={lbl}>Email Address</label>
+                  <input
+                    className={`${inp} opacity-60 cursor-not-allowed`}
+                    value={user?.email || ''}
+                    readOnly
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Email cannot be changed.</p>
+                </div>
+                <div>
+                  <label className={lbl}>Phone</label>
+                  <input
+                    className={inp}
+                    value={profilePhone}
+                    onChange={e => setProfilePhone(e.target.value)}
+                    placeholder="+1 (555) 000-0000"
+                  />
+                </div>
+                <div>
+                  <label className={lbl}>Member Since</label>
+                  <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                    {user?.created_at
+                      ? new Date(user.created_at).toLocaleDateString('en-US', {
+                          year: 'numeric', month: 'long', day: 'numeric',
+                        })
+                      : '—'}
+                  </p>
+                </div>
+                {user?.auth_provider && (
+                  <div>
+                    <label className={lbl}>Sign-in Method</label>
+                    <span className={`inline-block text-xs font-semibold px-2.5 py-1 rounded-full ${
+                      isDark ? 'bg-dark-400 text-gray-300' : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      {user.auth_provider === 'google'
+                        ? 'Google'
+                        : user.auth_provider === 'apple'
+                        ? 'Apple'
+                        : 'Email / Password'}
+                    </span>
+                  </div>
+                )}
+                {profileMsg && (
+                  <p className={`text-sm font-medium ${
+                    profileMsg.type === 'success' ? 'text-green-500' : 'text-red-500'
+                  }`}>
+                    {profileMsg.text}
+                  </p>
+                )}
+                <button
+                  onClick={saveProfile}
+                  disabled={profileSaving}
+                  className="btn-primary flex items-center gap-2 text-sm disabled:opacity-60"
+                >
+                  <Save className="w-4 h-4" />
+                  {profileSaving ? 'Saving…' : 'Save Changes'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── SUBSCRIPTION ── */}
+          {activeTab === 'subscription' && (
+            <div className="space-y-4">
+
+              {/* Current plan card */}
+              <div className={card}>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h2 className={`text-base font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Current Plan</h2>
+                    <div className={`text-3xl font-black ${
+                      isPro ? 'text-primary-400' : isDark ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      {isPro ? 'Pro' : 'Free'}
+                    </div>
+                    <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                      {isPro
+                        ? `${subscription?.billing_cycle === 'annual' ? 'Annual billing' : 'Monthly billing'}${
+                            subscription?.renewal_date
+                              ? ` · Renews ${new Date(subscription.renewal_date).toLocaleDateString()}`
+                              : ''
+                          }`
+                        : 'Upgrade to Pro to unlock all 7 tools.'}
+                    </p>
+                  </div>
+                  {isPro && (
+                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-green-500/20 text-green-400">
+                      Active
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Plan comparison table */}
+              <div className={`rounded-xl border overflow-hidden ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                <div className={`grid grid-cols-3 border-b ${isDark ? 'bg-dark-400 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
+                  <div className={`py-3 px-4 text-xs font-bold uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Feature</div>
+                  <div className={`py-3 text-center text-xs font-bold uppercase tracking-wider border-l ${
+                    isDark ? 'border-gray-700 text-gray-300' : 'border-gray-200 text-gray-600'
+                  }`}>
+                    Free
+                  </div>
+                  <div className={`py-3 text-center text-xs font-bold uppercase tracking-wider border-l ${
+                    isDark ? 'border-gray-700 text-primary-400' : 'border-gray-200 text-primary-600'
+                  }`}>
+                    Pro
+                  </div>
+                </div>
+                {planRows.map(([feature, free, pro], i) => (
+                  <div
+                    key={i}
+                    className={`grid grid-cols-3 border-b last:border-b-0 ${
+                      isDark ? 'border-gray-700' : 'border-gray-200'
+                    } ${i % 2 === 0
+                      ? isDark ? 'bg-dark-300' : 'bg-white'
+                      : isDark ? 'bg-dark-400' : 'bg-gray-50'
+                    }`}
+                  >
+                    <div className={`py-3 px-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{feature}</div>
+                    <div className={`py-3 text-sm text-center border-l flex items-center justify-center ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                      {typeof free === 'boolean'
+                        ? free
+                          ? <CheckCircle className="w-4 h-4 text-green-500" />
+                          : <span className="text-gray-400">—</span>
+                        : <span className={`text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{free}</span>}
+                    </div>
+                    <div className={`py-3 text-sm text-center border-l flex items-center justify-center ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                      {typeof pro === 'boolean'
+                        ? pro
+                          ? <CheckCircle className="w-4 h-4 text-primary-500" />
+                          : <span className="text-gray-400">—</span>
+                        : <span className="text-xs font-medium text-primary-500">{pro}</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Upgrade CTA (Free users only) */}
+              {!isPro && (
+                <div className={`rounded-xl border p-5 ${
+                  isDark ? 'bg-primary-900/20 border-primary-700/50' : 'bg-primary-50 border-primary-200'
+                }`}>
+                  <div className="flex items-start gap-3">
+                    <Zap className="w-5 h-5 text-primary-500 shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className={`font-bold text-sm mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>Upgrade to Pro</p>
+                      <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                        Get access to all 7 tools, unlimited history, and PDF downloads.
+                      </p>
+                    </div>
+                    <button
+                      className="btn-primary text-sm shrink-0"
+                      onClick={() => setActiveTab('payment')}
+                    >
+                      Upgrade →
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── PAYMENT ── */}
+          {activeTab === 'payment' && (
+            <div className={card}>
+              <h2 className={`text-base font-bold mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>Payment Methods</h2>
+              <p className={`text-sm mb-6 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                Manage cards and billing for your Pro subscription.
+              </p>
+
+              {/* Stripe coming soon notice */}
+              <div className={`flex items-start gap-3 p-4 rounded-lg border mb-6 ${
+                isDark ? 'bg-dark-400 border-gray-600' : 'bg-gray-50 border-gray-200'
+              }`}>
+                <CreditCard className={`w-5 h-5 shrink-0 mt-0.5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+                <div>
+                  <p className={`text-sm font-semibold ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
+                    Stripe integration coming soon
+                  </p>
+                  <p className={`text-xs mt-0.5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                    Secure card management and subscription billing via Stripe will be available shortly.
+                  </p>
+                </div>
+              </div>
+
+              {/* Placeholder card */}
+              <div className="space-y-3">
+                <div className={`flex items-center gap-4 p-4 rounded-lg border opacity-40 cursor-not-allowed select-none ${
+                  isDark ? 'border-gray-700 bg-dark-400' : 'border-gray-200 bg-gray-50'
+                }`}>
+                  <CreditCard className="w-5 h-5 text-gray-400" />
+                  <div className="flex-1">
+                    <p className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                      •••• •••• •••• 4242
+                    </p>
+                    <p className="text-xs text-gray-500">Visa · Expires 12/27</p>
+                  </div>
+                  <span className="text-xs bg-green-500/20 text-green-400 font-semibold px-2 py-0.5 rounded-full">
+                    Default
+                  </span>
+                </div>
+                <button
+                  disabled
+                  className="w-full py-2.5 rounded-lg border-2 border-dashed text-sm font-medium opacity-40 cursor-not-allowed flex items-center justify-center gap-2 text-gray-400 border-gray-400"
+                >
+                  + Add Payment Method
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── SECURITY ── */}
+          {activeTab === 'security' && (
+            <div className={card}>
+              <h2 className={`text-base font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Security</h2>
+
+              {isOAuth ? (
+                <div className={`flex items-start gap-3 p-4 rounded-lg border mt-4 ${
+                  isDark ? 'bg-dark-400 border-gray-700' : 'bg-blue-50 border-blue-200'
+                }`}>
+                  <Shield className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
+                  <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Your account is secured through{' '}
+                    <strong>{user?.auth_provider === 'google' ? 'Google' : 'Apple'}</strong> sign-in.
+                    Password management is handled by your provider.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4 mt-4">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    Change your account password below.
+                  </p>
+                  <div>
+                    <label className={lbl}>Current Password</label>
+                    <div className="relative">
+                      <input
+                        type={pwShowCurrent ? 'text' : 'password'}
+                        className={`${inp} pr-10`}
+                        value={pwCurrent}
+                        onChange={e => setPwCurrent(e.target.value)}
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setPwShowCurrent(v => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-500"
+                      >
+                        {pwShowCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className={lbl}>New Password</label>
+                    <div className="relative">
+                      <input
+                        type={pwShowNew ? 'text' : 'password'}
+                        className={`${inp} pr-10`}
+                        value={pwNew}
+                        onChange={e => setPwNew(e.target.value)}
+                        placeholder="Min. 8 characters"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setPwShowNew(v => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-500"
+                      >
+                        {pwShowNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className={lbl}>Confirm New Password</label>
+                    <input
+                      type="password"
+                      className={inp}
+                      value={pwConfirm}
+                      onChange={e => setPwConfirm(e.target.value)}
+                      placeholder="••••••••"
+                    />
+                  </div>
+                  {pwMsg && (
+                    <p className={`text-sm font-medium ${pwMsg.type === 'success' ? 'text-green-500' : 'text-red-500'}`}>
+                      {pwMsg.text}
+                    </p>
+                  )}
+                  <button
+                    onClick={changePassword}
+                    disabled={pwSaving || !pwCurrent || !pwNew || !pwConfirm}
+                    className="btn-primary text-sm disabled:opacity-60"
+                  >
+                    {pwSaving ? 'Updating…' : 'Update Password'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── ACCOUNT ── */}
+          {activeTab === 'account' && (
+            <div className={`rounded-xl border p-6 ${
+              isDark ? 'bg-dark-300 border-red-900/40' : 'bg-white border-red-200'
+            }`}>
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle className="w-5 h-5 text-red-500" />
+                <h2 className={`text-base font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Danger Zone</h2>
+              </div>
+              <p className={`text-sm mb-6 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                Permanently delete your account and all associated data. This action cannot be undone.
+              </p>
+              <div className="space-y-3">
+                <div>
+                  <label className={lbl}>
+                    Type <span className="font-black text-red-500">DELETE</span> to confirm
+                  </label>
+                  <input
+                    className={inp}
+                    value={deleteConfirm}
+                    onChange={e => setDeleteConfirm(e.target.value)}
+                    placeholder="DELETE"
+                  />
+                </div>
+                <button
+                  onClick={deleteAccount}
+                  disabled={deleteConfirm !== 'DELETE' || deleteLoading}
+                  className="px-5 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  {deleteLoading ? 'Deleting…' : 'Delete My Account'}
+                </button>
+              </div>
+            </div>
+          )}
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AccountPage;

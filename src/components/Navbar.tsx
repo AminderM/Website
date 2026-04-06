@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Truck, LogOut } from 'lucide-react';
+import { Menu, X, Truck, LogOut, UserCircle } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -90,18 +90,21 @@ const Navbar: React.FC = () => {
               <div className="relative">
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-sm transition-colors ${
                     isDark
                       ? 'bg-dark-300 text-white hover:bg-dark-200'
                       : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
                   }`}
                   data-testid="user-menu-btn"
                 >
-                  {user?.email || 'Account'}
+                  <div className="w-6 h-6 rounded-full bg-primary-600 flex items-center justify-center text-white text-xs font-bold">
+                    {(user?.full_name || user?.name || user?.email || '?')[0].toUpperCase()}
+                  </div>
+                  <span className="hidden lg:block max-w-[120px] truncate">{user?.full_name || user?.name || user?.email}</span>
                 </button>
                 {isUserMenuOpen && (
                   <div
-                    className={`absolute right-0 mt-2 w-48 rounded-lg shadow-lg border z-50 ${
+                    className={`absolute right-0 mt-2 w-52 rounded-lg shadow-lg border z-50 ${
                       isDark
                         ? 'bg-dark-300 border-gray-700'
                         : 'bg-white border-gray-200'
@@ -109,22 +112,41 @@ const Navbar: React.FC = () => {
                   >
                     <div className={`px-4 py-3 border-b ${isDark ? 'border-gray-700' : 'border-gray-100'}`}>
                       <p className="text-xs text-gray-500">Signed in as</p>
-                      <p className="text-sm font-medium">{user?.email}</p>
+                      <p className="text-sm font-medium truncate">{user?.email}</p>
+                      <span className={`inline-block mt-1 text-xs font-bold px-2 py-0.5 rounded-full ${
+                        user?.tier === 'paid'
+                          ? 'bg-primary-600/20 text-primary-400'
+                          : isDark ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        {user?.tier === 'paid' ? 'Pro' : 'Free'}
+                      </span>
                     </div>
                     <button
-                      onClick={() => {
-                        logout();
-                        setIsUserMenuOpen(false);
-                        navigate('/');
-                      }}
-                      className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:opacity-75 transition ${
-                        isDark ? 'text-gray-300' : 'text-gray-700'
+                      onClick={() => { navigate('/account'); setIsUserMenuOpen(false); }}
+                      className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 transition-colors ${
+                        isDark ? 'text-gray-300 hover:bg-dark-400' : 'text-gray-700 hover:bg-gray-50'
                       }`}
-                      data-testid="logout-btn"
+                      data-testid="account-settings-btn"
                     >
-                      <LogOut className="w-4 h-4" />
-                      Sign Out
+                      <UserCircle className="w-4 h-4" />
+                      Account Settings
                     </button>
+                    <div className={`border-t ${isDark ? 'border-gray-700' : 'border-gray-100'}`}>
+                      <button
+                        onClick={() => {
+                          logout();
+                          setIsUserMenuOpen(false);
+                          navigate('/');
+                        }}
+                        className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 transition-colors ${
+                          isDark ? 'text-red-400 hover:bg-dark-400' : 'text-red-600 hover:bg-red-50'
+                        }`}
+                        data-testid="logout-btn"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Sign Out
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -198,17 +220,27 @@ const Navbar: React.FC = () => {
             </Link>
           ))}
           {isAuthenticated ? (
-            <button
-              onClick={() => {
-                logout();
-                setIsMobileMenuOpen(false);
-                navigate('/');
-              }}
-              className="block w-full text-left px-4 py-2 text-base font-medium text-red-600 hover:text-red-500 transition-colors mt-4 border-t pt-4"
-              data-testid="mobile-logout-btn"
-            >
-              Sign Out
-            </button>
+            <div className={`mt-4 border-t pt-4 space-y-2 ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+              <button
+                onClick={() => { navigate('/account'); setIsMobileMenuOpen(false); }}
+                className={`block w-full text-left px-4 py-2 text-base font-medium transition-colors ${
+                  isDark ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
+                }`}
+              >
+                Account Settings
+              </button>
+              <button
+                onClick={() => {
+                  logout();
+                  setIsMobileMenuOpen(false);
+                  navigate('/');
+                }}
+                className="block w-full text-left px-4 py-2 text-base font-medium text-red-600 hover:text-red-500 transition-colors"
+                data-testid="mobile-logout-btn"
+              >
+                Sign Out
+              </button>
+            </div>
           ) : (
             <>
               <Link
