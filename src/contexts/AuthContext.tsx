@@ -74,7 +74,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setError(null);
     setIsLoading(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/auth/signup`, {
+      const response = await fetch(`${BACKEND_URL}/api/auth/web/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -139,7 +139,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setError(null);
     setIsLoading(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
+      const response = await fetch(`${BACKEND_URL}/api/auth/web/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -168,7 +168,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setError(null);
     setIsLoading(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/auth/google`, {
+      const response = await fetch(`${BACKEND_URL}/api/auth/web/google`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id_token: idToken }),
@@ -194,7 +194,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       const body: Record<string, string> = { id_token: idToken };
       if (fullName) body.full_name = fullName;
-      const response = await fetch(`${BACKEND_URL}/api/auth/apple`, {
+      const response = await fetch(`${BACKEND_URL}/api/auth/web/apple`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
