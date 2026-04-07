@@ -100,7 +100,7 @@ const Navbar: React.FC = () => {
                   <div className="w-6 h-6 rounded-full bg-primary-600 flex items-center justify-center text-white text-xs font-bold">
                     {(user?.full_name || user?.name || user?.email || '?')[0].toUpperCase()}
                   </div>
-                  <span className="hidden lg:block max-w-[120px] truncate">{user?.full_name || user?.name || user?.email}</span>
+                  <span className="hidden lg:block">My Profile</span>
                 </button>
                 {isUserMenuOpen && (
                   <div

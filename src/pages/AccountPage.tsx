@@ -181,22 +181,22 @@ const AccountPage: React.FC = () => {
   const card = `rounded-xl border p-6 ${isDark ? 'bg-dark-300 border-gray-700' : 'bg-white border-gray-200'}`;
   const inp = `w-full px-3 py-2 rounded-lg border text-sm outline-none transition-colors ${
     isDark
-      ? 'bg-dark-400 border-gray-600 text-white placeholder-gray-500 focus:border-primary-500'
+      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-500 focus:border-primary-500'
       : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-primary-500'
   }`;
   const lbl = `block text-xs font-semibold uppercase tracking-wider mb-1.5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`;
 
   const planRows: [string, boolean | string, boolean | string][] = [
-    ['Fuel Surcharge Calculator', true,      true],
-    ['IFTA Tax Calculator',       true,      true],
-    ['BOL Generator',             false,     true],
-    ['Invoice Generator',         false,     true],
-    ['PDF to Word',               false,     true],
-    ['Word to PDF',               false,     true],
-    ['e-Signature',               false,     true],
-    ['History (records)',         '30',      'Unlimited'],
-    ['PDF Downloads',             false,     true],
-    ['Priority Support',          false,     true],
+    ['Fuel Surcharge Calculator', true,         true],
+    ['IFTA Tax Calculator',       true,         true],
+    ['BOL Generator',             '10 / month', 'Unlimited'],
+    ['Invoice Generator',         false,         true],
+    ['PDF to Word',               false,         true],
+    ['Word to PDF',               false,         true],
+    ['e-Signature',               false,         true],
+    ['History',                   false,         'Unlimited'],
+    ['PDF Downloads',             false,         true],
+    ['Priority Support',          false,         true],
   ];
 
   return (
@@ -414,7 +414,7 @@ const AccountPage: React.FC = () => {
                     <div className="flex-1 min-w-0">
                       <p className={`font-bold text-sm mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>Upgrade to Pro</p>
                       <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                        Get access to all 7 tools, unlimited history, and PDF downloads.
+                        Unlock Invoice Generator, PDF to Word, Word to PDF, e-Signature, unlimited BOL downloads, history, and priority support.
                       </p>
                     </div>
                     <button
