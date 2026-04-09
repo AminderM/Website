@@ -6,18 +6,26 @@ export interface User {
   auth_provider?: string;
   email_verified?: boolean;
   role?: string;
-  tier?: 'free' | 'paid';
+  tier?: 'free' | 'pro' | 'enterprise' | 'paid';
   created_at?: string;
   registration_status?: string;
   allowed_workspaces?: string[];
 }
 
-/** Returns true for any paying/admin role — false for free 'viewer' accounts */
+/** Returns true for any paying tier (pro, enterprise, or legacy 'paid') */
 export const isPaidUser = (user: User | null): boolean => {
   if (!user) return false;
-  if (user.tier === 'paid') return true;
-  const freeRoles = ['viewer'];
-  return !freeRoles.includes(user.role ?? 'viewer');
+  return user.tier === 'pro' || user.tier === 'enterprise' || user.tier === 'paid';
+};
+
+export const isProUser = (user: User | null): boolean => {
+  if (!user) return false;
+  return user.tier === 'pro' || user.tier === 'enterprise' || user.tier === 'paid';
+};
+
+export const isEnterpriseUser = (user: User | null): boolean => {
+  if (!user) return false;
+  return user.tier === 'enterprise';
 };
 
 export interface SignupData {

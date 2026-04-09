@@ -23,6 +23,8 @@ import PdfToWordPage from './pages/PdfToWordPage';
 import WordToPdfPage from './pages/WordToPdfPage';
 import ESignaturePage from './pages/ESignaturePage';
 import AccountPage from './pages/AccountPage';
+import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
+import CheckoutCancelPage from './pages/CheckoutCancelPage';
 import './index.css';
 
 // Layout wrapper to handle sidebar spacing
@@ -34,7 +36,8 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <Navbar />
       <div className="flex flex-1">
         <AppSidebar />
-        <main className={`flex-grow transition-all duration-300 pt-20 ${isAuthenticated ? 'md:ml-72' : ''}`}>
+        {isAuthenticated && <div className="hidden md:block w-72 shrink-0 flex-none" />}
+        <main className="flex-grow min-w-0 transition-all duration-300 pt-20">
           {children}
         </main>
       </div>
@@ -67,6 +70,8 @@ function App() {
               <Route path="/word-to-pdf" element={<ProtectedRoute component={WordToPdfPage} />} />
               <Route path="/e-signature" element={<ProtectedRoute component={ESignaturePage} />} />
               <Route path="/account" element={<ProtectedRoute component={AccountPage} />} />
+              <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
+              <Route path="/checkout/cancel" element={<CheckoutCancelPage />} />
               {/* Redirect old tools route */}
               <Route path="/tools" element={<Navigate to="/fuel-surcharge" replace />} />
             </Routes>

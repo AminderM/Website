@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
   ArrowRight,
   Check,
@@ -11,7 +12,6 @@ import {
   DollarSign,
   Shield,
   Zap,
-  MessageSquare,
   Settings,
   Brain,
   Smartphone,
@@ -24,13 +24,50 @@ import {
   FileType,
   Receipt,
   ChevronRight,
+  X,
+  Star,
 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
+import { isPaidUser, isEnterpriseUser } from '../types/auth';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
 const ProductPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'carriers' | 'brokers' | 'dispatchers'>('carriers');
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const { user, token } = useAuth();
+  const navigate = useNavigate();
+
+  const handleUpgrade = async (priceEnvKey: string) => {
+    if (!token) {
+      navigate('/signup');
+      return;
+    }
+    const priceId = process.env[priceEnvKey] || '';
+    if (!priceId) {
+      alert('This plan is not yet configured. Please contact support.');
+      return;
+    }
+    setCheckoutLoading(priceEnvKey);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/stripe/create-checkout-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ price_id: priceId, billing_cycle: billingCycle }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Failed to start checkout');
+      window.location.href = data.url;
+    } catch (err: any) {
+      alert(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setCheckoutLoading(null);
+    }
+  };
 
   // ── TMS audience tabs ──────────────────────────────────────────────────────
   const audienceTabs = {
@@ -394,8 +431,233 @@ const ProductPage: React.FC = () => {
       </section>
 
       {/* ════════════════════════════════════════════════════════════════════
-          BOTTOM CTA
+          PRICING TABLE
       ════════════════════════════════════════════════════════════════════ */}
+      <section id="pricing" className={`section ${isDark ? 'bg-dark-50' : 'bg-gray-50'}`}>
+        <div className="container-custom">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            viewport={{ once: true }}
+            className="text-center max-w-2xl mx-auto mb-12"
+          >
+            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider mb-4 ${
+              isDark ? 'bg-primary-600/10 text-primary-400 border border-primary-600/20' : 'bg-primary-50 text-primary-600 border border-primary-200'
+            }`}>
+              Pricing
+            </div>
+            <h2 className={`text-3xl md:text-4xl font-bold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              Simple, Transparent Pricing
+            </h2>
+            <p className={`mb-6 ${isDark ? 'text-zinc-400' : 'text-gray-600'}`}>
+              Start free. Upgrade when you need more.
+            </p>
+            {/* Billing toggle */}
+            <div className={`inline-flex items-center rounded-xl p-1 border ${isDark ? 'bg-dark-300 border-gray-700' : 'bg-white border-gray-200'}`}>
+              <button
+                onClick={() => setBillingCycle('monthly')}
+                className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
+                  billingCycle === 'monthly'
+                    ? 'bg-primary-600 text-white'
+                    : isDark ? 'text-zinc-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setBillingCycle('annual')}
+                className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 ${
+                  billingCycle === 'annual'
+                    ? 'bg-primary-600 text-white'
+                    : isDark ? 'text-zinc-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'
+                }`}
+              >
+                Annual
+                <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${
+                  billingCycle === 'annual' ? 'bg-white/20 text-white' : 'bg-green-500/20 text-green-500'
+                }`}>
+                  Save 20%
+                </span>
+              </button>
+            </div>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {[
+              {
+                name: 'Free',
+                price: { monthly: '$0', annual: '$0' },
+                subtext: 'No credit card required',
+                badge: null,
+                features: [
+                  { label: 'Fuel Surcharge Calculator', included: true },
+                  { label: 'IFTA Tax Calculator', included: true },
+                  { label: 'BOL Generator', included: true, note: '10 / month' },
+                  { label: 'Invoice Generator', included: false },
+                  { label: 'PDF to Word', included: false },
+                  { label: 'Word to PDF', included: false },
+                  { label: 'e-Signature', included: false },
+                  { label: 'History & PDF Downloads', included: false },
+                  { label: 'Priority Support', included: false },
+                ],
+                cta: { label: 'Get Started Free', action: () => navigate('/signup'), priceEnvKey: null },
+                highlight: false,
+                isCurrentPlan: user?.tier === 'free' || !user?.tier,
+              },
+              {
+                name: 'Pro',
+                price: { monthly: '$29', annual: '$23' },
+                subtext: billingCycle === 'annual' ? 'Billed $279/year' : 'Billed monthly',
+                badge: 'Most Popular',
+                features: [
+                  { label: 'Fuel Surcharge Calculator', included: true },
+                  { label: 'IFTA Tax Calculator', included: true },
+                  { label: 'BOL Generator', included: true, note: 'Unlimited' },
+                  { label: 'Invoice Generator', included: true },
+                  { label: 'PDF to Word', included: true },
+                  { label: 'Word to PDF', included: true },
+                  { label: 'e-Signature', included: true },
+                  { label: 'History & PDF Downloads', included: true },
+                  { label: 'Priority Support', included: false },
+                ],
+                cta: {
+                  label: 'Upgrade to Pro',
+                  action: null,
+                  priceEnvKey: billingCycle === 'annual'
+                    ? 'REACT_APP_STRIPE_PRO_ANNUAL_PRICE_ID'
+                    : 'REACT_APP_STRIPE_PRO_MONTHLY_PRICE_ID',
+                },
+                highlight: true,
+                isCurrentPlan: isPaidUser(user) && !isEnterpriseUser(user),
+              },
+              {
+                name: 'Enterprise',
+                price: { monthly: '$99', annual: '$79' },
+                subtext: billingCycle === 'annual' ? 'Billed $950/year' : 'Billed monthly',
+                badge: null,
+                features: [
+                  { label: 'Fuel Surcharge Calculator', included: true },
+                  { label: 'IFTA Tax Calculator', included: true },
+                  { label: 'BOL Generator', included: true, note: 'Unlimited' },
+                  { label: 'Invoice Generator', included: true },
+                  { label: 'PDF to Word', included: true },
+                  { label: 'Word to PDF', included: true },
+                  { label: 'e-Signature', included: true },
+                  { label: 'History & PDF Downloads', included: true },
+                  { label: 'Priority Support', included: true },
+                ],
+                cta: {
+                  label: 'Upgrade to Enterprise',
+                  action: null,
+                  priceEnvKey: billingCycle === 'annual'
+                    ? 'REACT_APP_STRIPE_ENTERPRISE_ANNUAL_PRICE_ID'
+                    : 'REACT_APP_STRIPE_ENTERPRISE_MONTHLY_PRICE_ID',
+                },
+                highlight: false,
+                isCurrentPlan: isEnterpriseUser(user),
+              },
+            ].map((plan, idx) => (
+              <motion.div
+                key={plan.name}
+                initial={{ opacity: 0, y: 28 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.55, delay: idx * 0.1, ease: [0.22, 1, 0.36, 1] }}
+                viewport={{ once: true }}
+                whileHover={{ y: plan.highlight ? -6 : -4, transition: { duration: 0.2 } }}
+                className={`relative rounded-2xl border flex flex-col p-6 transition-all ${
+                  plan.highlight
+                    ? isDark
+                      ? 'bg-primary-900/20 border-primary-600/60'
+                      : 'bg-primary-50 border-primary-400'
+                    : isDark
+                    ? 'bg-dark-300 border-gray-700'
+                    : 'bg-white border-gray-200 shadow-sm'
+                }`}
+              >
+                {plan.badge && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <span className="inline-flex items-center gap-1 bg-primary-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+                      <Star className="w-3 h-3" /> {plan.badge}
+                    </span>
+                  </div>
+                )}
+                <div className="mb-5">
+                  <h3 className={`text-lg font-bold mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>{plan.name}</h3>
+                  <div className="flex items-end gap-1 mb-1">
+                    <span className={`text-4xl font-black ${plan.highlight ? 'text-primary-500' : isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {plan.price[billingCycle]}
+                    </span>
+                    {plan.name !== 'Free' && (
+                      <span className={`text-sm mb-1.5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>/mo</span>
+                    )}
+                  </div>
+                  <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{plan.subtext}</p>
+                </div>
+
+                <ul className="space-y-2.5 flex-1 mb-6">
+                  {plan.features.map((f) => (
+                    <li key={f.label} className="flex items-center gap-2.5">
+                      {f.included ? (
+                        <Check className="w-4 h-4 text-primary-500 shrink-0" />
+                      ) : (
+                        <X className="w-4 h-4 text-gray-400 shrink-0" />
+                      )}
+                      <span className={`text-sm ${f.included ? isDark ? 'text-gray-300' : 'text-gray-700' : 'text-gray-400'}`}>
+                        {f.label}
+                        {f.note && (
+                          <span className={`ml-1 text-xs font-medium ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                            ({f.note})
+                          </span>
+                        )}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                {plan.isCurrentPlan ? (
+                  <div className={`w-full text-center py-2.5 rounded-xl text-sm font-semibold border ${
+                    isDark ? 'border-gray-600 text-gray-400' : 'border-gray-300 text-gray-500'
+                  }`}>
+                    Current Plan
+                  </div>
+                ) : plan.cta.action ? (
+                  <button
+                    onClick={plan.cta.action}
+                    className={`w-full py-2.5 rounded-xl text-sm font-bold transition-colors ${
+                      plan.highlight
+                        ? 'bg-primary-600 hover:bg-primary-700 text-white'
+                        : isDark
+                        ? 'bg-dark-400 hover:bg-dark-500 text-gray-300 border border-gray-600'
+                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200'
+                    }`}
+                  >
+                    {plan.cta.label}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleUpgrade(plan.cta.priceEnvKey!)}
+                    disabled={checkoutLoading === plan.cta.priceEnvKey}
+                    className={`w-full py-2.5 rounded-xl text-sm font-bold transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
+                      plan.highlight
+                        ? 'bg-primary-600 hover:bg-primary-700 text-white'
+                        : isDark
+                        ? 'bg-dark-400 hover:bg-dark-500 text-gray-300 border border-gray-600'
+                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200'
+                    }`}
+                  >
+                    {checkoutLoading === plan.cta.priceEnvKey ? 'Loading…' : plan.cta.label}
+                  </button>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════════════════
+          BOTTOM CTA
+      ═════════════���══════════════════════════════════════════════════════ */}
       <section className={`section ${isDark ? 'bg-dark-50' : 'bg-gray-50'}`}>
         <div className="container-custom">
           <div className="text-center max-w-2xl mx-auto">
