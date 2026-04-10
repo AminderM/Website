@@ -80,16 +80,14 @@ const AccountPage: React.FC = () => {
     }
   };
 
-  const startCheckout = async (priceEnvKey: string) => {
+  const startCheckout = async (plan: string, billing_cycle: string) => {
     if (!token) { navigate('/signup'); return; }
-    const priceId = process.env[priceEnvKey] || '';
-    if (!priceId) { alert('Plan not configured yet. Contact support.'); return; }
-    setCheckoutLoading(priceEnvKey);
+    setCheckoutLoading(`${plan}_${billing_cycle}`);
     try {
       const res = await fetch(`${BACKEND_URL}/api/stripe/create-checkout-session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ price_id: priceId, billing_cycle: pricingCycle }),
+        body: JSON.stringify({ plan, billing_cycle }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Failed to start checkout');
@@ -500,13 +498,9 @@ const AccountPage: React.FC = () => {
                       <button
                         className="btn-primary text-xs w-full disabled:opacity-60"
                         disabled={checkoutLoading !== null}
-                        onClick={() => startCheckout(
-                          pricingCycle === 'annual'
-                            ? 'REACT_APP_STRIPE_PRO_ANNUAL_PRICE_ID'
-                            : 'REACT_APP_STRIPE_PRO_MONTHLY_PRICE_ID'
-                        )}
+                        onClick={() => startCheckout('pro', pricingCycle)}
                       >
-                        {checkoutLoading?.includes('PRO') ? 'Loading…' : 'Upgrade to Pro →'}
+                        {checkoutLoading?.startsWith('pro') ? 'Loading…' : 'Upgrade to Pro →'}
                       </button>
                     </div>
                     <div className={`rounded-xl border p-4 ${isDark ? 'bg-yellow-900/10 border-yellow-700/30' : 'bg-yellow-50 border-yellow-200'}`}>
@@ -522,13 +516,9 @@ const AccountPage: React.FC = () => {
                       <button
                         className="w-full text-xs px-3 py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white font-bold transition-colors disabled:opacity-60"
                         disabled={checkoutLoading !== null}
-                        onClick={() => startCheckout(
-                          pricingCycle === 'annual'
-                            ? 'REACT_APP_STRIPE_ENTERPRISE_ANNUAL_PRICE_ID'
-                            : 'REACT_APP_STRIPE_ENTERPRISE_MONTHLY_PRICE_ID'
-                        )}
+                        onClick={() => startCheckout('enterprise', pricingCycle)}
                       >
-                        {checkoutLoading?.includes('ENTERPRISE') ? 'Loading…' : 'Upgrade to Enterprise →'}
+                        {checkoutLoading?.startsWith('enterprise') ? 'Loading…' : 'Upgrade to Enterprise →'}
                       </button>
                     </div>
                   </div>
