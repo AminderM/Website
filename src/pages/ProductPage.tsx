@@ -42,22 +42,17 @@ const ProductPage: React.FC = () => {
   const { user, token } = useAuth();
   const navigate = useNavigate();
 
-  const handleUpgrade = async (priceEnvKey: string) => {
+  const handleUpgrade = async (plan: string) => {
     if (!token) {
       navigate('/signup');
       return;
     }
-    const priceId = process.env[priceEnvKey] || '';
-    if (!priceId) {
-      alert('This plan is not yet configured. Please contact support.');
-      return;
-    }
-    setCheckoutLoading(priceEnvKey);
+    setCheckoutLoading(plan);
     try {
       const res = await fetch(`${BACKEND_URL}/api/stripe/create-checkout-session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ price_id: priceId, billing_cycle: billingCycle }),
+        body: JSON.stringify({ plan, billing_cycle: billingCycle }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Failed to start checkout');
@@ -521,13 +516,7 @@ const ProductPage: React.FC = () => {
                   { label: 'History & PDF Downloads', included: true },
                   { label: 'Priority Support', included: false },
                 ],
-                cta: {
-                  label: 'Upgrade to Pro',
-                  action: null,
-                  priceEnvKey: billingCycle === 'annual'
-                    ? 'REACT_APP_STRIPE_PRO_ANNUAL_PRICE_ID'
-                    : 'REACT_APP_STRIPE_PRO_MONTHLY_PRICE_ID',
-                },
+                cta: { label: 'Upgrade to Pro', action: null, priceEnvKey: 'pro' },
                 highlight: true,
                 isCurrentPlan: isPaidUser(user) && !isEnterpriseUser(user),
               },
@@ -547,13 +536,7 @@ const ProductPage: React.FC = () => {
                   { label: 'History & PDF Downloads', included: true },
                   { label: 'Priority Support', included: true },
                 ],
-                cta: {
-                  label: 'Upgrade to Enterprise',
-                  action: null,
-                  priceEnvKey: billingCycle === 'annual'
-                    ? 'REACT_APP_STRIPE_ENTERPRISE_ANNUAL_PRICE_ID'
-                    : 'REACT_APP_STRIPE_ENTERPRISE_MONTHLY_PRICE_ID',
-                },
+                cta: { label: 'Upgrade to Enterprise', action: null, priceEnvKey: 'enterprise' },
                 highlight: false,
                 isCurrentPlan: isEnterpriseUser(user),
               },
