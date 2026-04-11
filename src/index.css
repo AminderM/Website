@@ -5,6 +5,10 @@
 @tailwind utilities;
 
 /* Dark theme (default) */
+:root {
+  --page-brightness: 100%;
+}
+
 :root, .dark {
   --primary: #DC2626;
   --primary-dark: #B91C1C;
@@ -50,6 +54,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
   transition: background-color 0.3s ease, color 0.3s ease;
+  filter: brightness(var(--page-brightness));
 }
 
 /* Custom scrollbar - dark */

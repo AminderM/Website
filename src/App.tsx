@@ -1,12 +1,12 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
+import { useTheme } from './contexts/ThemeContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
-import AppSidebar from './components/AppSidebar';
 import HomePage from './pages/HomePage';
 import ProductPage from './pages/ProductPage';
 import UseCasesPage from './pages/UseCasesPage';
@@ -25,22 +25,20 @@ import ESignaturePage from './pages/ESignaturePage';
 import AccountPage from './pages/AccountPage';
 import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
 import CheckoutCancelPage from './pages/CheckoutCancelPage';
+import ToolsDashboardPage from './pages/ToolsDashboardPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import './index.css';
 
-// Layout wrapper to handle sidebar spacing
+// Layout wrapper
 const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
-  
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   return (
-    <div className="min-h-screen bg-dark dark:bg-dark light:bg-white flex flex-col transition-colors duration-300">
+    <div className={`min-h-screen flex flex-col transition-colors duration-300 ${isDark ? 'bg-dark' : 'bg-white'}`}>
       <Navbar />
-      <div className="flex flex-1">
-        <AppSidebar />
-        {isAuthenticated && <div className="hidden md:block w-72 shrink-0 flex-none" />}
-        <main className="flex-grow min-w-0 transition-all duration-300 pt-20">
-          {children}
-        </main>
-      </div>
+      <main className="flex-1 pt-20">
+        {children}
+      </main>
       <Footer />
     </div>
   );
@@ -72,8 +70,8 @@ function App() {
               <Route path="/account" element={<ProtectedRoute component={AccountPage} />} />
               <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
               <Route path="/checkout/cancel" element={<CheckoutCancelPage />} />
-              {/* Redirect old tools route */}
-              <Route path="/tools" element={<Navigate to="/fuel-surcharge" replace />} />
+              <Route path="/tools" element={<ProtectedRoute component={ToolsDashboardPage} />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             </Routes>
           </AppLayout>
         </Router>

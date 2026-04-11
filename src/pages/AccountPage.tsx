@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   User,
   CreditCard,
@@ -17,23 +17,43 @@ import {
   EyeOff,
   AlertTriangle,
   ExternalLink,
+  History,
+  Clock,
+  Fuel,
+  Calculator,
+  FileText,
+  Receipt,
+  Download,
 } from 'lucide-react';
 import { isPaidUser, isEnterpriseUser } from '../types/auth';
 
-type Tab = 'profile' | 'subscription' | 'payment' | 'security' | 'account';
+type Tab = 'profile' | 'subscription' | 'payment' | 'security' | 'account' | 'history';
 
 const AccountPage: React.FC = () => {
   const { theme } = useTheme();
   const { user, token, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const isDark = theme === 'dark';
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
-  const [activeTab, setActiveTab] = useState<Tab>('profile');
+  const searchParams = new URLSearchParams(location.search);
+  const tabFromUrl = searchParams.get('tab') as Tab | null;
+  const [activeTab, setActiveTab] = useState<Tab>(tabFromUrl || 'profile');
+
+  useEffect(() => {
+    const p = new URLSearchParams(location.search);
+    const t = p.get('tab') as Tab | null;
+    if (t) setActiveTab(t);
+  }, [location.search]);
 
   // Profile state
   const [profileName, setProfileName] = useState(user?.full_name || user?.name || '');
   const [profilePhone, setProfilePhone] = useState('');
+  const [profileCompany, setProfileCompany] = useState('');
+  const [profileAddress, setProfileAddress] = useState('');
+  const [profileMC, setProfileMC] = useState('');
+  const [profileDOT, setProfileDOT] = useState('');
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -119,6 +139,10 @@ const AccountPage: React.FC = () => {
         const data = await res.json();
         setProfileName(data.full_name || data.name || user?.full_name || '');
         setProfilePhone(data.phone || '');
+        setProfileCompany(data.company || '');
+        setProfileAddress(data.address || '');
+        setProfileMC(data.mc_number || '');
+        setProfileDOT(data.dot_number || '');
       }
     } catch {}
   };
@@ -141,7 +165,14 @@ const AccountPage: React.FC = () => {
       const res = await fetch(`${BACKEND_URL}/api/user/profile`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ full_name: profileName, phone: profilePhone }),
+        body: JSON.stringify({
+          full_name: profileName,
+          phone: profilePhone,
+          company: profileCompany,
+          address: profileAddress,
+          mc_number: profileMC,
+          dot_number: profileDOT,
+        }),
       });
       if (res.ok) {
         setProfileMsg({ type: 'success', text: 'Profile updated successfully.' });
@@ -208,17 +239,21 @@ const AccountPage: React.FC = () => {
     }
   };
 
-  const initials = (user?.full_name || user?.name || user?.email || '?')
+  const displayName = profileName || user?.full_name || user?.name || '';
+  const firstName = displayName.split(' ').find((p: string) => p.length > 0) || 'Account';
+  const initials = displayName
     .split(' ')
+    .filter((p: string) => p.length > 0)
     .map((p: string) => p[0])
     .join('')
     .slice(0, 2)
-    .toUpperCase();
+    .toUpperCase() || '?';
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: 'profile',      label: 'Profile',      icon: <User className="w-4 h-4" /> },
     { id: 'subscription', label: 'Subscription', icon: <Star className="w-4 h-4" /> },
     { id: 'payment',      label: 'Payment',      icon: <CreditCard className="w-4 h-4" /> },
+    { id: 'history',      label: 'History',      icon: <History className="w-4 h-4" /> },
     { id: 'security',     label: 'Security',     icon: <Lock className="w-4 h-4" /> },
     { id: 'account',      label: 'Account',      icon: <Settings className="w-4 h-4" /> },
   ];
@@ -254,7 +289,7 @@ const AccountPage: React.FC = () => {
         </div>
         <div className="min-w-0">
           <h1 className={`text-2xl font-bold truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            {user?.full_name || user?.name || 'My Account'}
+            {firstName}
           </h1>
           <p className={`text-sm truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{user?.email}</p>
         </div>
@@ -331,6 +366,44 @@ const AccountPage: React.FC = () => {
                     onChange={e => setProfilePhone(e.target.value)}
                     placeholder="+1 (555) 000-0000"
                   />
+                </div>
+                <div>
+                  <label className={lbl}>Company Name</label>
+                  <input
+                    className={inp}
+                    value={profileCompany}
+                    onChange={e => setProfileCompany(e.target.value)}
+                    placeholder="Your company name"
+                  />
+                </div>
+                <div>
+                  <label className={lbl}>Address</label>
+                  <input
+                    className={inp}
+                    value={profileAddress}
+                    onChange={e => setProfileAddress(e.target.value)}
+                    placeholder="123 Main St, City, State, ZIP"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={lbl}>MC #</label>
+                    <input
+                      className={inp}
+                      value={profileMC}
+                      onChange={e => setProfileMC(e.target.value)}
+                      placeholder="MC-000000"
+                    />
+                  </div>
+                  <div>
+                    <label className={lbl}>DOT #</label>
+                    <input
+                      className={inp}
+                      value={profileDOT}
+                      onChange={e => setProfileDOT(e.target.value)}
+                      placeholder="0000000"
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className={lbl}>Member Since</label>
@@ -424,8 +497,8 @@ const AccountPage: React.FC = () => {
               </div>
 
               {/* Plan comparison table */}
-              <div className={`rounded-xl border overflow-hidden ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-                <div className={`grid grid-cols-4 border-b ${isDark ? 'bg-dark-400 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
+              <div className={`rounded-xl border overflow-hidden ${isDark ? 'border-gray-700' : 'border-gray-300'}`}>
+                <div className={`grid grid-cols-4 border-b ${isDark ? 'bg-dark-400 border-gray-700' : 'bg-gray-100 border-gray-300'}`}>
                   <div className={`py-3 px-4 text-xs font-bold uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Feature</div>
                   {['Free', 'Pro', 'Enterprise'].map((h, i) => (
                     <div key={h} className={`py-3 text-center text-xs font-bold uppercase tracking-wider border-l ${
@@ -439,20 +512,20 @@ const AccountPage: React.FC = () => {
                   <div
                     key={i}
                     className={`grid grid-cols-4 border-b last:border-b-0 ${isDark ? 'border-gray-700' : 'border-gray-200'} ${
-                      i % 2 === 0 ? isDark ? 'bg-dark-300' : 'bg-white' : isDark ? 'bg-dark-400' : 'bg-gray-50'
+                      i % 2 === 0 ? isDark ? 'bg-dark-300' : 'bg-white' : isDark ? 'bg-dark-400' : 'bg-gray-50/70'
                     }`}
                   >
                     <div className={`py-3 px-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{feature}</div>
                     {/* Free col */}
                     <div className={`py-3 text-sm text-center border-l flex items-center justify-center ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
                       {typeof free === 'boolean'
-                        ? free ? <CheckCircle className="w-4 h-4 text-green-500" /> : <span className="text-gray-400">—</span>
+                        ? free ? <CheckCircle className="w-4 h-4 text-green-500" /> : <span className={isDark ? 'text-gray-600' : 'text-gray-300'}>—</span>
                         : <span className={`text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{free}</span>}
                     </div>
                     {/* Pro col */}
                     <div className={`py-3 text-sm text-center border-l flex items-center justify-center ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
                       {typeof pro === 'boolean'
-                        ? pro ? <CheckCircle className="w-4 h-4 text-primary-500" /> : <span className="text-gray-400">—</span>
+                        ? pro ? <CheckCircle className="w-4 h-4 text-primary-500" /> : <span className={isDark ? 'text-gray-600' : 'text-gray-300'}>—</span>
                         : <span className="text-xs font-medium text-primary-500">{pro}</span>}
                     </div>
                     {/* Enterprise col — same as Pro + Priority Support */}
@@ -581,6 +654,11 @@ const AccountPage: React.FC = () => {
             </div>
           )}
 
+          {/* ── HISTORY ── */}
+          {activeTab === 'history' && (
+            <HistoryTab token={token} isDark={isDark} BACKEND_URL={BACKEND_URL} />
+          )}
+
           {/* ── SECURITY ── */}
           {activeTab === 'security' && (
             <div className={card}>
@@ -705,6 +783,74 @@ const AccountPage: React.FC = () => {
 
         </div>
       </div>
+    </div>
+  );
+};
+
+/* ── History Tab ──────────────────────────────────────────────── */
+const historyIcons: Record<string, React.ReactNode> = {
+  'fuel-surcharge': <Fuel className="w-4 h-4 text-orange-400" />,
+  'ifta':           <Calculator className="w-4 h-4 text-green-400" />,
+  'bol':            <FileText className="w-4 h-4 text-blue-400" />,
+  'invoice':        <Receipt className="w-4 h-4 text-purple-400" />,
+};
+
+const HistoryTab: React.FC<{ token: string | null; isDark: boolean; BACKEND_URL: string }> = ({ token, isDark, BACKEND_URL }) => {
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!token) return;
+    fetch(`${BACKEND_URL}/api/history`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : [])
+      .then(d => setItems(Array.isArray(d) ? d : []))
+      .catch(() => setItems([]))
+      .finally(() => setLoading(false));
+  }, [token, BACKEND_URL]);
+
+  const typeLabel: Record<string, string> = {
+    'fuel-surcharge': 'Fuel Surcharge',
+    'ifta': 'IFTA Calculation',
+    'bol': 'Bill of Lading',
+    'invoice': 'Invoice',
+  };
+
+  return (
+    <div className={`rounded-xl border ${isDark ? 'bg-dark-300 border-gray-700' : 'bg-white border-gray-200'}`}>
+      <div className={`px-6 py-4 border-b flex items-center gap-2 ${isDark ? 'border-gray-700' : 'border-gray-100'}`}>
+        <History className={`w-4 h-4 ${isDark ? 'text-zinc-400' : 'text-gray-500'}`} />
+        <h2 className={`text-base font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Activity History</h2>
+      </div>
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <div className="w-6 h-6 border-2 border-primary-600/30 border-t-primary-600 rounded-full animate-spin" />
+        </div>
+      ) : items.length === 0 ? (
+        <div className="text-center py-16">
+          <Clock className={`w-10 h-10 mx-auto mb-3 ${isDark ? 'text-zinc-700' : 'text-gray-300'}`} />
+          <p className={`text-sm font-medium ${isDark ? 'text-zinc-500' : 'text-gray-500'}`}>No activity yet</p>
+          <p className={`text-xs mt-1 ${isDark ? 'text-zinc-600' : 'text-gray-400'}`}>Use a tool to see your history here</p>
+        </div>
+      ) : (
+        <ul className={`divide-y ${isDark ? 'divide-white/[0.05]' : 'divide-gray-100'}`}>
+          {items.map((item: any) => (
+            <li key={item.id} className={`flex items-center gap-4 px-6 py-3.5 transition-colors ${isDark ? 'hover:bg-white/[0.02]' : 'hover:bg-gray-50'}`}>
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isDark ? 'bg-dark-400' : 'bg-gray-100'}`}>
+                {historyIcons[item.type] || <Clock className="w-4 h-4 text-gray-400" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm font-medium truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  {typeLabel[item.type] || item.type}
+                </p>
+                <p className={`text-xs ${isDark ? 'text-zinc-600' : 'text-gray-400'}`}>
+                  {new Date(item.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
+              <Download className={`w-4 h-4 shrink-0 cursor-pointer transition-colors ${isDark ? 'text-zinc-600 hover:text-zinc-300' : 'text-gray-400 hover:text-gray-700'}`} />
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 };
