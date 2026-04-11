@@ -4,6 +4,7 @@ import {
   Upload, PenLine, Type, Download, Trash2, X,
   CheckCircle, AlertCircle, FileText, RotateCcw, MousePointer
 } from 'lucide-react';
+import BackToTools from '../components/BackToTools';
 import * as pdfjsLib from 'pdfjs-dist';
 import { PDFDocument } from 'pdf-lib';
 
@@ -319,6 +320,7 @@ const ESignaturePage: React.FC = () => {
   return (
     <div className={`min-h-screen px-6 py-10 ${isDark ? 'bg-dark text-white' : 'bg-gray-50 text-gray-900'}`}>
       <div className="max-w-5xl mx-auto">
+        <BackToTools />
 
         {/* Header */}
         <div className="mb-8">

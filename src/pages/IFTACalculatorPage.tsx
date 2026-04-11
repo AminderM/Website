@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Calculator, Save, CheckCircle, Lock } from 'lucide-react';
 import { isPaidUser } from '../types/auth';
 import { parseApiError } from '../utils/apiFetch';
+import BackToTools from '../components/BackToTools';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -177,6 +178,7 @@ const IFTACalculatorPage: React.FC = () => {
   return (
     <div className={`min-h-screen pt-32 pb-20 px-4 ${isDark ? 'bg-dark-400' : 'bg-gray-50'}`} data-testid="ifta-calculator-page">
       <div className="max-w-3xl mx-auto">
+        <BackToTools />
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <div className="p-4 rounded-xl bg-green-500/20">
