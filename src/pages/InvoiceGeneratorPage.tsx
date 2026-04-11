@@ -93,6 +93,7 @@ const InvoiceGeneratorPage: React.FC = () => {
   const isDark = theme === 'dark';
 
   const [data, setData]               = useState<InvoiceData>(blankInvoice());
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const [aiText, setAiText]           = useState('');
   const [fileName, setFileName]       = useState('');
   const [aiLoading, setAiLoading]     = useState(false);
@@ -120,6 +121,33 @@ const InvoiceGeneratorPage: React.FC = () => {
     ob.observe(previewRef.current);
     return () => ob.disconnect();
   }, []);
+
+  // ── Pre-populate vendor from user profile ───────────────────────────────────
+  useEffect(() => {
+    if (!token || profileLoaded) return;
+    fetch(`${BACKEND_URL}/api/user/profile`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (!d) return;
+        setData(prev => ({
+          ...prev,
+          vendor: {
+            name:    d.company    || prev.vendor.name,
+            address: d.address    || prev.vendor.address,
+            city:    d.city       || prev.vendor.city,
+            state:   d.state      || prev.vendor.state,
+            zip:     d.zip        || prev.vendor.zip,
+            phone:   d.phone      || prev.vendor.phone,
+            email:   user?.email  || prev.vendor.email,
+            mc:      d.mc_number  || prev.vendor.mc,
+            dot:     d.dot_number || prev.vendor.dot,
+          },
+        }));
+        setProfileLoaded(true);
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   // ── Computed totals ─────────────────────────────────────────────────────────
   const subtotal       = data.lineItems.reduce((s, i) => s + r2(i.amount), 0);

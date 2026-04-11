@@ -10,6 +10,7 @@ import {
   TrendingUp, Brain, Bot, Layers,
 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import IALogo from '../components/IALogo';
 
 /* ─────────────────────────────────────────────
    Shared animation variants
@@ -273,16 +274,15 @@ const HomePage: React.FC = () => {
               className={`text-5xl sm:text-6xl lg:text-7xl font-bold leading-[1.08] tracking-tight mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}
             >
               Transform Your{' '}
-              <span className="relative inline-block">
-                <span className="text-gradient-primary">Logistics</span>
-                <motion.span
-                  className="absolute -bottom-1 left-0 right-0 h-[3px] rounded-full bg-gradient-to-r from-primary-600 to-primary-400"
-                  initial={{ scaleX: 0, originX: 0 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{ duration: 0.8, delay: 0.7, ease: 'easeOut' }}
-                />
-              </span>
-              {' '}Operations
+              <span className="text-gradient-primary">Logistics</span>
+              {' '}Operations with{' '}
+              <span style={{
+                background: 'linear-gradient(to bottom, #DC2626, #7f1d1d)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                fontWeight: 900,
+              }}>IA</span>.
             </motion.h1>
 
             {/* Sub */}
@@ -292,8 +292,7 @@ const HomePage: React.FC = () => {
               transition={{ duration: 0.6, delay: 0.25, ease: 'easeOut' }}
               className={`text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed ${isDark ? 'text-zinc-400' : 'text-gray-600'}`}
             >
-              Our AI-powered TMS helps freight brokers, fleet owners, and dispatchers
-              streamline operations, reduce costs, and deliver exceptional service.
+              AI-powered TMS that streamlines operations, cuts costs by 50%, and saves 80% of time — so you can deliver exceptional, personalized service.
             </motion.p>
 
             {/* CTAs */}

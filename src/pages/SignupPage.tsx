@@ -49,7 +49,7 @@ const SignupPage: React.FC = () => {
       if (result.needsVerification) {
         navigate('/verify-otp', { state: { email: result.email } });
       } else {
-        navigate('/bol-generator');
+        navigate('/tools');
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Signup failed. Please try again.';
@@ -64,7 +64,7 @@ const SignupPage: React.FC = () => {
     setError('');
     try {
       await googleLogin(credentialResponse.credential);
-      navigate('/bol-generator');
+      navigate('/tools');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Google sign-in failed');
     }

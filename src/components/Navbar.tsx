@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Truck, LogOut, UserCircle, ChevronDown } from 'lucide-react';
+import { Menu, X, LogOut, UserCircle, History } from 'lucide-react';
+import IALogo from './IALogo';
 import { motion, AnimatePresence } from 'framer-motion';
 import ThemeToggle from './ThemeToggle';
 import { useTheme } from '../contexts/ThemeContext';
@@ -63,8 +64,10 @@ const Navbar: React.FC = () => {
         isScrolled
           ? isDark
             ? 'bg-dark-300/90 backdrop-blur-xl border-b border-white/[0.08] shadow-lg shadow-black/20'
-            : 'bg-white/90 backdrop-blur-xl border-b border-gray-200/80 shadow-sm'
-          : 'bg-transparent'
+            : 'bg-white/95 backdrop-blur-xl border-b border-gray-200/80 shadow-sm'
+          : isDark
+            ? 'bg-transparent'
+            : 'bg-white/80 backdrop-blur-sm'
       }`}>
 
         {/* Scroll progress bar */}
@@ -79,18 +82,14 @@ const Navbar: React.FC = () => {
             {/* Logo */}
             <Link to="/" className="flex items-center gap-3 group shrink-0">
               <motion.div
-                whileHover={{ rotate: -5, scale: 1.05 }}
+                whileHover={{ scale: 1.05 }}
                 transition={{ duration: 0.2 }}
-                className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary-600/30 group-hover:bg-primary-500 transition-colors"
               >
-                <Truck className="w-5 h-5 text-white" />
+                <IALogo size={38} />
               </motion.div>
               <div className="hidden sm:block">
-                <span className={`text-base font-bold tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  Integra AI
-                </span>
-                <span className={`text-[10px] block -mt-0.5 font-medium tracking-wider uppercase ${isDark ? 'text-zinc-500' : 'text-gray-400'}`}>
-                  Supply Chain Technologies
+                <span className={`text-[10px] font-medium tracking-wider uppercase ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                  SUPPLY CHAIN
                 </span>
               </div>
             </Link>
@@ -107,8 +106,8 @@ const Navbar: React.FC = () => {
                       active
                         ? isDark ? 'text-white bg-white/[0.07]' : 'text-gray-900 bg-gray-100'
                         : isDark
-                        ? 'text-zinc-400 hover:text-white hover:bg-white/[0.05]'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                        ? 'text-gray-400 hover:text-white hover:bg-white/[0.05]'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                     }`}
                   >
                     {link.name}
@@ -135,19 +134,18 @@ const Navbar: React.FC = () => {
                 <div className="relative" ref={userMenuRef}>
                   <button
                     onClick={() => setIsUserMenuOpen(v => !v)}
-                    className={`flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-xl font-medium text-sm transition-all duration-200 border ${
+                    className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-200 ring-2 ${
                       isDark
-                        ? 'bg-white/[0.06] text-white border-white/[0.1] hover:bg-white/[0.1]'
-                        : 'bg-gray-50 text-gray-900 border-gray-200 hover:bg-gray-100'
+                        ? 'bg-primary-600 text-white ring-primary-600/30 hover:ring-primary-500/60'
+                        : 'bg-primary-600 text-white ring-primary-200 hover:ring-primary-300'
                     }`}
+                    title={user?.full_name || user?.name || 'Account'}
                   >
-                    <div className="w-6 h-6 rounded-full bg-primary-600 flex items-center justify-center text-white text-xs font-bold">
-                      {(user?.full_name || user?.name || user?.email || '?')[0].toUpperCase()}
-                    </div>
-                    <span className="hidden lg:block max-w-[100px] truncate text-xs">
-                      {user?.full_name || user?.name || 'Account'}
-                    </span>
-                    <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+                    {(() => {
+                      const name = user?.full_name || user?.name || user?.email || '?';
+                      const parts = name.split(/[\s@]/);
+                      return (parts[0][0] + (parts[1]?.[0] || '')).toUpperCase();
+                    })()}
                   </button>
 
                   <AnimatePresence>
@@ -170,13 +168,33 @@ const Navbar: React.FC = () => {
                         </div>
                         <div className="py-1">
                           <button
+                            onClick={() => { navigate('/tools'); setIsUserMenuOpen(false); }}
+                            className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-2.5 transition-colors ${
+                              isDark ? 'text-zinc-300 hover:bg-white/[0.06] hover:text-white' : 'text-gray-700 hover:bg-gray-50'
+                            }`}
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                            </svg>
+                            My Tools
+                          </button>
+                          <button
+                            onClick={() => { navigate('/account?tab=history'); setIsUserMenuOpen(false); }}
+                            className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-2.5 transition-colors ${
+                              isDark ? 'text-zinc-300 hover:bg-white/[0.06] hover:text-white' : 'text-gray-700 hover:bg-gray-50'
+                            }`}
+                          >
+                            <History className="w-4 h-4" />
+                            History
+                          </button>
+                          <button
                             onClick={() => { navigate('/account'); setIsUserMenuOpen(false); }}
                             className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-2.5 transition-colors ${
                               isDark ? 'text-zinc-300 hover:bg-white/[0.06] hover:text-white' : 'text-gray-700 hover:bg-gray-50'
                             }`}
                           >
                             <UserCircle className="w-4 h-4" />
-                            Account Settings
+                            Settings
                           </button>
                         </div>
                         <div className={`border-t py-1 ${isDark ? 'border-white/[0.08]' : 'border-gray-100'}`}>

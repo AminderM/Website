@@ -1,13 +1,15 @@
 import React, { useState, FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, AlertCircle } from 'lucide-react';
+import { Mail, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
+import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const { login, googleLogin } = useAuth();
@@ -39,7 +41,7 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
     try {
       await login({ email, password });
-      navigate('/bol-generator');
+      navigate('/tools');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed. Please try again.';
       setError(message);
@@ -53,97 +55,162 @@ const LoginPage: React.FC = () => {
     setError('');
     try {
       await googleLogin(credentialResponse.credential);
-      navigate('/bol-generator');
+      navigate('/tools');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Google sign-in failed');
     }
   };
 
-  const inputClass = `w-full pl-10 pr-4 py-2 rounded-lg border transition-colors ${
+  const inputBase = `w-full pl-10 pr-4 py-2.5 rounded-lg border bg-transparent transition-all duration-200 focus:outline-none ${
     isDark
-      ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:border-primary-500'
-      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-primary-600'
-  } focus:outline-none focus:ring-2 focus:ring-primary-500/20`;
-
-  const iconClass = `absolute left-3 top-3 w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`;
-  const labelClass = `block text-sm font-medium mb-2 ${isDark ? 'text-gray-200' : 'text-gray-700'}`;
+      ? 'border-white/10 text-white placeholder-zinc-600 focus:border-primary-500/60 focus:shadow-[0_0_0_3px_rgba(220,38,38,0.12)] hover:border-white/20'
+      : 'border-gray-200 text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:shadow-[0_0_0_3px_rgba(220,38,38,0.10)] hover:border-gray-300'
+  }`;
+  const iconClass = `absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 ${isDark ? 'text-zinc-600' : 'text-gray-400'}`;
+  const labelClass = `block text-xs font-semibold uppercase tracking-widest mb-2 ${isDark ? 'text-zinc-500' : 'text-gray-500'}`;
 
   return (
-    <div className={`min-h-screen pt-32 pb-16 px-4 ${isDark ? 'bg-dark-400' : 'bg-gray-50'}`}>
-      <div className="max-w-md mx-auto">
+    <div className={`relative min-h-screen flex items-center justify-center px-4 py-24 overflow-hidden ${isDark ? 'bg-dark' : 'bg-gray-50'}`}>
+
+      {/* Background grid */}
+      <div className={`absolute inset-0 bg-grid-pattern ${isDark ? 'opacity-30' : 'opacity-[0.04]'}`} />
+
+      {/* Red glow orb */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-primary-600/10 rounded-full blur-[120px] pointer-events-none" />
+
+      {/* Cyber corner accents */}
+      <div className="absolute top-8 left-8 w-12 h-12 border-l-2 border-t-2 border-primary-600/30 pointer-events-none" />
+      <div className="absolute top-8 right-8 w-12 h-12 border-r-2 border-t-2 border-primary-600/30 pointer-events-none" />
+      <div className="absolute bottom-8 left-8 w-12 h-12 border-l-2 border-b-2 border-primary-600/30 pointer-events-none" />
+      <div className="absolute bottom-8 right-8 w-12 h-12 border-r-2 border-b-2 border-primary-600/30 pointer-events-none" />
+
+      <div className="relative w-full max-w-md">
+
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className={`text-3xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+        <motion.div
+          initial={{ opacity: 0, y: -16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="text-center mb-8"
+        >
+          <h1 className="text-3xl font-bold mb-2 text-gradient-primary">
             Welcome Back
           </h1>
-          <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>
-            Sign in to access your BOL Generator
+          <p className={isDark ? 'text-zinc-500 text-sm' : 'text-gray-500 text-sm'}>
+            Sign in to access your logistics tools
           </p>
-        </div>
+        </motion.div>
 
-        {/* Form Container */}
-        <div className={`rounded-xl border ${isDark ? 'bg-dark-300 border-gray-700' : 'bg-white border-gray-200'} shadow-lg overflow-hidden`}>
+        {/* Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+          className={`rounded-2xl border overflow-hidden ${
+            isDark
+              ? 'bg-dark-100/80 border-white/[0.08] backdrop-blur-xl shadow-2xl shadow-black/40'
+              : 'bg-white border-gray-200 shadow-xl'
+          }`}
+        >
+          {/* Top accent line */}
+          <div className="h-[2px] bg-gradient-to-r from-transparent via-primary-600 to-transparent" />
+
           <form onSubmit={handleSubmit} className="p-8">
-            {/* Error Alert */}
+
+            {/* Error */}
             {error && (
-              <div className={`flex items-start gap-3 p-4 rounded-lg mb-6 border ${
-                isDark ? 'bg-red-950/30 border-red-800 text-red-300' : 'bg-red-50 border-red-200 text-red-700'
-              }`}>
-                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                <p className="text-sm">{error}</p>
-              </div>
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`flex items-start gap-3 p-3.5 rounded-lg mb-6 border text-sm ${
+                  isDark ? 'bg-red-950/30 border-red-800/40 text-red-400' : 'bg-red-50 border-red-200 text-red-700'
+                }`}
+              >
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <p>{error}</p>
+              </motion.div>
             )}
 
             {/* Email */}
-            <div className="mb-6">
+            <div className="mb-5">
               <label htmlFor="email" className={labelClass}>Email Address</label>
               <div className="relative">
-                <Mail className={iconClass} />
+                <Mail className={`${iconClass} w-4 h-4`} />
                 <input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setError(''); }}
-                  className={inputClass}
+                  className={inputBase}
                   placeholder="you@example.com"
+                  autoComplete="email"
                 />
               </div>
             </div>
 
             {/* Password */}
-            <div className="mb-6">
+            <div className="mb-2">
               <label htmlFor="password" className={labelClass}>Password</label>
               <div className="relative">
-                <Lock className={iconClass} />
+                <Lock className={`${iconClass} w-4 h-4`} />
                 <input
                   id="password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setError(''); }}
-                  className={inputClass}
-                  placeholder="••••••"
+                  className={`${inputBase} pr-10`}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(p => !p)}
+                  className={`absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded transition-colors ${
+                    isDark ? 'text-zinc-600 hover:text-zinc-300' : 'text-gray-400 hover:text-gray-600'
+                  }`}
+                  tabIndex={-1}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
+            </div>
+
+            {/* Forgot password */}
+            <div className="flex justify-end mb-6">
+              <Link
+                to="/forgot-password"
+                className={`text-xs font-medium transition-colors ${
+                  isDark ? 'text-zinc-500 hover:text-primary-400' : 'text-gray-500 hover:text-primary-600'
+                }`}
+              >
+                Forgot password?
+              </Link>
             </div>
 
             {/* Submit */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full btn-primary py-2 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed mb-4"
+              className="w-full btn-primary btn-glow py-2.5 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed mb-5 relative overflow-hidden"
             >
-              {isLoading ? 'Signing in...' : 'Sign In'}
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Signing in…
+                </span>
+              ) : 'Sign In'}
             </button>
 
             {/* Divider */}
-            <div className={`flex items-center gap-3 mb-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-              <div className="flex-1 h-px bg-current opacity-30"></div>
-              <span className="text-xs uppercase">Or sign in with</span>
-              <div className="flex-1 h-px bg-current opacity-30"></div>
+            <div className={`flex items-center gap-3 mb-5 ${isDark ? 'text-white/10' : 'text-gray-200'}`}>
+              <div className="flex-1 h-px bg-current" />
+              <span className={`text-xs uppercase tracking-widest font-medium ${isDark ? 'text-zinc-500' : 'text-gray-400'}`}>or</span>
+              <div className="flex-1 h-px bg-current" />
             </div>
 
             {/* Google */}
-            <div className="flex justify-center mb-3">
+            <div className="flex justify-center mb-4">
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
                 onError={() => setError('Google sign-in failed')}
@@ -154,15 +221,15 @@ const LoginPage: React.FC = () => {
               />
             </div>
 
-            {/* Signup Link */}
-            <p className={`text-center text-sm mt-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+            {/* Signup link */}
+            <p className={`text-center text-sm ${isDark ? 'text-zinc-600' : 'text-gray-500'}`}>
               Don't have an account?{' '}
-              <Link to="/signup" className="text-primary-600 hover:text-primary-500 font-medium transition-colors">
+              <Link to="/signup" className="text-primary-500 hover:text-primary-400 font-semibold transition-colors">
                 Sign Up
               </Link>
             </p>
           </form>
-        </div>
+        </motion.div>
       </div>
     </div>
   );
