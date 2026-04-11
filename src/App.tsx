@@ -27,6 +27,7 @@ import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
 import CheckoutCancelPage from './pages/CheckoutCancelPage';
 import ToolsDashboardPage from './pages/ToolsDashboardPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import SavedDocumentsSidebar from './components/SavedDocumentsSidebar';
 import './index.css';
 
 // Layout wrapper
@@ -39,6 +40,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <main className="flex-1 pt-20">
         {children}
       </main>
+      <SavedDocumentsSidebar />
       <Footer />
     </div>
   );

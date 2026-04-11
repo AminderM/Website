@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { FileType, Upload, Download, AlertCircle, CheckCircle, X } from 'lucide-react';
+import BackToTools from '../components/BackToTools';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -90,6 +91,7 @@ const WordToPdfPage: React.FC = () => {
   return (
     <div className={`min-h-screen px-6 py-10 ${isDark ? 'bg-dark text-white' : 'bg-gray-50 text-gray-900'}`}>
       <div className="max-w-2xl mx-auto">
+        <BackToTools />
 
         {/* Header */}
         <div className="mb-8">

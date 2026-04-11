@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { isPaidUser } from '../types/auth';
 import { parseApiError } from '../utils/apiFetch';
+import BackToTools from '../components/BackToTools';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -537,6 +538,7 @@ const InvoiceGeneratorPage: React.FC = () => {
       </div>
 
       <div className={`min-h-screen pb-12 ${isDark ? 'bg-dark-200' : 'bg-gray-50'}`}>
+        <div className="max-w-screen-xl mx-auto px-6 pt-4"><BackToTools /></div>
         {/* Page Header */}
         <div className={`px-6 py-5 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
           <div className="flex items-center justify-between max-w-screen-xl mx-auto">

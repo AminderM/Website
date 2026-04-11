@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Save, CheckCircle, Lock } from 'lucide-react';
 import { isPaidUser } from '../types/auth';
 import { parseApiError } from '../utils/apiFetch';
+import BackToTools from '../components/BackToTools';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -341,6 +342,7 @@ const BOLGeneratorPage: React.FC = () => {
       </style>
       <div className={`pt-32 pb-20 px-4 print-reset ${isDark ? 'bg-dark-400' : 'bg-gray-50'}`}>
         <div className="max-w-6xl mx-auto print-reset">
+          <div className="no-print"><BackToTools /></div>
           {/* Header */}
           <div className="mb-12 no-print">
           <h1 className={`text-3xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
