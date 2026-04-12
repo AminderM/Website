@@ -43,7 +43,13 @@ module.exports = {
         'slide-in-right': 'slideInRight 0.5s ease-out',
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'float': 'float 6s ease-in-out infinite',
+        'float-delayed': 'float 6s ease-in-out 2s infinite',
         'marquee': 'marquee 30s linear infinite',
+        'marquee-reverse': 'marqueeReverse 25s linear infinite',
+        'spin-slow': 'spin 12s linear infinite',
+        'ping-slow': 'ping 2.5s cubic-bezier(0, 0, 0.2, 1) infinite',
+        'gradient-x': 'gradientX 4s ease infinite',
+        'border-flow': 'borderFlow 3s linear infinite',
       },
       keyframes: {
         fadeIn: {
@@ -69,6 +75,18 @@ module.exports = {
         marquee: {
           '0%': { transform: 'translateX(0%)' },
           '100%': { transform: 'translateX(-50%)' },
+        },
+        marqueeReverse: {
+          '0%': { transform: 'translateX(-50%)' },
+          '100%': { transform: 'translateX(0%)' },
+        },
+        gradientX: {
+          '0%, 100%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+        },
+        borderFlow: {
+          '0%':   { backgroundPosition: '0% 50%' },
+          '100%': { backgroundPosition: '200% 50%' },
         },
       },
       backgroundImage: {

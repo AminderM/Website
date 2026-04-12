@@ -1,11 +1,13 @@
-from fastapi import FastAPI, HTTPException, Depends, Header
+from fastapi import FastAPI, HTTPException, Depends, Header, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Literal
 import jwt
 import os
+import stripe
 from datetime import datetime, timedelta
 from pymongo import MongoClient
+from bson import ObjectId
 
 app = FastAPI(title="Integrated Supply Chain API")
 
@@ -33,6 +35,21 @@ app.add_middleware(
 JWT_SECRET = os.environ.get("JWT_SECRET", "your-secret-key-change-in-production")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24
+
+# Stripe Config
+stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000")
+
+STRIPE_PRICE_IDS = {
+    "pro_monthly":        os.environ.get("STRIPE_PRO_MONTHLY_PRICE_ID", ""),
+    "pro_annual":         os.environ.get("STRIPE_PRO_ANNUAL_PRICE_ID", ""),
+    "enterprise_monthly": os.environ.get("STRIPE_ENTERPRISE_MONTHLY_PRICE_ID", ""),
+    "enterprise_annual":  os.environ.get("STRIPE_ENTERPRISE_ANNUAL_PRICE_ID", ""),
+}
+
+# Maps stripe_customer_id -> user email for webhook lookups
+customers_db: dict = {}
 
 # In-memory user storage (for demo)
 users_db = {}
@@ -105,7 +122,11 @@ def signup(request: SignupRequest):
         "password": request.password,  # In production, hash this!
         "name": request.name or "",
         "tier": "free",
-        "created_at": created_at
+        "created_at": created_at,
+        "stripe_customer_id": None,
+        "stripe_subscription_id": None,
+        "billing_cycle": None,
+        "renewal_date": None,
     }
     
     token = generate_token(user_id, email)
@@ -172,7 +193,11 @@ def seed_test_user():
             "password": "qwerty123",
             "name": "Test Fleet Owner",
             "tier": "free",
-            "created_at": datetime.utcnow().isoformat() + "Z"
+            "created_at": datetime.utcnow().isoformat() + "Z",
+            "stripe_customer_id": None,
+            "stripe_subscription_id": None,
+            "billing_cycle": None,
+            "renewal_date": None,
         }
         print(f"✅ Test user seeded: {test_email}")
 
@@ -262,44 +287,291 @@ def save_bol(bol: BOLData, payload: dict = Depends(verify_token)):
     return {"success": True, "id": str(result.inserted_id)}
 
 @app.get("/api/history")
-def get_history(payload: dict = Depends(verify_token)):
+def get_history(
+    payload: dict = Depends(verify_token),
+    type: Optional[Literal["fuel_surcharge", "ifta", "bol"]] = Query(None, description="Filter by type"),
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(20, ge=1, le=100, description="Items per page")
+):
     user_id = payload.get("userId")
+    skip = (page - 1) * limit
     
-    # Get all history items for user
-    fuel_surcharge_items = list(fuel_surcharge_collection.find(
-        {"user_id": user_id}, {"_id": 0}
-    ).sort("created_at", -1).limit(20))
-    
-    ifta_items = list(ifta_collection.find(
-        {"user_id": user_id}, {"_id": 0}
-    ).sort("created_at", -1).limit(20))
-    
-    bol_items = list(bol_collection.find(
-        {"user_id": user_id}, {"_id": 0}
-    ).sort("created_at", -1).limit(20))
-    
-    # Combine and sort by date
     all_items = []
-    for item in fuel_surcharge_items:
-        all_items.append({
-            "type": "fuel_surcharge",
-            "data": item.get("data"),
-            "created_at": item.get("created_at")
-        })
-    for item in ifta_items:
-        all_items.append({
-            "type": "ifta",
-            "data": item.get("data"),
-            "created_at": item.get("created_at")
-        })
-    for item in bol_items:
-        all_items.append({
-            "type": "bol",
-            "data": item.get("data"),
-            "created_at": item.get("created_at")
-        })
+    total_count = 0
     
-    # Sort by created_at descending
+    # Helper to add items from collection
+    def fetch_from_collection(collection, item_type):
+        nonlocal total_count
+        query = {"user_id": user_id}
+        count = collection.count_documents(query)
+        total_count += count
+        
+        items = list(collection.find(query).sort("created_at", -1))
+        for item in items:
+            all_items.append({
+                "id": str(item["_id"]),
+                "type": item_type,
+                "data": item.get("data"),
+                "created_at": item.get("created_at")
+            })
+    
+    # Fetch based on type filter
+    if type is None or type == "fuel_surcharge":
+        fetch_from_collection(fuel_surcharge_collection, "fuel_surcharge")
+    if type is None or type == "ifta":
+        fetch_from_collection(ifta_collection, "ifta")
+    if type is None or type == "bol":
+        fetch_from_collection(bol_collection, "bol")
+    
+    # Sort combined results by date
     all_items.sort(key=lambda x: x.get("created_at", ""), reverse=True)
     
-    return {"history": all_items[:50]}
+    # Apply pagination
+    paginated_items = all_items[skip:skip + limit]
+    has_more = len(all_items) > skip + limit
+    
+    return {
+        "history": paginated_items,
+        "total": len(all_items),
+        "page": page,
+        "limit": limit,
+        "has_more": has_more
+    }
+
+@app.get("/api/history/{item_id}")
+def get_history_item(item_id: str, payload: dict = Depends(verify_token)):
+    """Get a single history item by ID"""
+    user_id = payload.get("userId")
+    
+    try:
+        obj_id = ObjectId(item_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid ID format")
+    
+    # Search in all collections
+    for collection, item_type in [
+        (fuel_surcharge_collection, "fuel_surcharge"),
+        (ifta_collection, "ifta"),
+        (bol_collection, "bol")
+    ]:
+        item = collection.find_one({"_id": obj_id, "user_id": user_id})
+        if item:
+            return {
+                "id": str(item["_id"]),
+                "type": item_type,
+                "data": item.get("data"),
+                "created_at": item.get("created_at")
+            }
+    
+    raise HTTPException(status_code=404, detail="History item not found")
+
+@app.delete("/api/history/{item_id}")
+def delete_history_item(item_id: str, payload: dict = Depends(verify_token)):
+    """Delete a history item by ID"""
+    user_id = payload.get("userId")
+
+    try:
+        obj_id = ObjectId(item_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid ID format")
+
+    # Try to delete from each collection
+    for collection in [fuel_surcharge_collection, ifta_collection, bol_collection]:
+        result = collection.delete_one({"_id": obj_id, "user_id": user_id})
+        if result.deleted_count > 0:
+            return {"success": True, "message": "Item deleted"}
+
+    raise HTTPException(status_code=404, detail="History item not found")
+
+
+# ============================================
+# Subscription Endpoint
+# ============================================
+
+@app.get("/api/user/subscription")
+def get_subscription(payload: dict = Depends(verify_token)):
+    email = payload.get("email")
+    user = users_db.get(email)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    sub_id = user.get("stripe_subscription_id")
+    tier = user.get("tier", "free")
+    billing_cycle = user.get("billing_cycle")
+    renewal_date = user.get("renewal_date")
+
+    # Fetch live renewal date from Stripe if we have a subscription
+    if sub_id and stripe.api_key:
+        try:
+            sub = stripe.Subscription.retrieve(sub_id)
+            renewal_date = datetime.utcfromtimestamp(
+                sub["current_period_end"]
+            ).isoformat() + "Z"
+            billing_cycle = "annual" if sub.get("items", {}).get("data", [{}])[0].get(
+                "plan", {}
+            ).get("interval") == "year" else "monthly"
+        except Exception:
+            pass
+
+    return {
+        "tier": tier,
+        "billing_cycle": billing_cycle,
+        "renewal_date": renewal_date,
+        "stripe_subscription_id": sub_id,
+    }
+
+
+# ============================================
+# Stripe Endpoints
+# ============================================
+
+class CheckoutRequest(BaseModel):
+    price_id: str
+    billing_cycle: Literal["monthly", "annual"] = "monthly"
+
+
+@app.post("/api/stripe/create-checkout-session")
+def create_checkout_session(req: CheckoutRequest, payload: dict = Depends(verify_token)):
+    if not stripe.api_key:
+        raise HTTPException(status_code=500, detail="Stripe is not configured")
+
+    email = payload.get("email")
+    user = users_db.get(email)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    # Validate that the price ID is one of ours
+    valid_price_ids = set(STRIPE_PRICE_IDS.values()) - {""}
+    if valid_price_ids and req.price_id not in valid_price_ids:
+        raise HTTPException(status_code=400, detail="Invalid price ID")
+
+    try:
+        # Create or reuse Stripe customer
+        customer_id = user.get("stripe_customer_id")
+        if not customer_id:
+            customer = stripe.Customer.create(
+                email=email,
+                name=user.get("name", ""),
+                metadata={"user_id": user["id"]},
+            )
+            customer_id = customer["id"]
+            users_db[email]["stripe_customer_id"] = customer_id
+            customers_db[customer_id] = email
+
+        session = stripe.checkout.Session.create(
+            customer=customer_id,
+            payment_method_types=["card"],
+            line_items=[{"price": req.price_id, "quantity": 1}],
+            mode="subscription",
+            success_url=f"{FRONTEND_URL}/checkout/success?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{FRONTEND_URL}/checkout/cancel",
+            metadata={"user_id": user["id"], "email": email},
+        )
+        return {"url": session.url}
+    except stripe.error.StripeError as e:
+        raise HTTPException(status_code=400, detail=str(e.user_message or e))
+
+
+@app.post("/api/stripe/portal")
+def create_portal_session(payload: dict = Depends(verify_token)):
+    if not stripe.api_key:
+        raise HTTPException(status_code=500, detail="Stripe is not configured")
+
+    email = payload.get("email")
+    user = users_db.get(email)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    customer_id = user.get("stripe_customer_id")
+    if not customer_id:
+        raise HTTPException(status_code=400, detail="No Stripe customer found for this account")
+
+    try:
+        session = stripe.billing_portal.Session.create(
+            customer=customer_id,
+            return_url=f"{FRONTEND_URL}/account",
+        )
+        return {"url": session.url}
+    except stripe.error.StripeError as e:
+        raise HTTPException(status_code=400, detail=str(e.user_message or e))
+
+
+def _tier_from_price_id(price_id: str) -> str:
+    """Derive tier name from a Stripe price ID."""
+    for key, pid in STRIPE_PRICE_IDS.items():
+        if pid == price_id:
+            return "enterprise" if "enterprise" in key else "pro"
+    return "pro"
+
+
+def _billing_cycle_from_interval(interval: str) -> str:
+    return "annual" if interval == "year" else "monthly"
+
+
+def _handle_subscription_active(sub: dict):
+    """Update user tier when a subscription becomes active or is updated."""
+    customer_id = sub.get("customer")
+    email = customers_db.get(customer_id)
+    if not email or email not in users_db:
+        return
+
+    items = sub.get("items", {}).get("data", [])
+    price_id = items[0]["price"]["id"] if items else ""
+    interval = items[0]["price"].get("recurring", {}).get("interval", "month") if items else "month"
+    renewal_ts = sub.get("current_period_end")
+    renewal_date = datetime.utcfromtimestamp(renewal_ts).isoformat() + "Z" if renewal_ts else None
+
+    users_db[email]["tier"] = _tier_from_price_id(price_id)
+    users_db[email]["stripe_subscription_id"] = sub["id"]
+    users_db[email]["billing_cycle"] = _billing_cycle_from_interval(interval)
+    users_db[email]["renewal_date"] = renewal_date
+
+
+@app.post("/api/stripe/webhook")
+async def stripe_webhook(request: Request):
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature", "")
+
+    if STRIPE_WEBHOOK_SECRET:
+        try:
+            event = stripe.Webhook.construct_event(payload, sig_header, STRIPE_WEBHOOK_SECRET)
+        except stripe.error.SignatureVerificationError:
+            raise HTTPException(status_code=400, detail="Invalid webhook signature")
+    else:
+        # Dev mode: no signature check
+        import json
+        event = json.loads(payload)
+
+    event_type = event.get("type", "")
+    data_obj = event.get("data", {}).get("object", {})
+
+    if event_type == "checkout.session.completed":
+        # Retrieve full subscription to get price/interval info
+        sub_id = data_obj.get("subscription")
+        customer_id = data_obj.get("customer")
+        email_from_session = data_obj.get("customer_details", {}).get("email") or data_obj.get("metadata", {}).get("email")
+
+        # Register customer mapping if not already known
+        if customer_id and email_from_session:
+            customers_db[customer_id] = email_from_session.lower()
+
+        if sub_id and stripe.api_key:
+            try:
+                sub = stripe.Subscription.retrieve(sub_id)
+                _handle_subscription_active(sub)
+            except Exception:
+                pass
+
+    elif event_type in ("customer.subscription.updated", "customer.subscription.created"):
+        _handle_subscription_active(data_obj)
+
+    elif event_type == "customer.subscription.deleted":
+        customer_id = data_obj.get("customer")
+        email = customers_db.get(customer_id)
+        if email and email in users_db:
+            users_db[email]["tier"] = "free"
+            users_db[email]["stripe_subscription_id"] = None
+            users_db[email]["billing_cycle"] = None
+            users_db[email]["renewal_date"] = None
+
+    return {"received": True}

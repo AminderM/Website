@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
-import { Save, CheckCircle } from 'lucide-react';
+import { Save, CheckCircle, Lock } from 'lucide-react';
+import { isPaidUser } from '../types/auth';
+import { parseApiError } from '../utils/apiFetch';
+import BackToTools from '../components/BackToTools';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -94,15 +97,20 @@ const Input = (props: any & { isDark: boolean }) => {
 
 const BOLGeneratorPage: React.FC = () => {
   const { theme } = useTheme();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const isDark = theme === 'dark';
   const previewRef = React.useRef<HTMLDivElement>(null);
   const [previewScale, setPreviewScale] = React.useState(0.25);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   const saveBOLToHistory = async () => {
     if (!token || !form.bolNumber) return;
-    
+    if (!isPaidUser(user)) {
+      setSaveError('Upgrade to a paid plan to save BOLs to history.');
+      return;
+    }
+    setSaveError('');
     try {
       const response = await fetch(`${BACKEND_URL}/api/history/bol`, {
         method: 'POST',
@@ -111,22 +119,28 @@ const BOLGeneratorPage: React.FC = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          bol_number: form.bolNumber,
-          bol_date: form.bolDate,
           shipper_name: form.sName,
+          shipper_address: `${form.sAddr}, ${form.sCity} ${form.sState}`,
           consignee_name: form.cName,
-          carrier_name: form.carrierName,
-          total_weight: form.totalWt,
-          freight_terms: form.fTerms
+          consignee_address: `${form.cAddr}, ${form.cCity} ${form.cState}`,
+          carrier_name: form.carrierName || undefined,
+          pro_number: form.proNum || undefined,
+          weight: parseFloat(form.totalWt) || undefined,
+          special_instructions: form.instrTxt || undefined,
+          reference_number: form.poNum || undefined,
         })
       });
-      
       if (response.ok) {
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
+      } else if (response.status === 403) {
+        setSaveError('Upgrade to a paid plan to save BOLs to history.');
+      } else {
+        const err = await response.json().catch(() => ({}));
+        setSaveError(parseApiError(err));
       }
     } catch (error) {
-      console.error('Failed to save BOL:', error);
+      setSaveError('Network error. Please try again.');
     }
   };
 
@@ -293,6 +307,9 @@ const BOLGeneratorPage: React.FC = () => {
           @page { size: 2480px 3508px; margin: 0; }
           body, html, #root, .min-h-screen { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white !important; background-color: white !important; }
           nav, header, footer { display: none !important; }
+          aside { display: none !important; }
+          [data-testid="app-sidebar"] { display: none !important; }
+          main { margin-left: 0 !important; padding-top: 0 !important; }
           .no-print { display: none !important; }
           
           .bol-preview-container .pdf-native-wrapper {
@@ -325,6 +342,7 @@ const BOLGeneratorPage: React.FC = () => {
       </style>
       <div className={`pt-32 pb-20 px-4 print-reset ${isDark ? 'bg-dark-400' : 'bg-gray-50'}`}>
         <div className="max-w-6xl mx-auto print-reset">
+          <div className="no-print"><BackToTools /></div>
           {/* Header */}
           <div className="mb-12 no-print">
           <h1 className={`text-3xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
@@ -336,9 +354,9 @@ const BOLGeneratorPage: React.FC = () => {
         </div>
 
         {/* Main Layout: Form (left) + Preview (right) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start print-reset">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start print-reset">
           {/* ===== FORM PANEL ===== */}
-          <div className={`rounded-lg border no-print ${
+          <div className={`lg:col-span-2 rounded-lg border no-print ${
             isDark ? 'bg-dark-300 border-gray-700' : 'bg-white border-gray-200'
           } p-8`}>
 
@@ -715,19 +733,26 @@ const BOLGeneratorPage: React.FC = () => {
 
             {/* Actions */}
             <div className="flex flex-wrap gap-3 pt-8 border-t border-gray-700">
+              {saveError && (
+                <div className="w-full px-4 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+                  {saveError}
+                </div>
+              )}
               <button
                 onClick={saveBOLToHistory}
                 className={`flex-1 min-w-[140px] px-4 py-3 rounded-lg font-semibold border transition flex items-center justify-center gap-2 ${
                   saved
                     ? 'bg-green-500/20 border-green-500 text-green-500'
-                    : isDark
-                      ? 'bg-dark-400 border-gray-600 text-white hover:bg-dark-300'
-                      : 'bg-gray-100 border-gray-300 text-gray-900 hover:bg-gray-200'
+                    : !isPaidUser(user)
+                      ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400 cursor-not-allowed'
+                      : isDark
+                        ? 'bg-dark-400 border-gray-600 text-white hover:bg-dark-300'
+                        : 'bg-gray-100 border-gray-300 text-gray-900 hover:bg-gray-200'
                 }`}
                 data-testid="save-bol-btn"
               >
-                {saved ? <CheckCircle className="w-5 h-5" /> : <Save className="w-5 h-5" />}
-                {saved ? 'Saved!' : 'Save BOL'}
+                {saved ? <CheckCircle className="w-5 h-5" /> : !isPaidUser(user) ? <Lock className="w-5 h-5" /> : <Save className="w-5 h-5" />}
+                {saved ? 'Saved!' : !isPaidUser(user) ? 'Paid Plan Required' : 'Save BOL'}
               </button>
               <button
                 onClick={downloadBOL}
@@ -759,7 +784,7 @@ const BOLGeneratorPage: React.FC = () => {
           </div>
 
           {/* ===== PREVIEW PANEL ===== */}
-          <div className={`bol-preview-container rounded-lg border overflow-hidden sticky top-32 ${
+          <div className={`hidden lg:block lg:col-span-3 bol-preview-container rounded-lg border overflow-hidden sticky top-24 ${
             isDark ? 'bg-white border-gray-200' : 'bg-white border-gray-200'
           } shadow-lg`} ref={previewRef} style={{ width: '100%', aspectRatio: '2480 / 3508', position: 'relative', overflow: 'hidden' }}>
             
@@ -782,7 +807,7 @@ const BOLGeneratorPage: React.FC = () => {
                 <div style={{
                   writingMode: 'vertical-rl',
                   textOrientation: 'mixed',
-                  fontFamily: 'Arial',
+                  fontFamily: "'Inter', system-ui, sans-serif",
                   fontSize: '23px',
                   fontWeight: 700,
                   letterSpacing: '7px',
@@ -814,7 +839,7 @@ const BOLGeneratorPage: React.FC = () => {
                 <div style={{
                   writingMode: 'vertical-rl',
                   textOrientation: 'mixed',
-                  fontFamily: 'Arial',
+                  fontFamily: "'Inter', system-ui, sans-serif",
                   fontSize: '23px',
                   fontWeight: 700,
                   letterSpacing: '7px',
@@ -835,7 +860,7 @@ const BOLGeneratorPage: React.FC = () => {
                 backgroundColor: '#ffffff',
                 color: '#0A1628',
                 fontSize: '45px',
-                fontFamily: 'Arial, sans-serif',
+                fontFamily: "'Inter', system-ui, sans-serif",
                 flex: 1,
                 marginLeft: '0',
                 marginRight: '0',
