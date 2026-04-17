@@ -28,6 +28,7 @@ import CheckoutCancelPage from './pages/CheckoutCancelPage';
 import ToolsDashboardPage from './pages/ToolsDashboardPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import SavedDocumentsSidebar from './components/SavedDocumentsSidebar';
+import ScrollToTop from './components/ScrollToTop';
 import './index.css';
 
 // Layout wrapper
@@ -52,6 +53,7 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <Router basename="">
+          <ScrollToTop />
           <AppLayout>
             <Routes>
               <Route path="/" element={<HomePage />} />
