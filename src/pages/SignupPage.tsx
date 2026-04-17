@@ -1,7 +1,6 @@
 import React, { useState, FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, User, Phone, AlertCircle } from 'lucide-react';
-import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -13,7 +12,7 @@ const SignupPage: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const { signup, googleLogin } = useAuth();
+  const { signup } = useAuth();
   const navigate = useNavigate();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
@@ -56,17 +55,6 @@ const SignupPage: React.FC = () => {
       setError(message);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleGoogleSuccess = async (credentialResponse: { credential?: string }) => {
-    if (!credentialResponse.credential) return;
-    setError('');
-    try {
-      await googleLogin(credentialResponse.credential);
-      navigate('/tools');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Google sign-in failed');
     }
   };
 
@@ -198,25 +186,6 @@ const SignupPage: React.FC = () => {
             >
               {isLoading ? 'Creating account...' : 'Create Account'}
             </button>
-
-            {/* Divider */}
-            <div className={`flex items-center gap-3 mb-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-              <div className="flex-1 h-px bg-current opacity-30"></div>
-              <span className="text-xs uppercase">Or sign up with</span>
-              <div className="flex-1 h-px bg-current opacity-30"></div>
-            </div>
-
-            {/* Google */}
-            <div className="flex justify-center mb-3">
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={() => setError('Google sign-in failed')}
-                theme={isDark ? 'filled_black' : 'outline'}
-                text="signup_with"
-                shape="rectangular"
-                width="100%"
-              />
-            </div>
 
             {/* Login Link */}
             <p className={`text-center text-sm mt-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
