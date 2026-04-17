@@ -31,9 +31,10 @@ build.tar.gz
 logs/
 *.log
 
-# Environment files
+# Environment files (allow .env.production for CI build)
 *.env
 *.env.*
+!.env.production
 
 # Temp scripts
 temp_auto_push.bat

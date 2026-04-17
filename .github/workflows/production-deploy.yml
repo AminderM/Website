@@ -51,11 +51,18 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
+      - name: Create .env.production
+        run: |
+          cat > .env.production << EOF
+          REACT_APP_BACKEND_URL=https://api.integratedtech.ca
+          REACT_APP_GOOGLE_CLIENT_ID=${{ secrets.REACT_APP_GOOGLE_CLIENT_ID }}
+          REACT_APP_STRIPE_PUBLISHABLE_KEY=${{ secrets.REACT_APP_STRIPE_PUBLISHABLE_KEY }}
+          EOF
+
       - name: Build application
         run: npm run build
         env:
           CI: false
-          REACT_APP_BACKEND_URL: https://api.integratedtech.ca
 
       - name: Create deployment info file
         run: |
