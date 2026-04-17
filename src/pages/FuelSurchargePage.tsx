@@ -109,7 +109,7 @@ const FuelSurchargePage: React.FC = () => {
   const labelClass = `block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`;
 
   return (
-    <div className={`min-h-screen pt-32 pb-20 px-4 ${isDark ? 'bg-dark-400' : 'bg-gray-50'}`} data-testid="fuel-surcharge-page">
+    <div className={`min-h-screen pt-20 sm:pt-28 pb-20 px-4 ${isDark ? 'bg-dark-400' : 'bg-gray-50'}`} data-testid="fuel-surcharge-page">
       <div className="max-w-2xl mx-auto">
         <BackToTools />
         {/* Header */}

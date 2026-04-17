@@ -340,7 +340,7 @@ const BOLGeneratorPage: React.FC = () => {
           }
         `}
       </style>
-      <div className={`pt-32 pb-20 px-4 print-reset ${isDark ? 'bg-dark-400' : 'bg-gray-50'}`}>
+      <div className={`pt-20 sm:pt-28 pb-20 px-4 print-reset ${isDark ? 'bg-dark-400' : 'bg-gray-50'}`}>
         <div className="max-w-6xl mx-auto print-reset">
           <div className="no-print"><BackToTools /></div>
           {/* Header */}
@@ -619,27 +619,25 @@ const BOLGeneratorPage: React.FC = () => {
             <FormSection isDark={isDark} title="Commodities">
               <div className="space-y-3 mb-4">
                 {commodities.map((com) => (
-                  <div key={com.id} className="grid grid-cols-5 gap-2 items-end">
-                    <input
-                      type="text"
-                      value={com.description}
-                      onChange={(e) => updateCommodity(com.id, 'description', e.target.value)}
-                      placeholder="Description"
-                      className={`px-2 py-1 rounded border text-xs ${
-                        isDark
-                          ? 'bg-gray-700 border-gray-600 text-white'
-                          : 'bg-white border-gray-300'
-                      } focus:outline-none`}
-                    />
+                  <div key={com.id} className="grid grid-cols-2 sm:grid-cols-5 gap-2 items-end">
+                    <div className="col-span-2 sm:col-span-1">
+                      <input
+                        type="text"
+                        value={com.description}
+                        onChange={(e) => updateCommodity(com.id, 'description', e.target.value)}
+                        placeholder="Description"
+                        className={`w-full px-2 py-1.5 rounded border text-xs ${
+                          isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
+                        } focus:outline-none`}
+                      />
+                    </div>
                     <input
                       type="text"
                       value={com.qty}
                       onChange={(e) => updateCommodity(com.id, 'qty', e.target.value)}
                       placeholder="Qty"
-                      className={`px-2 py-1 rounded border text-xs ${
-                        isDark
-                          ? 'bg-gray-700 border-gray-600 text-white'
-                          : 'bg-white border-gray-300'
+                      className={`w-full px-2 py-1.5 rounded border text-xs ${
+                        isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
                       } focus:outline-none`}
                     />
                     <input
@@ -647,10 +645,8 @@ const BOLGeneratorPage: React.FC = () => {
                       value={com.weight}
                       onChange={(e) => updateCommodity(com.id, 'weight', e.target.value)}
                       placeholder="Weight"
-                      className={`px-2 py-1 rounded border text-xs ${
-                        isDark
-                          ? 'bg-gray-700 border-gray-600 text-white'
-                          : 'bg-white border-gray-300'
+                      className={`w-full px-2 py-1.5 rounded border text-xs ${
+                        isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
                       } focus:outline-none`}
                     />
                     <input
@@ -658,17 +654,15 @@ const BOLGeneratorPage: React.FC = () => {
                       value={com.class}
                       onChange={(e) => updateCommodity(com.id, 'class', e.target.value)}
                       placeholder="Class"
-                      className={`px-2 py-1 rounded border text-xs ${
-                        isDark
-                          ? 'bg-gray-700 border-gray-600 text-white'
-                          : 'bg-white border-gray-300'
+                      className={`w-full px-2 py-1.5 rounded border text-xs ${
+                        isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
                       } focus:outline-none`}
                     />
                     <button
                       onClick={() => removeCommodity(com.id)}
-                      className="px-2 py-1 bg-red-600/20 text-red-600 rounded text-xs hover:bg-red-600/30 transition"
+                      className="px-2 py-1.5 bg-red-600/20 text-red-600 rounded text-xs hover:bg-red-600/30 transition"
                     >
-                      ✕
+                      ✕ Remove
                     </button>
                   </div>
                 ))}
