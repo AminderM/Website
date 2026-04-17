@@ -777,8 +777,8 @@ const InvoiceGeneratorPage: React.FC = () => {
               <div className="p-5 space-y-3">
                 {data.lineItems.map((item, idx) => (
                   <div key={item.id} className={`p-3 rounded-lg border ${isDark ? 'border-gray-700 bg-dark-400' : 'border-gray-200 bg-gray-50'}`}>
-                    <div className="grid grid-cols-2 sm:grid-cols-12 gap-2 items-end">
-                      <div className="col-span-2 sm:col-span-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-end">
+                      <div className="col-span-1 sm:col-span-4">
                         <label className={lbl}>Description *</label>
                         <input className={inp(fieldErrors[`lineItems.${idx}.description`])}
                           value={item.description} placeholder="Linehaul - Toronto to Calgary"
@@ -803,10 +803,10 @@ const InvoiceGeneratorPage: React.FC = () => {
                           min={0} step="0.01" placeholder="0.00"
                           onChange={e => updateItem(item.id, 'amount', parseFloat(e.target.value) || 0)} />
                       </div>
-                      <div className="col-span-1 sm:col-span-1 flex justify-end pb-1">
+                      <div className="col-span-1 sm:col-span-1 flex sm:justify-end pb-1">
                         {data.lineItems.length > 1 && (
-                          <button onClick={() => removeItem(item.id)} className="text-red-400 hover:text-red-300">
-                            <Trash2 className="w-4 h-4" />
+                          <button onClick={() => removeItem(item.id)} className="text-red-400 hover:text-red-300 flex items-center gap-1 text-xs">
+                            <Trash2 className="w-4 h-4" /> <span className="sm:hidden">Remove</span>
                           </button>
                         )}
                       </div>
@@ -824,7 +824,7 @@ const InvoiceGeneratorPage: React.FC = () => {
             </div>
 
             {/* Totals + Notes */}
-            <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div className={sec()}>
                 <div className={secHead}><FileText className="w-4 h-4 text-cyan-500" /> Notes</div>
                 <div className="p-4">

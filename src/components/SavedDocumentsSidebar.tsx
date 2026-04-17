@@ -57,7 +57,7 @@ const SavedDocumentsSidebar: React.FC = () => {
   const bgClass     = isDark ? 'bg-dark-200'          : 'bg-white';
 
   return (
-    <div className="fixed right-0 top-20 h-[calc(100vh-5rem)] z-40 flex items-stretch print:hidden">
+    <div className="hidden md:flex fixed right-0 top-20 h-[calc(100vh-5rem)] z-40 items-stretch print:hidden">
 
       {/* Toggle tab */}
       <button

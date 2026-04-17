@@ -318,7 +318,7 @@ const ESignaturePage: React.FC = () => {
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div className={`min-h-screen px-6 py-10 ${isDark ? 'bg-dark text-white' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={`min-h-screen px-4 sm:px-6 py-6 sm:py-10 ${isDark ? 'bg-dark text-white' : 'bg-gray-50 text-gray-900'}`}>
       <div className="max-w-5xl mx-auto">
         <BackToTools />
 

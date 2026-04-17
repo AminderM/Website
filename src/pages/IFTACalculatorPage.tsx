@@ -176,7 +176,7 @@ const IFTACalculatorPage: React.FC = () => {
   const labelClass = `block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`;
 
   return (
-    <div className={`min-h-screen pt-32 pb-20 px-4 ${isDark ? 'bg-dark-400' : 'bg-gray-50'}`} data-testid="ifta-calculator-page">
+    <div className={`min-h-screen pt-20 sm:pt-28 pb-20 px-4 ${isDark ? 'bg-dark-400' : 'bg-gray-50'}`} data-testid="ifta-calculator-page">
       <div className="max-w-3xl mx-auto">
         <BackToTools />
         {/* Header */}
@@ -237,7 +237,7 @@ const IFTACalculatorPage: React.FC = () => {
             <div className="space-y-4">
               {jurisdictions.map((j, idx) => (
                 <div key={j.id} className={`p-4 rounded-lg ${isDark ? 'bg-dark-400' : 'bg-gray-50'}`}>
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 items-end">
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3 items-end">
                     <div>
                       <label className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>State/Province</label>
                       <input
@@ -328,7 +328,7 @@ const IFTACalculatorPage: React.FC = () => {
                 </div>
               </div>
               
-              <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                 <div className={`p-4 rounded-lg ${isDark ? 'bg-dark-300' : 'bg-white'}`}>
                   <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Total Miles</p>
                   <p className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
@@ -351,10 +351,10 @@ const IFTACalculatorPage: React.FC = () => {
 
               <div className={`border-t ${isDark ? 'border-gray-600' : 'border-gray-200'} pt-4 mb-4`}>
                 <h4 className={`text-sm font-semibold mb-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>By Jurisdiction</h4>
-                <div className="overflow-x-auto">
-                  <div className="space-y-2 min-w-[420px]">
+                <div className="overflow-x-auto -mx-1">
+                  <div className="space-y-2 min-w-[300px]">
                     {result.jurisdictionResults.map((j, idx) => (
-                      <div key={idx} className={`flex justify-between items-center p-3 rounded-lg ${isDark ? 'bg-dark-300' : 'bg-white'}`}>
+                      <div key={idx} className={`flex flex-wrap justify-between items-center gap-2 p-3 rounded-lg ${isDark ? 'bg-dark-300' : 'bg-white'}`}>
                         <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{j.state}</span>
                         <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>{j.miles.toLocaleString()} mi</span>
                         <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>{j.fuelUsed.toFixed(1)} gal used</span>
