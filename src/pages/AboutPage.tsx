@@ -15,18 +15,9 @@ const AboutPage: React.FC = () => {
   ];
 
   const milestones = [
-    { year: '2020', title: 'Founded', description: 'Started with a vision to transform logistics operations with modern technology.' },
-    { year: '2021', title: 'First 100 Customers', description: 'Reached our first milestone of 100 active customers managing over 50,000 loads.' },
-    { year: '2022', title: 'Series A Funding', description: 'Raised funding to accelerate product development and expand our team.' },
-    { year: '2023', title: 'AI Integration', description: 'Launched AI-powered features including smart routing and predictive analytics.' },
-    { year: '2024', title: '500+ Customers', description: 'Crossed 500 customers and 1 million loads managed through our platform.' },
-  ];
-
-  const team = [
-    { name: 'Michael Chen', role: 'CEO & Co-Founder', bio: 'Former logistics executive with 15+ years in supply chain management.' },
-    { name: 'Sarah Johnson', role: 'CTO & Co-Founder', bio: 'Tech veteran with experience building scalable enterprise platforms.' },
-    { name: 'David Rodriguez', role: 'VP of Product', bio: 'Product leader focused on creating intuitive user experiences.' },
-    { name: 'Emily Watson', role: 'VP of Customer Success', bio: 'Dedicated to helping customers achieve their operational goals.' },
+    { year: 'July 2024', title: 'Founded', description: 'Started with a vision to transform logistics operations with modern technology.' },
+    { year: 'January 2025', title: 'First 50 Customers', description: 'Reached our first milestone of 50 active customers.' },
+    { year: '2026', title: 'Enhanced Suite of AI Products & Tools', description: 'Launched an enhanced suite of AI-powered products and tools to streamline supply chain operations.' },
   ];
 
   return (
@@ -49,39 +40,52 @@ const AboutPage: React.FC = () => {
       <section className={`section ${isDark ? 'bg-dark-50' : 'bg-gray-50'}`}>
         <div className="container-custom">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
+
+            {/* Left — text */}
             <div>
               <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 ${isDark ? 'bg-primary-600/20 border border-primary-600/30' : 'bg-primary-50 border border-primary-200'}`}>
                 <Target className="w-4 h-4 text-primary-500" />
                 <span className={`text-sm ${isDark ? 'text-primary-400' : 'text-primary-600'}`}>Our Mission</span>
               </div>
-              <h2 className={`text-3xl md:text-4xl font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}>Empowering Logistics Professionals</h2>
-              <p className={`mb-6 ${isDark ? 'text-zinc-400' : 'text-gray-600'}`}>
-                The logistics industry moves the world. Yet too many freight brokers, fleet owners, and dispatchers are held back by outdated technology and manual processes.
+
+              <h2 className={`text-3xl md:text-4xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                Built for the people who keep the world{' '}
+                <span className="text-gradient-primary">moving.</span>
+              </h2>
+
+              <div className={`border-l-2 border-primary-600 pl-5 my-6`}>
+                <p className={`text-base font-medium leading-relaxed ${isDark ? 'text-zinc-300' : 'text-gray-700'}`}>
+                  "Every feature we build is grounded in a single purpose: helping our customers move more freight, more efficiently — with less friction and less stress."
+                </p>
+              </div>
+
+              <p className={`mb-5 leading-relaxed ${isDark ? 'text-zinc-400' : 'text-gray-600'}`}>
+                The logistics industry is the backbone of global commerce — and yet, the freight brokers, fleet owners, and dispatchers driving it forward have long been underserved by technology that either costs too much, does too little, or wasn't built with their reality in mind.
               </p>
-              <p className={`mb-6 ${isDark ? 'text-zinc-400' : 'text-gray-600'}`}>
-                We founded Integrated Supply Chain Technologies to change that. Our Transportation Management System brings enterprise-grade capabilities to businesses of all sizes, helping them compete and grow in an increasingly competitive market.
-              </p>
-              <p className={isDark ? 'text-zinc-400' : 'text-gray-600'}>
-                Every feature we build is designed with one goal in mind: helping our customers move more freight, more efficiently, with less stress.
+              <p className={`leading-relaxed ${isDark ? 'text-zinc-400' : 'text-gray-600'}`}>
+                At Integrated Supply Chain Solutions, we're changing that. We build a Transportation Management System designed from the ground up to give businesses of every size access to the enterprise-grade tools they need to compete, grow, and thrive in an increasingly demanding market.
               </p>
             </div>
+
+            {/* Right — stats */}
             <div className="relative">
               <div className={`absolute inset-0 rounded-3xl blur-2xl ${isDark ? 'bg-gradient-to-tr from-primary-600/20 to-transparent' : 'bg-gradient-to-tr from-primary-600/10 to-transparent'}`} />
               <div className="relative grid grid-cols-2 gap-4">
                 {[
-                  { icon: Truck, value: '1M+', label: 'Loads Managed' },
-                  { icon: Users, value: '500+', label: 'Active Customers' },
-                  { icon: Globe, value: '48', label: 'States Covered' },
-                  { icon: Award, value: '4.9', label: 'Customer Rating' },
+                  { icon: Truck,  value: '100K+', label: 'Loads Managed' },
+                  { icon: Users,  value: '250+',  label: 'Customers' },
+                  { icon: Globe,  value: 'All',   label: 'US States & Canadian Provinces' },
+                  { icon: Award,  value: '4.9',   label: 'Customer Rating' },
                 ].map((stat, idx) => (
-                  <div key={idx} className={`rounded-2xl p-8 border text-center ${idx % 2 === 1 ? 'mt-8' : ''} ${isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200 shadow-sm'}`}>
-                    <stat.icon className="w-10 h-10 text-primary-500 mx-auto mb-4" />
+                  <div key={idx} className={`rounded-2xl p-6 border text-center ${idx % 2 === 1 ? 'mt-8' : ''} ${isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200 shadow-sm'}`}>
+                    <stat.icon className="w-8 h-8 text-primary-500 mx-auto mb-3" />
                     <div className={`text-3xl font-bold mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>{stat.value}</div>
-                    <div className={`text-sm ${isDark ? 'text-zinc-500' : 'text-gray-500'}`}>{stat.label}</div>
+                    <div className={`text-xs leading-snug ${isDark ? 'text-zinc-500' : 'text-gray-500'}`}>{stat.label}</div>
                   </div>
                 ))}
               </div>
             </div>
+
           </div>
         </div>
       </section>
@@ -91,7 +95,7 @@ const AboutPage: React.FC = () => {
         <div className="container-custom">
           <div className="text-center mb-16">
             <h2 className={`text-3xl md:text-4xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Our Values</h2>
-            <p className={`max-w-2xl mx-auto ${isDark ? 'text-zinc-400' : 'text-gray-600'}`}>These principles guide everything we do, from product development to customer support.</p>
+            <p className={`max-w-2xl mx-auto ${isDark ? 'text-zinc-400' : 'text-gray-600'}`}>Making smart AI systems accessible to all thereby uplifting North American transportation industry.</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {values.map((value, index) => (
@@ -137,28 +141,6 @@ const AboutPage: React.FC = () => {
                 ))}
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Team Section */}
-      <section className={`section ${isDark ? '' : 'bg-white'}`}>
-        <div className="container-custom">
-          <div className="text-center mb-16">
-            <h2 className={`text-3xl md:text-4xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Leadership Team</h2>
-            <p className={`max-w-2xl mx-auto ${isDark ? 'text-zinc-400' : 'text-gray-600'}`}>A team of industry veterans and technology experts driving innovation in logistics.</p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {team.map((member, index) => (
-              <div key={index} className="text-center group">
-                <div className={`w-32 h-32 rounded-full mx-auto mb-6 flex items-center justify-center border group-hover:border-primary-600/50 transition-colors ${isDark ? 'bg-gradient-to-br from-primary-600/30 to-primary-600/10 border-white/10' : 'bg-gradient-to-br from-primary-100 to-primary-50 border-gray-200'}`}>
-                  <Users className={`w-12 h-12 group-hover:text-primary-500 transition-colors ${isDark ? 'text-zinc-500' : 'text-gray-400'}`} />
-                </div>
-                <h3 className={`text-lg font-semibold mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>{member.name}</h3>
-                <p className="text-sm text-primary-500 mb-3">{member.role}</p>
-                <p className={`text-sm ${isDark ? 'text-zinc-500' : 'text-gray-500'}`}>{member.bio}</p>
-              </div>
-            ))}
           </div>
         </div>
       </section>

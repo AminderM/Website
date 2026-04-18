@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Truck, Linkedin, Twitter, Mail } from 'lucide-react';
+import { Linkedin, Twitter, Mail } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import IALogo from './IALogo';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -32,14 +33,14 @@ const Footer: React.FC = () => {
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
-                <Truck className="w-6 h-6 text-white" />
-              </div>
+              <IALogo size={42} />
               <div>
-                <span className={`text-lg font-bold block ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  Integrated Supply Chain
+                <span className={`text-lg font-bold block leading-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  Integra AI
                 </span>
-                <span className={`text-xs ${isDark ? 'text-zinc-500' : 'text-gray-500'}`}>Technologies</span>
+                <span className={`text-xs ${isDark ? 'text-zinc-500' : 'text-gray-500'}`}>
+                  Integrated Supply Chain Solutions
+                </span>
               </div>
             </Link>
             <p className={`text-sm leading-relaxed max-w-sm mb-6 ${isDark ? 'text-zinc-400' : 'text-gray-600'}`}>
