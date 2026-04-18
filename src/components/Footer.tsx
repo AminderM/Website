@@ -132,7 +132,7 @@ const Footer: React.FC = () => {
         {/* Bottom Bar */}
         <div className={`mt-16 pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-4 ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
           <p className={`text-sm ${isDark ? 'text-zinc-500' : 'text-gray-500'}`}>
-            &copy; {currentYear} Integrated Supply Chain Technologies. All rights
+            &copy; {currentYear} Integrated Supply Chain Solutions. All rights
             reserved.
           </p>
           <p className={`text-xs ${isDark ? 'text-zinc-600' : 'text-gray-400'}`}>
