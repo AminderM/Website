@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import {
-  Upload, PenLine, Type, Download, Trash2, X,
+  Upload, PenLine, Type, Download, X,
   CheckCircle, AlertCircle, FileText, RotateCcw, MousePointer
 } from 'lucide-react';
 import BackToTools from '../components/BackToTools';

@@ -164,7 +164,7 @@ const ToolsDashboardPage: React.FC = () => {
           className="mb-10"
         >
           <p className={`text-xs font-semibold uppercase tracking-[0.2em] mb-2 ${isDark ? 'text-primary-500' : 'text-primary-600'}`}>
-            // INTEGRA TOOL BOX
+            {/* INTEGRA TOOL BOX */}
           </p>
           <h1 className={`text-3xl md:text-4xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
             Hey, <span className="text-gradient-primary">{firstName}</span>
