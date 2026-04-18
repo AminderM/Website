@@ -502,8 +502,8 @@ const ProductPage: React.FC = () => {
               },
               {
                 name: 'Pro',
-                price: { monthly: '$29', annual: '$23' },
-                subtext: billingCycle === 'annual' ? 'Billed $279/year' : 'Billed monthly',
+                price: { monthly: '$19.50', annual: '$16.25' },
+                subtext: billingCycle === 'annual' ? 'Billed $195/year' : 'Billed monthly',
                 badge: 'Most Popular',
                 features: [
                   { label: 'Fuel Surcharge Calculator', included: true },
@@ -522,8 +522,8 @@ const ProductPage: React.FC = () => {
               },
               {
                 name: 'Enterprise',
-                price: { monthly: '$99', annual: '$79' },
-                subtext: billingCycle === 'annual' ? 'Billed $950/year' : 'Billed monthly',
+                price: { monthly: '$39.50', annual: '$32.92' },
+                subtext: billingCycle === 'annual' ? 'Billed $395/year' : 'Billed monthly',
                 badge: null,
                 features: [
                   { label: 'Fuel Surcharge Calculator', included: true },
