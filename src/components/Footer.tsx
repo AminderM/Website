@@ -12,36 +12,25 @@ const Footer: React.FC = () => {
   const footerLinks = {
     product: [
       { name: 'Features', path: '/product#features' },
-      { name: 'Pricing', path: '/product#pricing' },
-      { name: 'Integrations', path: '/product#integrations' },
     ],
     company: [
       { name: 'About Us', path: '/about' },
       { name: 'Use Cases', path: '/use-cases' },
       { name: 'Contact', path: '/contact' },
     ],
-    legal: [
-      { name: 'Privacy Policy', path: '/privacy' },
-      { name: 'Terms of Service', path: '/terms' },
-    ],
   };
 
   return (
     <footer className={`border-t ${isDark ? 'bg-dark-100 border-white/10' : 'bg-gray-50 border-gray-200'}`}>
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center gap-3 mb-6">
-              <IALogo size={42} />
-              <div>
-                <span className={`text-lg font-bold block leading-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  Integra AI
-                </span>
-                <span className={`text-xs ${isDark ? 'text-zinc-500' : 'text-gray-500'}`}>
-                  Integrated Supply Chain Solutions
-                </span>
-              </div>
+              <IALogo size={38} />
+              <span className={`text-[10px] font-medium tracking-wider uppercase ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                SUPPLY CHAIN
+              </span>
             </Link>
             <p className={`text-sm leading-relaxed max-w-sm mb-6 ${isDark ? 'text-zinc-400' : 'text-gray-600'}`}>
               Transforming logistics operations with intelligent transportation
@@ -111,22 +100,6 @@ const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Legal Links */}
-          <div>
-            <h4 className={`font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Legal</h4>
-            <ul className="space-y-3">
-              {footerLinks.legal.map((link) => (
-                <li key={link.path}>
-                  <Link
-                    to={link.path}
-                    className={`text-sm transition-colors ${isDark ? 'text-zinc-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
-                  >
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
         </div>
 
         {/* Bottom Bar */}
