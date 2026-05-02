@@ -252,12 +252,13 @@ const FreightCalculatorPage: React.FC = () => {
   const labelCls = 'block text-xs font-semibold text-gray-600 mb-1';
 
   return (
-    <div className="flex flex-col bg-gray-100" style={{ height: 'calc(100vh - 80px)' }}>
+    <div className="min-h-screen pt-20 sm:pt-28 pb-16 px-4 bg-gray-100">
+      <div className="max-w-6xl mx-auto">
+
+      <BackToTools />
 
       {/* ── Tab bar ─────────────────────────────────────────────── */}
-      <div className="flex items-center bg-white border-b border-gray-200 px-2 h-10 shrink-0 gap-1">
-        <BackToTools />
-        <div className="w-px h-5 bg-gray-200 mx-1" />
+      <div className="flex items-center bg-white border border-gray-200 rounded-t-xl px-2 h-10 gap-1 mt-4">
         {quotes.map(q => (
           <button
             key={q.id}
@@ -290,10 +291,10 @@ const FreightCalculatorPage: React.FC = () => {
       </div>
 
       {/* ── Main row (calculator + map) ──────────────────────────── */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex border-x border-gray-200 bg-white" style={{ height: '480px' }}>
 
         {/* Left panel */}
-        <div className="w-56 shrink-0 flex flex-col bg-white border-r border-gray-200 overflow-hidden">
+        <div className="w-56 shrink-0 flex flex-col border-r border-gray-200 overflow-hidden">
 
           {/* Quote calculator inputs — scrollable */}
           <div className="flex-1 overflow-y-auto p-3 space-y-3">
@@ -513,7 +514,7 @@ const FreightCalculatorPage: React.FC = () => {
       </div>
 
       {/* ── Bottom row (unit converter + route calculator) ───────── */}
-      <div className="flex shrink-0 border-t border-gray-200 bg-white" style={{ height: '220px' }}>
+      <div className="flex border border-t-0 border-gray-200 bg-white rounded-b-xl overflow-hidden" style={{ height: '200px' }}>
 
         {/* Unit Converter */}
         <div className="w-1/2 p-4 border-r border-gray-200 overflow-y-auto">
@@ -639,6 +640,8 @@ const FreightCalculatorPage: React.FC = () => {
           </button>
         </div>
       </div>
+
+      </div>{/* end max-w-6xl */}
     </div>
   );
 };
