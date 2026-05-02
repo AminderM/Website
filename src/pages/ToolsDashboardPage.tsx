@@ -115,7 +115,7 @@ const tools = [
   {
     id: 'freight-calculator',
     name: 'Freight Calculator',
-    desc: 'Estimate freight costs between Canadian provinces',
+    desc: 'Estimate freight costs across the USA and Canada',
     path: '/freight-calculator',
     icon: Truck,
     color: 'text-indigo-400',
