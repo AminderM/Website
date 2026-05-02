@@ -81,9 +81,6 @@ const PdfToWordPage: React.FC = () => {
     setError('');
   };
 
-  const inp = `w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 transition-colors ${
-    isDark ? 'bg-gray-800 text-white border-gray-600 focus:ring-primary-500' : 'bg-white text-gray-900 border-gray-300 focus:ring-primary-400'
-  }`;
 
   return (
     <div className={`min-h-screen px-4 sm:px-6 py-6 sm:py-10 ${isDark ? 'bg-dark text-white' : 'bg-gray-50 text-gray-900'}`}>
