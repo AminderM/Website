@@ -10,7 +10,6 @@ import {
   TrendingUp, Brain, Bot, Layers,
 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
-import IALogo from '../components/IALogo';
 
 /* ─────────────────────────────────────────────
    Shared animation variants

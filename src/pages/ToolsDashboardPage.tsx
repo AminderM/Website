@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   FileText, Fuel, Calculator, Receipt,
-  FileType, FileDown, PenTool, Lock, ArrowRight,
+  FileType, FileDown, PenTool, Truck, Lock, ArrowRight,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -112,6 +112,19 @@ const tools = [
     pro: true,
     badge: null,
   },
+  {
+    id: 'freight-calculator',
+    name: 'Freight Calculator',
+    desc: 'Estimate freight costs between Canadian provinces',
+    path: '/freight-calculator',
+    icon: Truck,
+    color: 'text-indigo-400',
+    bg: 'bg-indigo-500/10',
+    border: 'group-hover:border-indigo-500/40',
+    glow: 'group-hover:shadow-[0_0_24px_rgba(99,102,241,0.15)]',
+    pro: false,
+    badge: null,
+  },
 ];
 
 /* ── Component ────────────────────────────────────────────────── */
@@ -164,7 +177,7 @@ const ToolsDashboardPage: React.FC = () => {
           className="mb-10"
         >
           <p className={`text-xs font-semibold uppercase tracking-[0.2em] mb-2 ${isDark ? 'text-primary-500' : 'text-primary-600'}`}>
-            // INTEGRA TOOL BOX
+            {/* INTEGRA TOOL BOX */}
           </p>
           <h1 className={`text-3xl md:text-4xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
             Hey, <span className="text-gradient-primary">{firstName}</span>
