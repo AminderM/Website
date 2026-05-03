@@ -60,7 +60,7 @@ const Navbar: React.FC = () => {
 
   return (
     <>
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      <nav className={`fixed top-0 left-0 right-0 z-[1200] transition-all duration-300 ${
         isScrolled
           ? isDark
             ? 'bg-dark-300/90 backdrop-blur-xl border-b border-white/[0.08] shadow-lg shadow-black/20'
@@ -155,7 +155,7 @@ const Navbar: React.FC = () => {
                         animate={{ opacity: 1, y: 0,  scale: 1    }}
                         exit={{    opacity: 0, y: -8, scale: 0.96 }}
                         transition={{ duration: 0.18, ease: 'easeOut' }}
-                        className={`absolute right-0 mt-2 w-56 rounded-2xl shadow-2xl border overflow-hidden z-50 ${
+                        className={`absolute right-0 mt-2 w-56 rounded-2xl shadow-2xl border overflow-hidden z-[1300] ${
                           isDark ? 'bg-dark-200 border-white/10' : 'bg-white border-gray-200'
                         }`}
                       >
@@ -265,7 +265,7 @@ const Navbar: React.FC = () => {
             animate={{ opacity: 1, y: 0  }}
             exit={{    opacity: 0, y: -10 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className={`fixed top-20 left-0 right-0 z-40 border-b backdrop-blur-xl ${
+            className={`fixed top-20 left-0 right-0 z-[1190] border-b backdrop-blur-xl ${
               isDark ? 'bg-dark-200/98 border-white/10' : 'bg-white/98 border-gray-200'
             }`}
           >

@@ -6,8 +6,9 @@ import {
   Plus, X, Printer, RotateCcw, ArrowLeftRight, MapPin, Navigation,
   DollarSign, Copy, Save, CheckCircle, Lock, User, Building2,
 } from 'lucide-react';
-import { apiFetch, parseApiError } from '../utils/apiFetch';
+import { parseApiError } from '../utils/apiFetch';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { isPaidUser } from '../types/auth';
 import BackToTools from '../components/BackToTools';
 
@@ -86,35 +87,6 @@ async function fetchRoute(waypoints: [number, number][]): Promise<RouteInfo> {
   };
 }
 
-/* ── Route → SVG (for PDF embed) ────────────────────────────────────── */
-function routeToSVG(polyline: [number, number][]): string {
-  if (!polyline || polyline.length < 2) return '';
-  const lats = polyline.map(p => p[0]);
-  const lons = polyline.map(p => p[1]);
-  const minLat = Math.min(...lats), maxLat = Math.max(...lats);
-  const minLon = Math.min(...lons), maxLon = Math.max(...lons);
-  const latR = maxLat - minLat || 0.01;
-  const lonR = maxLon - minLon || 0.01;
-  const W = 560, H = 160, pad = 28;
-  const toX = (lon: number) => ((lon - minLon) / lonR) * (W - 2 * pad) + pad;
-  const toY = (lat: number) => H - pad - ((lat - minLat) / latR) * (H - 2 * pad);
-  const path = polyline.map(([lat, lon], i) =>
-    `${i === 0 ? 'M' : 'L'}${toX(lon).toFixed(1)},${toY(lat).toFixed(1)}`).join(' ');
-  const [sLat, sLon] = polyline[0];
-  const [eLat, eLon] = polyline[polyline.length - 1];
-  const sx = toX(sLon).toFixed(1), sy = toY(sLat).toFixed(1);
-  const ex = toX(eLon).toFixed(1), ey = toY(eLat).toFixed(1);
-  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:8px;display:block;background:#eef2f7">
-    <defs><pattern id="g" width="30" height="30" patternUnits="userSpaceOnUse"><path d="M30 0L0 0 0 30" fill="none" stroke="#d0dcea" stroke-width="0.6"/></pattern></defs>
-    <rect width="${W}" height="${H}" fill="url(#g)"/>
-    <path d="${path}" fill="none" stroke="#dc2626" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.88"/>
-    <circle cx="${sx}" cy="${sy}" r="7" fill="#16a34a" stroke="white" stroke-width="2"/>
-    <text x="${sx}" y="${(+sy + 4).toFixed(0)}" text-anchor="middle" font-size="8" fill="white" font-weight="bold" font-family="Arial">A</text>
-    <circle cx="${ex}" cy="${ey}" r="7" fill="#dc2626" stroke="white" stroke-width="2"/>
-    <text x="${ex}" y="${(+ey + 4).toFixed(0)}" text-anchor="middle" font-size="8" fill="white" font-weight="bold" font-family="Arial">B</text>
-  </svg>`;
-}
-
 /* ── Map fit bounds helper ───────────────────────────────────────────── */
 function FitBounds({ positions }: { positions: [number, number][] }) {
   const map = useMap();
@@ -129,9 +101,11 @@ function exportPDF(
   q: QuoteTab, route: RouteInfo | null, c: ReturnType<typeof computeQuote>,
   customer: PartyInfo, consignor: PartyInfo, consignee: PartyInfo,
   pickup: string, destination: string,
-  companyName: string,
+  companyName: string, userFullName: string,
 ) {
   const esc = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const headerName = companyName || userFullName || '';
+  const logoB64 = localStorage.getItem('integra_company_logo') || '';
 
   const partyBlock = (title: string, p: PartyInfo) => `
     <div class="party">
@@ -143,8 +117,6 @@ function exportPDF(
       ${p.phone   ? `<p>&#x1F4DE; ${esc(p.phone)}</p>` : ''}
       ${p.email   ? `<p>&#x2709; ${esc(p.email)}</p>` : ''}
     </div>`;
-
-  const mapSVG = route ? routeToSVG(route.polyline) : '';
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
   <title>${esc(q.label)} — Freight Quote</title>
@@ -159,8 +131,6 @@ function exportPDF(
     .lh-company { font-size: 22px; font-weight: 900; color: #dc2626; letter-spacing: -.3px; }
     .lh-tag     { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: .1em; margin-top: 2px; }
     .lh-right   { text-align: right; font-size: 11px; color: #999; }
-
-    /* ── Section title ── */
     .quote-title { font-size: 17px; font-weight: 700; color: #111; margin-bottom: 16px; }
 
     /* ── Parties ── */
@@ -169,8 +139,7 @@ function exportPDF(
                border: 1px solid #eee; border-radius: 6px; padding: 14px; margin-bottom: 18px; }
     .party p { margin: 2px 0; font-size: 12px; }
 
-    /* ── Route map ── */
-    .map-wrap { margin-bottom: 14px; border-radius: 8px; overflow: hidden; }
+    /* ── Route bar ── */
     .route-bar { background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px;
                  padding: 10px 14px; margin-bottom: 16px; display: flex; gap: 28px; }
     .route-bar span { font-size: 11px; color: #777; }
@@ -183,21 +152,19 @@ function exportPDF(
     td     { padding: 8px 11px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
     .total-row td { font-weight: 700; font-size: 17px; color: #dc2626;
                     border-top: 2px solid #dc2626; padding-top: 11px; border-bottom: none; }
-
-    /* ── Disclaimer ── */
     .disclaimer { margin-top: 18px; font-size: 10px; color: #bbb;
                   border-top: 1px solid #eee; padding-top: 9px; }
-
-    @media print {
-      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    }
+    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
   </style></head><body>
 
   <!-- Letterhead -->
   <div class="letterhead">
-    <div>
-      <div class="lh-company">${esc(companyName || 'Integra AI')}</div>
-      <div class="lh-tag">Integrated Supply Chain Solutions</div>
+    <div style="display:flex;align-items:center;gap:12px">
+      ${logoB64 ? `<img src="${logoB64}" alt="Logo" style="height:48px;width:auto;object-fit:contain" />` : ''}
+      <div>
+        ${headerName ? `<div class="lh-company">${esc(headerName)}</div>` : ''}
+        <div class="lh-tag">Integrated Supply Chain Solutions</div>
+      </div>
     </div>
     <div class="lh-right">
       <div>Freight Quote</div>
@@ -213,9 +180,6 @@ function exportPDF(
     ${partyBlock('Consignor / Shipper', consignor)}
     ${partyBlock('Consignee / Receiver', consignee)}
   </div>
-
-  <!-- Route map -->
-  ${mapSVG ? `<div class="map-wrap">${mapSVG}</div>` : ''}
 
   <!-- Route bar -->
   ${route ? `
@@ -237,7 +201,7 @@ function exportPDF(
     <tr class="total-row"><td colspan="2">TOTAL QUOTE</td><td style="text-align:right">${fmt(c.total)} USD</td></tr>
   </table>
 
-  <p class="disclaimer">This is an estimate only. Actual charges may vary based on final weight, distance, and accessorial requirements. &copy; ${new Date().getFullYear()} ${esc(companyName || 'Integra AI')} — Integrated Supply Chain Solutions.</p>
+  <p class="disclaimer">This is an estimate only. Actual charges may vary based on final weight, distance, and accessorial requirements.${headerName ? ` &copy; ${new Date().getFullYear()} ${esc(headerName)}.` : ''}</p>
   </body></html>`;
 
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
@@ -252,6 +216,8 @@ function exportPDF(
 /* ── Component ───────────────────────────────────────────────────────── */
 const FreightCalculatorPage: React.FC = () => {
   const { user, token } = useAuth();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
 
   /* Profile (for PDF letterhead) */
   const [companyName, setCompanyName] = useState('');
@@ -295,6 +261,35 @@ const FreightCalculatorPage: React.FC = () => {
 
   const activeQuote = quotes.find(q => q.id === activeId) ?? quotes[0];
   const calc        = computeQuote(activeQuote, route);
+
+  /* Shared input styles — theme-aware */
+  const inp = isDark
+    ? 'w-full px-2 py-1.5 text-sm border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-red-500 bg-dark-300 text-gray-100 placeholder-gray-500'
+    : 'w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-red-500 bg-white text-gray-900 placeholder-gray-400';
+  const lbl = isDark ? 'block text-xs font-semibold text-gray-400 mb-1' : 'block text-xs font-semibold text-gray-600 mb-1';
+
+  const prefixWrap = isDark
+    ? 'flex items-center border border-gray-600 rounded overflow-hidden bg-dark-300 focus-within:ring-1 focus-within:ring-red-500'
+    : 'flex items-center border border-gray-300 rounded overflow-hidden bg-white focus-within:ring-1 focus-within:ring-red-500';
+  const prefixSpan = isDark
+    ? 'px-2 text-xs text-gray-500 border-r border-gray-600 bg-dark-400'
+    : 'px-2 text-xs text-gray-400 border-r border-gray-200 bg-gray-50';
+  const prefixInput = isDark
+    ? 'flex-1 px-2 py-1.5 text-sm focus:outline-none min-w-0 bg-dark-300 text-gray-100'
+    : 'flex-1 px-2 py-1.5 text-sm focus:outline-none min-w-0 bg-white text-gray-900';
+
+  const prefixInp = (key: keyof QuoteTab, placeholder = '0.00') => (
+    <div className={prefixWrap}>
+      <span className={prefixSpan}>$</span>
+      <input
+        type="number" min="0" step="0.01"
+        value={(activeQuote as any)[key]}
+        onChange={e => updateQuote({ [key]: e.target.value } as any)}
+        placeholder={placeholder}
+        className={prefixInput}
+      />
+    </div>
+  );
 
   /* Quote helpers */
   const updateQuote = useCallback((patch: Partial<QuoteTab>) => {
@@ -392,25 +387,14 @@ const FreightCalculatorPage: React.FC = () => {
     }
   };
 
-  /* Shared input styles */
-  const inp  = 'w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-red-500 bg-white text-gray-900';
-  const lbl  = 'block text-xs font-semibold text-gray-600 mb-1';
-  const prefixInp = (key: keyof QuoteTab, placeholder = '0.00') => (
-    <div className="flex items-center border border-gray-300 rounded overflow-hidden bg-white focus-within:ring-1 focus-within:ring-red-500">
-      <span className="px-2 text-xs text-gray-400 border-r border-gray-200 bg-gray-50">$</span>
-      <input
-        type="number" min="0" step="0.01"
-        value={(activeQuote as any)[key]}
-        onChange={e => updateQuote({ [key]: e.target.value } as any)}
-        placeholder={placeholder}
-        className="flex-1 px-2 py-1.5 text-sm focus:outline-none min-w-0"
-      />
-    </div>
-  );
+  const panelBorder  = isDark ? 'border-gray-700' : 'border-gray-200';
+  const panelBg      = isDark ? 'bg-dark-200'     : 'bg-white';
+  const sectionTitle = isDark ? 'text-gray-200'   : 'text-gray-800';
+  const subtleText   = isDark ? 'text-gray-500'   : 'text-gray-400';
 
   const partyFields = (label: string, val: PartyInfo, set: React.Dispatch<React.SetStateAction<PartyInfo>>, Icon: React.ElementType) => (
     <div>
-      <div className="flex items-center gap-1.5 text-xs font-bold text-gray-700 mb-3 pb-1 border-b border-gray-100">
+      <div className={`flex items-center gap-1.5 text-xs font-bold mb-3 pb-1 border-b ${isDark ? 'text-gray-300 border-gray-700' : 'text-gray-700 border-gray-100'}`}>
         <Icon className="w-3.5 h-3.5 text-red-500" /> {label}
       </div>
       <div className="grid grid-cols-2 gap-2">
@@ -436,19 +420,23 @@ const FreightCalculatorPage: React.FC = () => {
     </div>
   );
 
+  const userFullName = user?.full_name || user?.name || '';
+
   return (
-    <div className="min-h-screen pt-20 sm:pt-28 pb-16 px-4 bg-gray-100">
+    <div className={`min-h-screen pt-20 sm:pt-28 pb-16 px-4 ${isDark ? 'bg-dark-300' : 'bg-gray-100'}`}>
       <div className="max-w-6xl mx-auto">
         <BackToTools />
 
         {/* ── Tab bar ──────────────────────────────────────────────── */}
-        <div className="flex items-center bg-white border border-b-0 border-gray-200 rounded-t-xl px-2 h-10 gap-1 mt-4">
+        <div className={`flex items-center border border-b-0 rounded-t-xl px-2 h-10 gap-1 mt-4 ${panelBg} ${panelBorder}`}>
           {quotes.map(q => (
             <button
               key={q.id}
               onClick={() => setActiveId(q.id)}
               className={`flex items-center gap-1.5 px-3 py-1 rounded text-sm font-medium transition-colors ${
-                q.id === activeId ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                q.id === activeId
+                  ? 'bg-red-600 text-white'
+                  : isDark ? 'bg-dark-400 text-gray-300 hover:bg-dark-500' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
               <span className="text-xs">📄</span>
@@ -462,19 +450,21 @@ const FreightCalculatorPage: React.FC = () => {
           ))}
           <button
             onClick={addQuote}
-            className="ml-1 flex items-center gap-1 px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded border border-dashed border-gray-300"
+            className={`ml-1 flex items-center gap-1 px-3 py-1 text-sm rounded border border-dashed transition-colors ${
+              isDark ? 'text-gray-400 hover:bg-dark-400 border-gray-600' : 'text-gray-600 hover:bg-gray-100 border-gray-300'
+            }`}
           >
             <Plus className="w-3.5 h-3.5" /> New Quote
           </button>
         </div>
 
         {/* ── Main: left panel + map ───────────────────────────────── */}
-        <div className="flex border border-gray-200 bg-white">
+        <div className={`flex border ${panelBg} ${panelBorder}`}>
 
           {/* Left panel — no scroll */}
-          <div className="w-64 shrink-0 flex flex-col border-r border-gray-200">
+          <div className={`w-64 shrink-0 flex flex-col border-r ${panelBorder}`}>
             <div className="p-3 space-y-3">
-              <div className="flex items-center gap-1.5 text-sm font-bold text-gray-800 border-b border-gray-100 pb-2">
+              <div className={`flex items-center gap-1.5 text-sm font-bold border-b pb-2 ${sectionTitle} ${panelBorder}`}>
                 <DollarSign className="w-4 h-4 text-red-600" /> Quote Calculator
               </div>
 
@@ -505,16 +495,16 @@ const FreightCalculatorPage: React.FC = () => {
               {/* FTL/LTL */}
               <div>
                 <label className={lbl}>FTL/LTL (%)</label>
-                <div className="flex items-center border border-gray-300 rounded overflow-hidden focus-within:ring-1 focus-within:ring-red-500">
+                <div className={`flex items-center border rounded overflow-hidden focus-within:ring-1 focus-within:ring-red-500 ${isDark ? 'border-gray-600 bg-dark-300' : 'border-gray-300 bg-white'}`}>
                   <input
                     type="number" min="0" max="100"
                     value={activeQuote.ftlLtl}
                     onChange={e => updateQuote({ ftlLtl: e.target.value })}
-                    className="flex-1 px-2 py-1.5 text-sm focus:outline-none"
+                    className={`flex-1 px-2 py-1.5 text-sm focus:outline-none ${isDark ? 'bg-dark-300 text-gray-100' : 'bg-white text-gray-900'}`}
                   />
-                  <span className="px-2 text-xs text-gray-400 border-l border-gray-200 bg-gray-50">%</span>
+                  <span className={prefixSpan}>%</span>
                 </div>
-                <p className="text-[10px] text-gray-400 mt-1">0% = LTL &nbsp;·&nbsp; 100% = FTL</p>
+                <p className={`text-[10px] mt-1 ${subtleText}`}>0% = LTL &nbsp;·&nbsp; 100% = FTL</p>
               </div>
 
               {/* Accessorials */}
@@ -523,22 +513,22 @@ const FreightCalculatorPage: React.FC = () => {
                 <div className="space-y-1.5">
                   {activeQuote.accessorials.map(a => (
                     <div key={a.id} className="flex gap-1">
-                      <div className="flex items-center border border-gray-300 rounded overflow-hidden w-20 shrink-0">
-                        <span className="px-1 text-xs text-gray-400 border-r border-gray-200 bg-gray-50">$</span>
+                      <div className={`flex items-center border rounded overflow-hidden w-20 shrink-0 ${isDark ? 'border-gray-600 bg-dark-300' : 'border-gray-300 bg-white'}`}>
+                        <span className={`px-1 text-xs border-r ${isDark ? 'text-gray-500 border-gray-600 bg-dark-400' : 'text-gray-400 border-gray-200 bg-gray-50'}`}>$</span>
                         <input type="number" min="0" value={a.amount}
                           onChange={e => updateAcc(a.id, { amount: e.target.value })}
-                          placeholder="0.00" className="flex-1 px-1 py-1 text-xs focus:outline-none w-0" />
+                          placeholder="0.00" className={`flex-1 px-1 py-1 text-xs focus:outline-none w-0 ${isDark ? 'bg-dark-300 text-gray-100' : 'bg-white text-gray-900'}`} />
                       </div>
                       <input type="text" value={a.name}
                         onChange={e => updateAcc(a.id, { name: e.target.value })}
                         placeholder="Name"
-                        className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-red-500" />
-                      <button onClick={() => removeAcc(a.id)} className="text-gray-400 hover:text-red-500">
+                        className={`flex-1 px-2 py-1 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-red-500 ${isDark ? 'border-gray-600 bg-dark-300 text-gray-100 placeholder-gray-500' : 'border-gray-300 bg-white text-gray-900'}`} />
+                      <button onClick={() => removeAcc(a.id)} className={`${isDark ? 'text-gray-500 hover:text-red-400' : 'text-gray-400 hover:text-red-500'}`}>
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   ))}
-                  <button onClick={addAcc} className="text-xs text-red-600 hover:text-red-700 font-medium flex items-center gap-1">
+                  <button onClick={addAcc} className="text-xs text-red-600 hover:text-red-500 font-medium flex items-center gap-1">
                     <Plus className="w-3 h-3" /> Add Accessorial
                   </button>
                 </div>
@@ -547,11 +537,11 @@ const FreightCalculatorPage: React.FC = () => {
               {/* Margin */}
               <div>
                 <label className={lbl}>Margin (%)</label>
-                <div className="flex items-center border border-gray-300 rounded overflow-hidden focus-within:ring-1 focus-within:ring-red-500">
+                <div className={`flex items-center border rounded overflow-hidden focus-within:ring-1 focus-within:ring-red-500 ${isDark ? 'border-gray-600 bg-dark-300' : 'border-gray-300 bg-white'}`}>
                   <input type="number" min="0" value={activeQuote.margin}
                     onChange={e => updateQuote({ margin: e.target.value })}
-                    placeholder="0" className="flex-1 px-2 py-1.5 text-sm focus:outline-none" />
-                  <span className="px-2 text-xs text-gray-400 border-l border-gray-200 bg-gray-50">%</span>
+                    placeholder="0" className={`flex-1 px-2 py-1.5 text-sm focus:outline-none ${isDark ? 'bg-dark-300 text-gray-100' : 'bg-white text-gray-900'}`} />
+                  <span className={prefixSpan}>%</span>
                 </div>
               </div>
             </div>
@@ -577,25 +567,30 @@ const FreightCalculatorPage: React.FC = () => {
 
               <div className="mt-3 flex flex-col gap-2">
                 <button
-                  onClick={() => exportPDF(activeQuote, route, calc, customer, consignor, consignee, pickup, destination, companyName)}
+                  onClick={() => {
+                    exportPDF(activeQuote, route, calc, customer, consignor, consignee, pickup, destination, companyName, userFullName);
+                    if (isPaidUser(user)) saveToHistory();
+                  }}
                   className="w-full flex items-center justify-center gap-2 bg-white text-red-700 font-bold text-xs py-2 rounded hover:bg-red-50 transition-colors"
                 >
-                  <Printer className="w-3.5 h-3.5" /> Export PDF Quote
+                  <Printer className="w-3.5 h-3.5" />
+                  {saved ? 'Exported & Saved!' : 'Export PDF Quote'}
                 </button>
-                <button
-                  onClick={saveToHistory}
-                  className={`w-full flex items-center justify-center gap-2 font-bold text-xs py-2 rounded transition-colors border ${
-                    saved
-                      ? 'bg-green-500/20 text-green-300 border-green-400/30'
-                      : !isPaidUser(user)
-                        ? 'bg-white/10 text-white/70 border-white/20'
-                        : 'bg-white/15 text-white border-white/30 hover:bg-white/25'
-                  }`}
-                >
-                  {saved ? <CheckCircle className="w-3.5 h-3.5" /> : !isPaidUser(user) ? <Lock className="w-3.5 h-3.5" /> : <Save className="w-3.5 h-3.5" />}
-                  {saved ? 'Saved!' : !isPaidUser(user) ? 'Pro Required to Save' : 'Save to History'}
-                </button>
-                {saveError && <p className="text-[10px] text-red-200">{saveError}</p>}
+                {saved && (
+                  <p className="text-[10px] text-green-300 text-center flex items-center justify-center gap-1">
+                    <CheckCircle className="w-3 h-3" /> Saved to your history
+                  </p>
+                )}
+                {!isPaidUser(user) && (
+                  <p className="text-[10px] text-white/50 text-center flex items-center justify-center gap-1">
+                    <Lock className="w-3 h-3" /> Upgrade to Pro to save history
+                  </p>
+                )}
+                {saveError === 'upgrade' ? (
+                  <p className="text-[10px] text-red-200">Upgrade to Pro to save quotes to history.</p>
+                ) : saveError ? (
+                  <p className="text-[10px] text-red-200">{saveError}</p>
+                ) : null}
               </div>
             </div>
           </div>
@@ -603,10 +598,14 @@ const FreightCalculatorPage: React.FC = () => {
           {/* Map */}
           <div className="flex-1 relative" style={{ minHeight: '620px' }}>
             {/* Map/Satellite toggle */}
-            <div className="absolute top-3 right-3 z-[1000] flex overflow-hidden rounded border border-gray-300 shadow-sm">
+            <div className={`absolute top-3 right-3 z-[1000] flex overflow-hidden rounded border shadow-sm ${isDark ? 'border-gray-600' : 'border-gray-300'}`}>
               {(['osm', 'sat'] as const).map(s => (
                 <button key={s} onClick={() => setMapStyle(s)}
-                  className={`px-3 py-1.5 text-xs font-semibold transition-colors ${mapStyle === s ? 'bg-red-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}>
+                  className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    mapStyle === s
+                      ? 'bg-red-600 text-white'
+                      : isDark ? 'bg-dark-300 text-gray-300 hover:bg-dark-400' : 'bg-white text-gray-700 hover:bg-gray-100'
+                  }`}>
                   {s === 'osm' ? 'Map' : 'Satellite'}
                 </button>
               ))}
@@ -643,7 +642,7 @@ const FreightCalculatorPage: React.FC = () => {
         </div>
 
         {/* ── Customer / Consignor / Consignee ─────────────────────── */}
-        <div className="border border-t-0 border-gray-200 bg-white p-5">
+        <div className={`border border-t-0 p-5 ${panelBg} ${panelBorder}`}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {partyFields('Customer', customer, setCustomer, User)}
             {partyFields('Consignor / Shipper', consignor, setConsignor, Building2)}
@@ -652,43 +651,45 @@ const FreightCalculatorPage: React.FC = () => {
         </div>
 
         {/* ── Bottom: unit converter + route calculator ────────────── */}
-        <div className="flex border border-t-0 border-gray-200 bg-white rounded-b-xl overflow-hidden">
+        <div className={`flex border border-t-0 rounded-b-xl overflow-hidden ${panelBg} ${panelBorder}`}>
 
           {/* Unit Converter */}
-          <div className="w-1/2 p-4 border-r border-gray-200">
+          <div className={`w-1/2 p-4 border-r ${panelBorder}`}>
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2 text-sm font-bold text-gray-800">
+              <div className={`flex items-center gap-2 text-sm font-bold ${sectionTitle}`}>
                 <ArrowLeftRight className="w-4 h-4 text-red-600" /> Unit Converter
               </div>
               <select value={convType} onChange={e => setConvType(e.target.value as any)}
-                className="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-red-500">
+                className={`text-xs border rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-red-500 ${
+                  isDark ? 'border-gray-600 bg-dark-300 text-gray-200' : 'border-gray-300 bg-white text-gray-800'
+                }`}>
                 <option value="weight">Weight</option>
                 <option value="distance">Distance</option>
               </select>
             </div>
             <div className="grid grid-cols-[1fr,auto,1fr] gap-2 items-center mb-2">
               <div>
-                <label className="text-xs text-gray-500 block mb-1">{convType === 'weight' ? 'Pounds (lbs)' : 'Miles (mi)'}</label>
+                <label className={`text-xs block mb-1 ${subtleText}`}>{convType === 'weight' ? 'Pounds (lbs)' : 'Miles (mi)'}</label>
                 <input type="number" value={convA} onChange={e => handleConvA(e.target.value)}
                   placeholder={convType === 'weight' ? 'Enter lbs' : 'Enter miles'} className={inp} />
               </div>
-              <button onClick={() => { const t = convA; setConvA(convB); setConvB(t); }} className="text-gray-400 hover:text-red-600 mt-5">
+              <button onClick={() => { const t = convA; setConvA(convB); setConvB(t); }} className={`mt-5 ${isDark ? 'text-gray-500 hover:text-red-500' : 'text-gray-400 hover:text-red-600'}`}>
                 <ArrowLeftRight className="w-4 h-4" />
               </button>
               <div>
-                <label className="text-xs text-gray-500 block mb-1">{convType === 'weight' ? 'Kilograms (kg)' : 'Kilometers (km)'}</label>
+                <label className={`text-xs block mb-1 ${subtleText}`}>{convType === 'weight' ? 'Kilograms (kg)' : 'Kilometers (km)'}</label>
                 <input type="number" value={convB} onChange={e => handleConvB(e.target.value)}
                   placeholder={convType === 'weight' ? 'Enter kg' : 'Enter km'} className={inp} />
               </div>
             </div>
-            <p className="text-[11px] text-gray-400">
+            <p className={`text-[11px] ${subtleText}`}>
               {convType === 'weight' ? '1 lb = 0.454 kg  ·  1 kg = 2.205 lbs' : '1 mi = 1.609 km  ·  1 km = 0.621 mi'}
             </p>
           </div>
 
           {/* Route Calculator */}
           <div className="w-1/2 p-4">
-            <div className="flex items-center gap-2 text-sm font-bold text-gray-800 mb-3">
+            <div className={`flex items-center gap-2 text-sm font-bold mb-3 ${sectionTitle}`}>
               <Navigation className="w-4 h-4 text-red-600" /> Route Calculator
             </div>
             <div className="space-y-2 mb-3">
@@ -706,7 +707,7 @@ const FreightCalculatorPage: React.FC = () => {
                       onChange={e => setExtraStops(s => s.map((v, j) => j === i ? e.target.value : v))}
                       placeholder="Stop (optional)" className={`${inp} pl-7`} />
                   </div>
-                  <button onClick={() => setExtraStops(s => s.filter((_, j) => j !== i))} className="text-gray-400 hover:text-red-500">
+                  <button onClick={() => setExtraStops(s => s.filter((_, j) => j !== i))} className={`${isDark ? 'text-gray-500 hover:text-red-400' : 'text-gray-400 hover:text-red-500'}`}>
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -726,7 +727,7 @@ const FreightCalculatorPage: React.FC = () => {
             </div>
             {routeError && <p className="text-xs text-red-500 mb-2">{routeError}</p>}
             {route && (
-              <p className="text-xs text-green-600 mb-2 font-medium">
+              <p className="text-xs text-green-500 mb-2 font-medium">
                 ✓ {route.distanceMiles.toFixed(1)} mi · {route.distanceKm.toFixed(1)} km · ~{Math.floor(route.durationMin / 60)}h {Math.round(route.durationMin % 60)}m drive time
               </p>
             )}
