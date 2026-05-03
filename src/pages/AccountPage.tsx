@@ -145,6 +145,10 @@ const AccountPage: React.FC = () => {
         setProfileAddress(data.address || '');
         setProfileMC(data.mc_number || '');
         setProfileDOT(data.dot_number || '');
+        if (data.company_logo_base64) {
+          setCompanyLogo(data.company_logo_base64);
+          localStorage.setItem('integra_company_logo', data.company_logo_base64);
+        }
       }
     } catch {}
   };
@@ -168,12 +172,13 @@ const AccountPage: React.FC = () => {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          full_name: profileName,
-          phone: profilePhone,
-          company: profileCompany,
-          address: profileAddress,
-          mc_number: profileMC,
-          dot_number: profileDOT,
+          full_name:            profileName,
+          phone:                profilePhone,
+          company:              profileCompany,
+          address:              profileAddress,
+          mc_number:            profileMC,
+          dot_number:           profileDOT,
+          company_logo_base64:  companyLogo || null,
         }),
       });
       if (res.ok) {
