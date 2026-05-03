@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   FileText, Fuel, Calculator, Receipt, FileType, FileDown,
-  PenTool, Truck, Clock, Download, ChevronRight, ChevronLeft, RefreshCw,
+  PenTool, Truck, LayoutTemplate, Clock, Download, ChevronRight, ChevronLeft, RefreshCw,
 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,7 +11,7 @@ import { useAuth } from '../contexts/AuthContext';
 const TOOL_ROUTES = [
   '/bol-generator', '/fuel-surcharge', '/ifta-calculator',
   '/invoice-generator', '/pdf-to-word', '/word-to-pdf', '/e-signature',
-  '/freight-calculator',
+  '/freight-calculator', '/letterhead',
 ];
 
 const typeConfig: Record<string, { label: string; Icon: React.ElementType; color: string; bg: string }> = {
@@ -22,7 +22,8 @@ const typeConfig: Record<string, { label: string; Icon: React.ElementType; color
   'pdf-to-word':    { label: 'PDF → Word',      Icon: FileType,  color: 'text-red-400',    bg: 'bg-red-500/10' },
   'word-to-pdf':    { label: 'Word → PDF',      Icon: FileDown,  color: 'text-pink-400',   bg: 'bg-pink-500/10' },
   'e-signature':      { label: 'e-Signature',       Icon: PenTool, color: 'text-cyan-400',   bg: 'bg-cyan-500/10'   },
-  'freight-quote':    { label: 'Freight Quote',     Icon: Truck,   color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
+  'freight-quote':    { label: 'Freight Quote',     Icon: Truck,          color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
+  'letterhead':       { label: 'Letterhead',        Icon: LayoutTemplate, color: 'text-cyan-400',   bg: 'bg-cyan-500/10'   },
 };
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';

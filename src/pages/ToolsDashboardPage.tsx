@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   FileText, Fuel, Calculator, Receipt,
-  FileType, FileDown, PenTool, Truck, Lock, ArrowRight,
+  FileType, FileDown, PenTool, Truck, LayoutTemplate, Lock, ArrowRight,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -122,6 +122,19 @@ const tools = [
     bg: 'bg-indigo-500/10',
     border: 'group-hover:border-indigo-500/40',
     glow: 'group-hover:shadow-[0_0_24px_rgba(99,102,241,0.15)]',
+    pro: false,
+    badge: null,
+  },
+  {
+    id: 'letterhead',
+    name: 'Letterhead',
+    desc: 'Design and download your company letterhead',
+    path: '/letterhead',
+    icon: LayoutTemplate,
+    color: 'text-cyan-400',
+    bg: 'bg-cyan-500/10',
+    border: 'group-hover:border-cyan-500/40',
+    glow: 'group-hover:shadow-[0_0_24px_rgba(34,211,238,0.15)]',
     pro: false,
     badge: null,
   },
