@@ -86,6 +86,35 @@ async function fetchRoute(waypoints: [number, number][]): Promise<RouteInfo> {
   };
 }
 
+/* ── Route → SVG (for PDF embed) ────────────────────────────────────── */
+function routeToSVG(polyline: [number, number][]): string {
+  if (!polyline || polyline.length < 2) return '';
+  const lats = polyline.map(p => p[0]);
+  const lons = polyline.map(p => p[1]);
+  const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+  const minLon = Math.min(...lons), maxLon = Math.max(...lons);
+  const latR = maxLat - minLat || 0.01;
+  const lonR = maxLon - minLon || 0.01;
+  const W = 560, H = 160, pad = 28;
+  const toX = (lon: number) => ((lon - minLon) / lonR) * (W - 2 * pad) + pad;
+  const toY = (lat: number) => H - pad - ((lat - minLat) / latR) * (H - 2 * pad);
+  const path = polyline.map(([lat, lon], i) =>
+    `${i === 0 ? 'M' : 'L'}${toX(lon).toFixed(1)},${toY(lat).toFixed(1)}`).join(' ');
+  const [sLat, sLon] = polyline[0];
+  const [eLat, eLon] = polyline[polyline.length - 1];
+  const sx = toX(sLon).toFixed(1), sy = toY(sLat).toFixed(1);
+  const ex = toX(eLon).toFixed(1), ey = toY(eLat).toFixed(1);
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:8px;display:block;background:#eef2f7">
+    <defs><pattern id="g" width="30" height="30" patternUnits="userSpaceOnUse"><path d="M30 0L0 0 0 30" fill="none" stroke="#d0dcea" stroke-width="0.6"/></pattern></defs>
+    <rect width="${W}" height="${H}" fill="url(#g)"/>
+    <path d="${path}" fill="none" stroke="#dc2626" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.88"/>
+    <circle cx="${sx}" cy="${sy}" r="7" fill="#16a34a" stroke="white" stroke-width="2"/>
+    <text x="${sx}" y="${(+sy + 4).toFixed(0)}" text-anchor="middle" font-size="8" fill="white" font-weight="bold" font-family="Arial">A</text>
+    <circle cx="${ex}" cy="${ey}" r="7" fill="#dc2626" stroke="white" stroke-width="2"/>
+    <text x="${ex}" y="${(+ey + 4).toFixed(0)}" text-anchor="middle" font-size="8" fill="white" font-weight="bold" font-family="Arial">B</text>
+  </svg>`;
+}
+
 /* ── Map fit bounds helper ───────────────────────────────────────────── */
 function FitBounds({ positions }: { positions: [number, number][] }) {
   const map = useMap();
@@ -100,73 +129,140 @@ function exportPDF(
   q: QuoteTab, route: RouteInfo | null, c: ReturnType<typeof computeQuote>,
   customer: PartyInfo, consignor: PartyInfo, consignee: PartyInfo,
   pickup: string, destination: string,
+  companyName: string,
 ) {
+  const esc = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
   const partyBlock = (title: string, p: PartyInfo) => `
     <div class="party">
-      <h4>${title}</h4>
-      ${p.company  ? `<p><strong>${p.company}</strong></p>` : ''}
-      ${p.contact  ? `<p>${p.contact}</p>` : ''}
-      ${p.address  ? `<p>${p.address}</p>` : ''}
-      ${p.city     ? `<p>${p.city}${p.state ? ', ' + p.state : ''}</p>` : ''}
-      ${p.phone    ? `<p>📞 ${p.phone}</p>` : ''}
-      ${p.email    ? `<p>✉ ${p.email}</p>` : ''}
+      <h4>${esc(title)}</h4>
+      ${p.company ? `<p><strong>${esc(p.company)}</strong></p>` : ''}
+      ${p.contact ? `<p>${esc(p.contact)}</p>` : ''}
+      ${p.address ? `<p>${esc(p.address)}</p>` : ''}
+      ${p.city    ? `<p>${esc(p.city)}${p.state ? ', ' + esc(p.state) : ''}</p>` : ''}
+      ${p.phone   ? `<p>&#x1F4DE; ${esc(p.phone)}</p>` : ''}
+      ${p.email   ? `<p>&#x2709; ${esc(p.email)}</p>` : ''}
     </div>`;
 
+  const mapSVG = route ? routeToSVG(route.polyline) : '';
+
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
-  <title>${q.label} — Freight Quote</title>
+  <title>${esc(q.label)} — Freight Quote</title>
   <style>
-    *{box-sizing:border-box}
-    body{font-family:Arial,sans-serif;padding:36px;color:#111;max-width:720px;margin:0 auto;font-size:13px}
-    h1{color:#dc2626;border-bottom:3px solid #dc2626;padding-bottom:10px;margin-bottom:20px;font-size:22px}
-    h4{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#888;margin:0 0 6px}
-    .parties{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;border:1px solid #eee;border-radius:6px;padding:16px}
-    .party p{margin:2px 0;font-size:12px}
-    .route-info{background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:12px 16px;margin-bottom:20px;display:flex;gap:32px}
-    .route-info span{font-size:12px;color:#555} .route-info strong{color:#dc2626;font-size:15px;display:block}
-    table{width:100%;border-collapse:collapse;margin-bottom:16px}
-    th{background:#f8f8f8;padding:8px 12px;text-align:left;font-size:11px;text-transform:uppercase;color:#666;border-bottom:2px solid #eee}
-    td{padding:9px 12px;border-bottom:1px solid #f0f0f0;font-size:13px}
-    .total-row td{font-weight:700;font-size:17px;color:#dc2626;border-top:2px solid #dc2626;padding-top:12px}
-    .disclaimer{margin-top:20px;font-size:10px;color:#aaa;border-top:1px solid #eee;padding-top:10px}
-    @media print{body{padding:20px}}
+    @page { size: A4; margin: 1.2cm 1.5cm 1.2cm; }
+    *  { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; color: #111; font-size: 13px; margin: 0; padding: 0; }
+
+    /* ── Letterhead ── */
+    .letterhead { display:flex; align-items:center; justify-content:space-between;
+                  border-bottom: 3px solid #dc2626; padding-bottom: 14px; margin-bottom: 20px; }
+    .lh-company { font-size: 22px; font-weight: 900; color: #dc2626; letter-spacing: -.3px; }
+    .lh-tag     { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: .1em; margin-top: 2px; }
+    .lh-right   { text-align: right; font-size: 11px; color: #999; }
+
+    /* ── Section title ── */
+    .quote-title { font-size: 17px; font-weight: 700; color: #111; margin-bottom: 16px; }
+
+    /* ── Parties ── */
+    h4 { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: #888; margin: 0 0 5px; }
+    .parties { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px;
+               border: 1px solid #eee; border-radius: 6px; padding: 14px; margin-bottom: 18px; }
+    .party p { margin: 2px 0; font-size: 12px; }
+
+    /* ── Route map ── */
+    .map-wrap { margin-bottom: 14px; border-radius: 8px; overflow: hidden; }
+    .route-bar { background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px;
+                 padding: 10px 14px; margin-bottom: 16px; display: flex; gap: 28px; }
+    .route-bar span { font-size: 11px; color: #777; }
+    .route-bar strong { color: #dc2626; font-size: 14px; display: block; }
+
+    /* ── Table ── */
+    table  { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+    th     { background: #f7f7f7; padding: 7px 11px; text-align: left; font-size: 11px;
+             text-transform: uppercase; color: #666; border-bottom: 2px solid #eee; }
+    td     { padding: 8px 11px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+    .total-row td { font-weight: 700; font-size: 17px; color: #dc2626;
+                    border-top: 2px solid #dc2626; padding-top: 11px; border-bottom: none; }
+
+    /* ── Disclaimer ── */
+    .disclaimer { margin-top: 18px; font-size: 10px; color: #bbb;
+                  border-top: 1px solid #eee; padding-top: 9px; }
+
+    @media print {
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
   </style></head><body>
-  <h1>Freight Quote — ${q.label}</h1>
+
+  <!-- Letterhead -->
+  <div class="letterhead">
+    <div>
+      <div class="lh-company">${esc(companyName || 'Integra AI')}</div>
+      <div class="lh-tag">Integrated Supply Chain Solutions</div>
+    </div>
+    <div class="lh-right">
+      <div>Freight Quote</div>
+      <div>${new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })}</div>
+    </div>
+  </div>
+
+  <div class="quote-title">${esc(q.label)}</div>
+
+  <!-- Parties -->
   <div class="parties">
     ${partyBlock('Customer', customer)}
     ${partyBlock('Consignor / Shipper', consignor)}
     ${partyBlock('Consignee / Receiver', consignee)}
   </div>
+
+  <!-- Route map -->
+  ${mapSVG ? `<div class="map-wrap">${mapSVG}</div>` : ''}
+
+  <!-- Route bar -->
   ${route ? `
-  <div class="route-info">
-    <div><span>Route</span><strong>${pickup || '—'} → ${destination || '—'}</strong></div>
+  <div class="route-bar">
+    <div><span>Route</span><strong>${esc(pickup||'—')} &rarr; ${esc(destination||'—')}</strong></div>
     <div><span>Distance</span><strong>${c.mi.toFixed(1)} mi (${route.distanceKm.toFixed(1)} km)</strong></div>
     <div><span>Est. Drive Time</span><strong>~${Math.floor(route.durationMin/60)}h ${Math.round(route.durationMin%60)}m</strong></div>
   </div>` : ''}
+
+  <!-- Cost table (margin intentionally excluded) -->
   <table>
     <tr><th>Item</th><th>Details</th><th style="text-align:right">Amount</th></tr>
-    <tr><td>Base Rate</td><td>${c.mi.toFixed(1)} mi × ${fmt(n(q.ratePerMile))}/mi</td><td style="text-align:right">${fmt(c.base)}</td></tr>
+    <tr><td>Base Rate</td><td>${c.mi.toFixed(1)} mi &times; ${esc(fmt(n(q.ratePerMile)))}/mi</td><td style="text-align:right">${fmt(c.base)}</td></tr>
     <tr><td>Fuel Surcharge</td><td>Flat</td><td style="text-align:right">${fmt(c.fuel)}</td></tr>
-    <tr><td>Stops</td><td>${c.stops} stop(s) × ${fmt(n(q.ratePerStop))}</td><td style="text-align:right">${fmt(c.stopsAmt)}</td></tr>
-    ${q.accessorials.map(a => `<tr><td>Accessorial</td><td>${a.name||'—'}</td><td style="text-align:right">${fmt(n(a.amount))}</td></tr>`).join('')}
+    <tr><td>Stops</td><td>${c.stops} stop(s) &times; ${fmt(n(q.ratePerStop))}</td><td style="text-align:right">${fmt(c.stopsAmt)}</td></tr>
+    ${q.accessorials.map(a => `<tr><td>Accessorial</td><td>${esc(a.name||'—')}</td><td style="text-align:right">${fmt(n(a.amount))}</td></tr>`).join('')}
     <tr><td colspan="2"><strong>Subtotal</strong></td><td style="text-align:right"><strong>${fmt(c.sub)}</strong></td></tr>
     <tr><td>FTL/LTL Applied</td><td>${n(q.ftlLtl)}%</td><td style="text-align:right">${fmt(c.ftl)}</td></tr>
-    <tr><td>Margin</td><td>${n(q.margin)}%</td><td style="text-align:right">${fmt(c.margin)}</td></tr>
     <tr class="total-row"><td colspan="2">TOTAL QUOTE</td><td style="text-align:right">${fmt(c.total)} USD</td></tr>
   </table>
-  <p class="disclaimer">This is an estimate only. Actual charges may vary based on final weight, distance, and accessorial requirements. Generated by Integra AI — Integrated Supply Chain Solutions.</p>
+
+  <p class="disclaimer">This is an estimate only. Actual charges may vary based on final weight, distance, and accessorial requirements. &copy; ${new Date().getFullYear()} ${esc(companyName || 'Integra AI')} — Integrated Supply Chain Solutions.</p>
   </body></html>`;
 
-  const win = window.open('', '_blank');
-  if (!win) return;
-  win.document.write(html);
-  win.document.close();
-  win.focus();
-  setTimeout(() => win.print(), 400);
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const win  = window.open(url, '_blank');
+  setTimeout(() => {
+    win?.print();
+    URL.revokeObjectURL(url);
+  }, 500);
 }
 
 /* ── Component ───────────────────────────────────────────────────────── */
 const FreightCalculatorPage: React.FC = () => {
   const { user, token } = useAuth();
+
+  /* Profile (for PDF letterhead) */
+  const [companyName, setCompanyName] = useState('');
+  useEffect(() => {
+    if (!token) return;
+    const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
+    fetch(`${BACKEND_URL}/api/user/profile`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.company) setCompanyName(d.company); })
+      .catch(() => {});
+  }, [token]);
 
   /* Quotes */
   const [quotes, setQuotes]     = useState<QuoteTab[]>([blankQ()]);
@@ -382,6 +478,18 @@ const FreightCalculatorPage: React.FC = () => {
                 <DollarSign className="w-4 h-4 text-red-600" /> Quote Calculator
               </div>
 
+              {/* Editable quote name */}
+              <div>
+                <label className={lbl}>Quote Name</label>
+                <input
+                  type="text"
+                  value={activeQuote.label}
+                  onChange={e => updateQuote({ label: e.target.value })}
+                  placeholder="e.g. Quote for Acme Corp"
+                  className={`${inp} font-medium`}
+                />
+              </div>
+
               {([
                 ['Rate per Mile',   'ratePerMile'],
                 ['Fuel Surcharge',  'fuelSurcharge'],
@@ -469,7 +577,7 @@ const FreightCalculatorPage: React.FC = () => {
 
               <div className="mt-3 flex flex-col gap-2">
                 <button
-                  onClick={() => exportPDF(activeQuote, route, calc, customer, consignor, consignee, pickup, destination)}
+                  onClick={() => exportPDF(activeQuote, route, calc, customer, consignor, consignee, pickup, destination, companyName)}
                   className="w-full flex items-center justify-center gap-2 bg-white text-red-700 font-bold text-xs py-2 rounded hover:bg-red-50 transition-colors"
                 >
                   <Printer className="w-3.5 h-3.5" /> Export PDF Quote
