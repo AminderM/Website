@@ -28,6 +28,7 @@ import CheckoutCancelPage from './pages/CheckoutCancelPage';
 import ToolsDashboardPage from './pages/ToolsDashboardPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import FreightCalculatorPage from './pages/FreightCalculatorPage';
+import LetterheadPage from './pages/LetterheadPage';
 import SavedDocumentsSidebar from './components/SavedDocumentsSidebar';
 import ScrollToTop from './components/ScrollToTop';
 import './index.css';
@@ -78,6 +79,7 @@ function App() {
               <Route path="/tools" element={<ProtectedRoute component={ToolsDashboardPage} />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/freight-calculator" element={<ProtectedRoute component={FreightCalculatorPage} />} />
+              <Route path="/letterhead" element={<ProtectedRoute component={LetterheadPage} />} />
             </Routes>
           </AppLayout>
         </Router>

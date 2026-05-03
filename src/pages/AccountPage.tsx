@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -56,6 +56,8 @@ const AccountPage: React.FC = () => {
   const [profileDOT, setProfileDOT] = useState('');
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [companyLogo, setCompanyLogo] = useState<string>(() => localStorage.getItem('integra_company_logo') || '');
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   // Subscription
   const [subscription, setSubscription] = useState<any>(null);
@@ -143,6 +145,10 @@ const AccountPage: React.FC = () => {
         setProfileAddress(data.address || '');
         setProfileMC(data.mc_number || '');
         setProfileDOT(data.dot_number || '');
+        if (data.company_logo_base64) {
+          setCompanyLogo(data.company_logo_base64);
+          localStorage.setItem('integra_company_logo', data.company_logo_base64);
+        }
       }
     } catch {}
   };
@@ -166,12 +172,13 @@ const AccountPage: React.FC = () => {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          full_name: profileName,
-          phone: profilePhone,
-          company: profileCompany,
-          address: profileAddress,
-          mc_number: profileMC,
-          dot_number: profileDOT,
+          full_name:            profileName,
+          phone:                profilePhone,
+          company:              profileCompany,
+          address:              profileAddress,
+          mc_number:            profileMC,
+          dot_number:           profileDOT,
+          company_logo_base64:  companyLogo || null,
         }),
       });
       if (res.ok) {
@@ -374,6 +381,56 @@ const AccountPage: React.FC = () => {
                     value={profileCompany}
                     onChange={e => setProfileCompany(e.target.value)}
                     placeholder="Your company name"
+                  />
+                </div>
+                <div>
+                  <label className={lbl}>Company Logo</label>
+                  <div className={`flex items-center gap-4 p-3 rounded-lg border ${isDark ? 'border-gray-600 bg-dark-400' : 'border-gray-200 bg-gray-50'}`}>
+                    {companyLogo ? (
+                      <img src={companyLogo} alt="Company logo" className="h-12 w-auto object-contain rounded" />
+                    ) : (
+                      <div className={`h-12 w-20 rounded flex items-center justify-center text-xs ${isDark ? 'bg-dark-300 text-gray-600' : 'bg-gray-100 text-gray-400'}`}>
+                        No logo
+                      </div>
+                    )}
+                    <div className="flex flex-col gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => logoInputRef.current?.click()}
+                        className={`text-xs px-3 py-1.5 rounded-lg border font-semibold transition-colors ${isDark ? 'border-gray-600 text-gray-300 hover:border-primary-500 hover:text-primary-400' : 'border-gray-300 text-gray-600 hover:border-primary-500 hover:text-primary-600'}`}
+                      >
+                        {companyLogo ? 'Change Logo' : 'Upload Logo'}
+                      </button>
+                      {companyLogo && (
+                        <button
+                          type="button"
+                          onClick={() => { setCompanyLogo(''); localStorage.removeItem('integra_company_logo'); }}
+                          className="text-xs text-red-500 hover:text-red-600 font-medium"
+                        >
+                          Remove
+                        </button>
+                      )}
+                      <p className={`text-[10px] ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>PNG, JPG · Max 2 MB</p>
+                    </div>
+                  </div>
+                  <input
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg,image/svg+xml"
+                    className="hidden"
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (file.size > 2 * 1024 * 1024) { setProfileMsg({ type: 'error', text: 'Logo must be under 2 MB.' }); return; }
+                      const reader = new FileReader();
+                      reader.onload = ev => {
+                        const b64 = ev.target?.result as string;
+                        setCompanyLogo(b64);
+                        localStorage.setItem('integra_company_logo', b64);
+                        setProfileMsg({ type: 'success', text: 'Logo saved locally. It will appear on your letterheads.' });
+                      };
+                      reader.readAsDataURL(file);
+                    }}
                   />
                 </div>
                 <div>
@@ -788,15 +845,17 @@ const AccountPage: React.FC = () => {
 };
 
 /* ── History Tab ──────────────────────────────────────────────── */
-const historyIcons: Record<string, React.ReactNode> = {
-  'fuel-surcharge': <Fuel className="w-4 h-4 text-orange-400" />,
-  'ifta':           <Calculator className="w-4 h-4 text-green-400" />,
-  'bol':            <FileText className="w-4 h-4 text-blue-400" />,
-  'invoice':        <Receipt className="w-4 h-4 text-purple-400" />,
+const historyConfig: Record<string, { label: string; icon: React.ReactNode; bg: string }> = {
+  'fuel-surcharge': { label: 'Fuel Surcharge',   icon: <Fuel     className="w-4 h-4 text-orange-400" />, bg: 'bg-orange-500/10' },
+  'ifta':           { label: 'IFTA Calculation',  icon: <Calculator className="w-4 h-4 text-green-400" />,  bg: 'bg-green-500/10'  },
+  'bol':            { label: 'Bill of Lading',    icon: <FileText className="w-4 h-4 text-blue-400" />,   bg: 'bg-blue-500/10'   },
+  'invoice':        { label: 'Invoice',           icon: <Receipt  className="w-4 h-4 text-purple-400" />, bg: 'bg-purple-500/10' },
+  'freight-quote':  { label: 'Freight Quote',     icon: <Download className="w-4 h-4 text-indigo-400" />, bg: 'bg-indigo-500/10' },
+  'letterhead':     { label: 'Letterhead',        icon: <FileText className="w-4 h-4 text-cyan-400" />,   bg: 'bg-cyan-500/10'   },
 };
 
 const HistoryTab: React.FC<{ token: string | null; isDark: boolean; BACKEND_URL: string }> = ({ token, isDark, BACKEND_URL }) => {
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems]   = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -808,18 +867,18 @@ const HistoryTab: React.FC<{ token: string | null; isDark: boolean; BACKEND_URL:
       .finally(() => setLoading(false));
   }, [token, BACKEND_URL]);
 
-  const typeLabel: Record<string, string> = {
-    'fuel-surcharge': 'Fuel Surcharge',
-    'ifta': 'IFTA Calculation',
-    'bol': 'Bill of Lading',
-    'invoice': 'Invoice',
-  };
-
   return (
     <div className={`rounded-xl border ${isDark ? 'bg-dark-300 border-gray-700' : 'bg-white border-gray-200'}`}>
-      <div className={`px-6 py-4 border-b flex items-center gap-2 ${isDark ? 'border-gray-700' : 'border-gray-100'}`}>
-        <History className={`w-4 h-4 ${isDark ? 'text-zinc-400' : 'text-gray-500'}`} />
-        <h2 className={`text-base font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Activity History</h2>
+      <div className={`px-6 py-4 border-b flex items-center justify-between ${isDark ? 'border-gray-700' : 'border-gray-100'}`}>
+        <div className="flex items-center gap-2">
+          <History className={`w-4 h-4 ${isDark ? 'text-zinc-400' : 'text-gray-500'}`} />
+          <h2 className={`text-base font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Document History</h2>
+        </div>
+        {items.length > 0 && (
+          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${isDark ? 'bg-dark-400 text-gray-400' : 'bg-gray-100 text-gray-500'}`}>
+            {items.length} record{items.length !== 1 ? 's' : ''}
+          </span>
+        )}
       </div>
       {loading ? (
         <div className="flex items-center justify-center py-16">
@@ -828,27 +887,44 @@ const HistoryTab: React.FC<{ token: string | null; isDark: boolean; BACKEND_URL:
       ) : items.length === 0 ? (
         <div className="text-center py-16">
           <Clock className={`w-10 h-10 mx-auto mb-3 ${isDark ? 'text-zinc-700' : 'text-gray-300'}`} />
-          <p className={`text-sm font-medium ${isDark ? 'text-zinc-500' : 'text-gray-500'}`}>No activity yet</p>
-          <p className={`text-xs mt-1 ${isDark ? 'text-zinc-600' : 'text-gray-400'}`}>Use a tool to see your history here</p>
+          <p className={`text-sm font-medium ${isDark ? 'text-zinc-500' : 'text-gray-500'}`}>No documents yet</p>
+          <p className={`text-xs mt-1 ${isDark ? 'text-zinc-600' : 'text-gray-400'}`}>Documents are saved automatically when you generate them</p>
         </div>
       ) : (
         <ul className={`divide-y ${isDark ? 'divide-white/[0.05]' : 'divide-gray-100'}`}>
-          {items.map((item: any) => (
-            <li key={item.id} className={`flex items-center gap-4 px-6 py-3.5 transition-colors ${isDark ? 'hover:bg-white/[0.02]' : 'hover:bg-gray-50'}`}>
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isDark ? 'bg-dark-400' : 'bg-gray-100'}`}>
-                {historyIcons[item.type] || <Clock className="w-4 h-4 text-gray-400" />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className={`text-sm font-medium truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  {typeLabel[item.type] || item.type}
-                </p>
-                <p className={`text-xs ${isDark ? 'text-zinc-600' : 'text-gray-400'}`}>
-                  {new Date(item.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                </p>
-              </div>
-              <Download className={`w-4 h-4 shrink-0 cursor-pointer transition-colors ${isDark ? 'text-zinc-600 hover:text-zinc-300' : 'text-gray-400 hover:text-gray-700'}`} />
-            </li>
-          ))}
+          {items.map((item: any) => {
+            const cfg = historyConfig[item.type] || { label: item.type, icon: <Clock className="w-4 h-4 text-gray-400" />, bg: 'bg-gray-500/10' };
+            return (
+              <li key={item.id} className={`flex items-center gap-4 px-6 py-3.5 transition-colors ${isDark ? 'hover:bg-white/[0.02]' : 'hover:bg-gray-50'}`}>
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${cfg.bg}`}>
+                  {cfg.icon}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-medium truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    {item.title || cfg.label}
+                  </p>
+                  <p className={`text-xs ${isDark ? 'text-zinc-600' : 'text-gray-400'}`}>
+                    {cfg.label} · {new Date(item.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+                {item.download_url ? (
+                  <a
+                    href={item.download_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    title="Download"
+                    className={`shrink-0 p-1.5 rounded-lg transition-colors ${isDark ? 'text-zinc-600 hover:text-zinc-200 hover:bg-white/10' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-100'}`}
+                  >
+                    <Download className="w-4 h-4" />
+                  </a>
+                ) : (
+                  <div className={`shrink-0 w-7 h-7 rounded-lg flex items-center justify-center ${isDark ? 'text-zinc-700' : 'text-gray-300'}`} title="No download available">
+                    <Download className="w-4 h-4" />
+                  </div>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
