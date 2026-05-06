@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { MapContainer, TileLayer, Polyline, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import html2pdf from 'html2pdf.js';
 import {
   Plus, X, Printer, RotateCcw, ArrowLeftRight, MapPin, Navigation,
   DollarSign, Copy, Save, CheckCircle, Lock, User, Building2,
@@ -45,7 +46,9 @@ const blankQ = (): QuoteTab => ({
 });
 const blankParty = (): PartyInfo => ({ company: '', contact: '', address: '', city: '', state: '', phone: '', email: '' });
 const n   = (v: string) => parseFloat(v) || 0;
-const fmt = (v: number) => '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+type Currency = 'USD' | 'CAD';
+const fmtCur = (v: number, cur: Currency) =>
+  (cur === 'CAD' ? 'CA$' : 'US$') + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 function computeQuote(q: QuoteTab, route: RouteInfo | null) {
   const mi       = route?.distanceMiles ?? 0;
@@ -102,8 +105,11 @@ function exportPDF(
   customer: PartyInfo, consignor: PartyInfo, consignee: PartyInfo,
   pickup: string, destination: string,
   companyName: string, userFullName: string,
+  currency: Currency,
 ) {
-  const esc = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const esc  = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const f    = (v: number) => fmtCur(v, currency);
+  const cur  = currency;
   const headerName = companyName || userFullName || '';
   const logoB64 = localStorage.getItem('integra_company_logo') || '';
 
@@ -121,7 +127,6 @@ function exportPDF(
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
   <title>${esc(q.label)} — Freight Quote</title>
   <style>
-    @page { size: A4; margin: 1.2cm 1.5cm 1.2cm; }
     *  { box-sizing: border-box; }
     body { font-family: Arial, sans-serif; color: #111; font-size: 13px; margin: 0; padding: 0; }
 
@@ -189,28 +194,34 @@ function exportPDF(
     <div><span>Est. Drive Time</span><strong>~${Math.floor(route.durationMin/60)}h ${Math.round(route.durationMin%60)}m</strong></div>
   </div>` : ''}
 
-  <!-- Cost table (margin intentionally excluded) -->
+  <!-- Cost table — margin baked into total, not shown as line item -->
   <table>
-    <tr><th>Item</th><th>Details</th><th style="text-align:right">Amount</th></tr>
-    <tr><td>Base Rate</td><td>${c.mi.toFixed(1)} mi &times; ${esc(fmt(n(q.ratePerMile)))}/mi</td><td style="text-align:right">${fmt(c.base)}</td></tr>
-    <tr><td>Fuel Surcharge</td><td>Flat</td><td style="text-align:right">${fmt(c.fuel)}</td></tr>
-    <tr><td>Stops</td><td>${c.stops} stop(s) &times; ${fmt(n(q.ratePerStop))}</td><td style="text-align:right">${fmt(c.stopsAmt)}</td></tr>
-    ${q.accessorials.map(a => `<tr><td>Accessorial</td><td>${esc(a.name||'—')}</td><td style="text-align:right">${fmt(n(a.amount))}</td></tr>`).join('')}
-    <tr><td colspan="2"><strong>Subtotal</strong></td><td style="text-align:right"><strong>${fmt(c.sub)}</strong></td></tr>
-    <tr><td>FTL/LTL Applied</td><td>${n(q.ftlLtl)}%</td><td style="text-align:right">${fmt(c.ftl)}</td></tr>
-    <tr class="total-row"><td colspan="2">TOTAL QUOTE</td><td style="text-align:right">${fmt(c.total)} USD</td></tr>
+    <tr><th>Description</th><th>Details</th><th style="text-align:right">Amount (${cur})</th></tr>
+    <tr><td>Linehaul Rate</td><td>${c.mi.toFixed(1)} mi &times; ${esc(f(n(q.ratePerMile)))}/mi</td><td style="text-align:right">${f(c.base)}</td></tr>
+    <tr><td>Fuel Surcharge</td><td>Flat rate</td><td style="text-align:right">${f(c.fuel)}</td></tr>
+    <tr><td>Stop Charges</td><td>${c.stops} stop(s) &times; ${f(n(q.ratePerStop))}</td><td style="text-align:right">${f(c.stopsAmt)}</td></tr>
+    ${q.accessorials.map(a => `<tr><td>${esc(a.name || 'Accessorial')}</td><td>—</td><td style="text-align:right">${f(n(a.amount))}</td></tr>`).join('')}
+    <tr class="total-row"><td colspan="2">TOTAL QUOTE</td><td style="text-align:right">${f(c.total)} ${cur}</td></tr>
   </table>
 
-  <p class="disclaimer">This is an estimate only. Actual charges may vary based on final weight, distance, and accessorial requirements.${headerName ? ` &copy; ${new Date().getFullYear()} ${esc(headerName)}.` : ''}</p>
+  <p class="disclaimer">This is an estimate only. Rates include applicable service fees. Actual charges may vary based on final weight, distance, and accessorial requirements.${headerName ? ` &copy; ${new Date().getFullYear()} ${esc(headerName)}.` : ''}</p>
   </body></html>`;
 
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  const url  = URL.createObjectURL(blob);
-  const win  = window.open(url, '_blank');
-  setTimeout(() => {
-    win?.print();
-    URL.revokeObjectURL(url);
-  }, 500);
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;width:190mm;background:#fff;';
+  wrapper.innerHTML = html;
+  document.body.appendChild(wrapper);
+
+  html2pdf()
+    .set({
+      margin:      12,
+      filename:    `${(q.label || 'Freight_Quote').replace(/[^a-zA-Z0-9_-]/g, '_')}_Quote.pdf`,
+      html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' },
+      jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    })
+    .from(wrapper)
+    .save()
+    .finally(() => document.body.removeChild(wrapper));
 }
 
 /* ── Component ───────────────────────────────────────────────────────── */
@@ -246,6 +257,10 @@ const FreightCalculatorPage: React.FC = () => {
   const [route, setRoute]               = useState<RouteInfo | null>(null);
   const [routeLoading, setRouteLoading] = useState(false);
   const [routeError, setRouteError]     = useState('');
+
+  /* Currency */
+  const [currency, setCurrency] = useState<Currency>('USD');
+  const fmt = (v: number) => fmtCur(v, currency);
 
   /* Map */
   const [mapStyle, setMapStyle] = useState<'osm' | 'sat'>('osm');
@@ -372,6 +387,7 @@ const FreightCalculatorPage: React.FC = () => {
           margin_pct:     n(activeQuote.margin),
           accessorials:   activeQuote.accessorials.filter(a => a.amount || a.name),
           total_quote:    parseFloat(calc.total.toFixed(2)),
+          currency:       currency,
         }),
       });
       if (res.status === 402) { setSaveError('upgrade'); return; }
@@ -428,34 +444,53 @@ const FreightCalculatorPage: React.FC = () => {
         <BackToTools />
 
         {/* ── Tab bar ──────────────────────────────────────────────── */}
-        <div className={`flex items-center border border-b-0 rounded-t-xl px-2 h-10 gap-1 mt-4 ${panelBg} ${panelBorder}`}>
-          {quotes.map(q => (
+        <div className={`flex items-center justify-between border border-b-0 rounded-t-xl px-2 h-10 gap-1 mt-4 ${panelBg} ${panelBorder}`}>
+          <div className="flex items-center gap-1 overflow-x-auto">
+            {quotes.map(q => (
+              <button
+                key={q.id}
+                onClick={() => setActiveId(q.id)}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded text-sm font-medium transition-colors whitespace-nowrap ${
+                  q.id === activeId
+                    ? 'bg-red-600 text-white'
+                    : isDark ? 'bg-dark-400 text-gray-300 hover:bg-dark-500' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <span className="text-xs">📄</span>
+                {q.label}
+                {quotes.length > 1 && (
+                  <span role="button" onClick={e => { e.stopPropagation(); removeQuote(q.id); }} className="ml-1 opacity-70 hover:opacity-100">
+                    <X className="w-3 h-3" />
+                  </span>
+                )}
+              </button>
+            ))}
             <button
-              key={q.id}
-              onClick={() => setActiveId(q.id)}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded text-sm font-medium transition-colors ${
-                q.id === activeId
-                  ? 'bg-red-600 text-white'
-                  : isDark ? 'bg-dark-400 text-gray-300 hover:bg-dark-500' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              onClick={addQuote}
+              className={`ml-1 flex items-center gap-1 px-3 py-1 text-sm rounded border border-dashed transition-colors whitespace-nowrap ${
+                isDark ? 'text-gray-400 hover:bg-dark-400 border-gray-600' : 'text-gray-600 hover:bg-gray-100 border-gray-300'
               }`}
             >
-              <span className="text-xs">📄</span>
-              {q.label}
-              {quotes.length > 1 && (
-                <span role="button" onClick={e => { e.stopPropagation(); removeQuote(q.id); }} className="ml-1 opacity-70 hover:opacity-100">
-                  <X className="w-3 h-3" />
-                </span>
-              )}
+              <Plus className="w-3.5 h-3.5" /> New Quote
             </button>
-          ))}
-          <button
-            onClick={addQuote}
-            className={`ml-1 flex items-center gap-1 px-3 py-1 text-sm rounded border border-dashed transition-colors ${
-              isDark ? 'text-gray-400 hover:bg-dark-400 border-gray-600' : 'text-gray-600 hover:bg-gray-100 border-gray-300'
-            }`}
-          >
-            <Plus className="w-3.5 h-3.5" /> New Quote
-          </button>
+          </div>
+
+          {/* Currency toggle */}
+          <div className={`flex shrink-0 ml-2 overflow-hidden rounded border text-xs font-bold ${isDark ? 'border-gray-600' : 'border-gray-300'}`}>
+            {(['USD', 'CAD'] as Currency[]).map(cur => (
+              <button
+                key={cur}
+                onClick={() => setCurrency(cur)}
+                className={`px-2.5 py-1 transition-colors ${
+                  currency === cur
+                    ? 'bg-red-600 text-white'
+                    : isDark ? 'bg-dark-400 text-gray-400 hover:bg-dark-500' : 'bg-white text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                {cur}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* ── Main: left panel + map ───────────────────────────────── */}
@@ -550,25 +585,36 @@ const FreightCalculatorPage: React.FC = () => {
             <div className="mt-auto bg-gradient-to-b from-red-600 to-red-800 text-white p-3">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs font-bold uppercase tracking-wide opacity-80">Total Quote</span>
-                <button onClick={() => navigator.clipboard?.writeText(calc.total.toFixed(2))} title="Copy total" className="opacity-60 hover:opacity-100">
-                  <Copy className="w-3.5 h-3.5" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold opacity-60">{currency}</span>
+                  <button onClick={() => navigator.clipboard?.writeText(calc.total.toFixed(2))} title="Copy total" className="opacity-60 hover:opacity-100">
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
               <div className="text-3xl font-black mb-3">{fmt(calc.total)}</div>
               <div className="text-[11px] space-y-0.5 opacity-90 border-t border-white/20 pt-2">
-                <div className="flex justify-between"><span>Base Rate ({calc.mi.toFixed(0)} mi × {fmt(n(activeQuote.ratePerMile))}/mi)</span><span>{fmt(calc.base)}</span></div>
+                <div className="flex justify-between">
+                  <span>
+                    Linehaul ({calc.mi.toFixed(0)} mi × {fmt(n(activeQuote.ratePerMile))}/mi
+                    {n(activeQuote.margin) > 0 ? ` +${n(activeQuote.margin)}%` : ''})
+                  </span>
+                  <span>{fmt(calc.base)}</span>
+                </div>
                 <div className="flex justify-between"><span>+ Fuel Surcharge</span><span>{fmt(calc.fuel)}</span></div>
                 <div className="flex justify-between"><span>+ Stops ({calc.stops} × {fmt(n(activeQuote.ratePerStop))})</span><span>{fmt(calc.stopsAmt)}</span></div>
                 <div className="flex justify-between"><span>+ Accessorials</span><span>{fmt(calc.acc)}</span></div>
                 <div className="flex justify-between font-bold border-t border-white/20 pt-1 mt-1"><span>Subtotal</span><span>{fmt(calc.sub)}</span></div>
-                <div className="flex justify-between"><span>× {n(activeQuote.ftlLtl)}% (FTL)</span><span>{fmt(calc.ftl)}</span></div>
-                <div className="flex justify-between"><span>+ Margin ({n(activeQuote.margin)}%)</span><span>{fmt(calc.margin)}</span></div>
+                <div className="flex justify-between"><span>× {n(activeQuote.ftlLtl)}% (FTL/LTL adj.)</span><span>{fmt(calc.ftl)}</span></div>
+                {n(activeQuote.margin) > 0 && (
+                  <div className="flex justify-between opacity-70"><span>+ Margin ({n(activeQuote.margin)}%)</span><span>{fmt(calc.margin)}</span></div>
+                )}
               </div>
 
               <div className="mt-3 flex flex-col gap-2">
                 <button
                   onClick={() => {
-                    exportPDF(activeQuote, route, calc, customer, consignor, consignee, pickup, destination, companyName, userFullName);
+                    exportPDF(activeQuote, route, calc, customer, consignor, consignee, pickup, destination, companyName, userFullName, currency);
                     if (isPaidUser(user)) saveToHistory();
                   }}
                   className="w-full flex items-center justify-center gap-2 bg-white text-red-700 font-bold text-xs py-2 rounded hover:bg-red-50 transition-colors"
