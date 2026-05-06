@@ -45,6 +45,17 @@ const SignupPage: React.FC = () => {
     setIsLoading(true);
     try {
       const result = await signup({ full_name: name, email, password, phone: phone || undefined });
+      fetch('https://api.staging.integratedtech.ca/api/customer-analytics/track/conversion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event_name: 'signup',
+          event_category: 'signup',
+          page_url: window.location.href,
+          session_id: localStorage.getItem('_sid'),
+          visitor_id: localStorage.getItem('_vid'),
+        }),
+      }).catch(() => {});
       if (result.needsVerification) {
         navigate('/verify-otp', { state: { email: result.email } });
       } else {

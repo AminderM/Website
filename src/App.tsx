@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
@@ -33,10 +33,132 @@ import SavedDocumentsSidebar from './components/SavedDocumentsSidebar';
 import ScrollToTop from './components/ScrollToTop';
 import './index.css';
 
+const ANALYTICS_BASE = 'https://api.staging.integratedtech.ca';
+
+function useAnalyticsTracking() {
+  const location = useLocation();
+
+  // Session start → then pageview with fresh IDs (fires on every route change)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    fetch(`${ANALYTICS_BASE}/api/customer-analytics/track/session/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        landing_page: window.location.href,
+        visitor_id: localStorage.getItem('_vid'),
+        referrer: document.referrer || null,
+        utm_source: params.get('utm_source'),
+        utm_medium: params.get('utm_medium'),
+        utm_campaign: params.get('utm_campaign'),
+        user_agent: navigator.userAgent,
+      }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.session_id) localStorage.setItem('_sid', data.session_id);
+        if (data.visitor_id) localStorage.setItem('_vid', data.visitor_id);
+        fetch(`${ANALYTICS_BASE}/api/customer-analytics/track/pageview`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            page_url: window.location.href,
+            page_title: document.title,
+            referrer: document.referrer || null,
+            session_id: data.session_id,
+            visitor_id: data.visitor_id,
+            utm_source: params.get('utm_source'),
+            utm_medium: params.get('utm_medium'),
+            utm_campaign: params.get('utm_campaign'),
+          }),
+        }).catch(() => {});
+      })
+      .catch(() => {});
+  }, [location.pathname, location.search]);
+
+  // Click tracking — single global listener, mounted once for lifetime of app
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      fetch(`${ANALYTICS_BASE}/api/customer-analytics/track/click`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          page_url: window.location.href,
+          x_position: e.clientX,
+          y_position: e.clientY,
+          viewport_width: window.innerWidth,
+          viewport_height: window.innerHeight,
+          element_id: target.id || null,
+          element_tag: target.tagName?.toLowerCase() || null,
+          element_text: target.innerText?.slice(0, 100) || null,
+          session_id: localStorage.getItem('_sid'),
+          visitor_id: localStorage.getItem('_vid'),
+        }),
+      }).catch(() => {});
+    };
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, []);
+
+  // Scroll depth — re-arms on each route change, reports milestones + on navigate/tab-hide
+  useEffect(() => {
+    const pageUrl = window.location.href;
+    const startTime = Date.now();
+    let maxDepth = 0;
+    const milestonesFired = new Set<number>();
+
+    const getDepth = () => {
+      const scrollable = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      return scrollable > 0 ? Math.round((window.scrollY / scrollable) * 100) : 0;
+    };
+
+    const report = (depth: number) => {
+      fetch(`${ANALYTICS_BASE}/api/customer-analytics/track/scroll`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          page_url: pageUrl,
+          scroll_depth_percent: depth,
+          max_scroll_depth: depth,
+          time_on_page: Math.round((Date.now() - startTime) / 1000),
+          session_id: localStorage.getItem('_sid'),
+          visitor_id: localStorage.getItem('_vid'),
+        }),
+      }).catch(() => {});
+    };
+
+    const handleScroll = () => {
+      const depth = getDepth();
+      if (depth > maxDepth) maxDepth = depth;
+      for (const m of [25, 50, 75, 100]) {
+        if (depth >= m && !milestonesFired.has(m)) {
+          milestonesFired.add(m);
+          report(m);
+        }
+      }
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'hidden') report(maxDepth);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      if (maxDepth > 0) report(maxDepth);
+    };
+  }, [location.pathname]);
+}
+
 // Layout wrapper
 const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  useAnalyticsTracking();
   return (
     <div className={`min-h-screen flex flex-col transition-colors duration-300 ${isDark ? 'bg-dark' : 'bg-white'}`}>
       <Navbar />
