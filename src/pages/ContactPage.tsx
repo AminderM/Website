@@ -33,6 +33,18 @@ const ContactPage: React.FC = () => {
       if (response.ok) {
         setSubmitStatus('success');
         setFormData({ firstName: '', lastName: '', email: '', company: '', phone: '', role: '', fleetSize: '', message: '' });
+        fetch('https://api.staging.integratedtech.ca/api/customer-analytics/track/conversion', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event_name: 'demo_request',
+            event_category: 'demo_request',
+            page_url: window.location.href,
+            session_id: localStorage.getItem('_sid'),
+            visitor_id: localStorage.getItem('_vid'),
+            metadata: { form_id: 'contact-demo-form' },
+          }),
+        }).catch(() => {});
       } else {
         const contentType = response.headers.get('content-type') || '';
         const errorData = contentType.includes('application/json') ? await response.json() : {};
