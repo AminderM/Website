@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import html2pdf from 'html2pdf.js';
 import {
   Plus, X, Printer, RotateCcw, ArrowLeftRight, MapPin, Navigation,
-  DollarSign, Copy, Save, CheckCircle, Lock, User, Building2,
+  DollarSign, Copy, CheckCircle, Lock, User, Building2,
 } from 'lucide-react';
 import { parseApiError } from '../utils/apiFetch';
 import { useAuth } from '../contexts/AuthContext';
