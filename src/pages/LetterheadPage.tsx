@@ -32,18 +32,12 @@ const TODAY = new Date().toLocaleDateString('en-US', {
   weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
 });
 
-/* ── Shared preview helpers ─────────────────────────────────────────── */
-function Lines({ n = 12 }: { n?: number }) {
-  return <>{Array.from({ length: n }, (_, i) => (
-    <div key={i} style={{ height: '1px', background: '#e5e7eb', margin: '10px 0' }} />
-  ))}</>;
-}
+/* ── Shared preview body ────────────────────────────────────────────── */
 function BodySection({ pad = '32px' }: { pad?: string }) {
   return (
-    <div style={{ padding: `36px ${pad} 24px` }}>
-      <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '24px' }}>{TODAY}</div>
-      <div style={{ fontSize: '12px', color: '#666', marginBottom: '16px' }}>Dear Sir/Madam,</div>
-      <Lines n={12} />
+    <div style={{ padding: `36px ${pad}`, minHeight: '480px' }}>
+      <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '28px' }}>{TODAY}</div>
+      <div style={{ fontSize: '12px', color: '#555', marginBottom: '0' }}>Dear Sir/Madam,</div>
     </div>
   );
 }
@@ -154,10 +148,9 @@ function CorporatePreview({ d }: { d: LetterheadData }) {
           </div>
         )}
       </div>
-      <div style={{ flex: 1, padding: '28px 24px' }}>
-        <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '24px' }}>{TODAY}</div>
-        <div style={{ fontSize: '12px', color: '#666', marginBottom: '16px' }}>Dear Sir/Madam,</div>
-        <Lines n={12} />
+      <div style={{ flex: 1, padding: '28px 24px', minHeight: '480px' }}>
+        <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '28px' }}>{TODAY}</div>
+        <div style={{ fontSize: '12px', color: '#555' }}>Dear Sir/Madam,</div>
       </div>
     </div>
   );
@@ -188,10 +181,9 @@ function ModernPreview({ d }: { d: LetterheadData }) {
       </div>
       <div style={{ display: 'flex', flex: 1 }}>
         <div style={{ width: '6px', background: `${d.accentColor}33`, flexShrink: 0 }} />
-        <div style={{ flex: 1, padding: '32px 28px 24px' }}>
-          <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '24px' }}>{TODAY}</div>
-          <div style={{ fontSize: '12px', color: '#666', marginBottom: '16px' }}>Dear Sir/Madam,</div>
-          <Lines n={12} />
+        <div style={{ flex: 1, padding: '32px 28px', minHeight: '480px' }}>
+          <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '28px' }}>{TODAY}</div>
+          <div style={{ fontSize: '12px', color: '#555' }}>Dear Sir/Madam,</div>
         </div>
       </div>
       <div style={{ display: 'flex' }}>
@@ -256,10 +248,9 @@ function SplitPreview({ d }: { d: LetterheadData }) {
           {[d.address, d.cityStateZip].filter(Boolean).join(' · ')}
         </div>
       )}
-      <div style={{ padding: '32px 32px 24px' }}>
-        <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '24px' }}>{TODAY}</div>
-        <div style={{ fontSize: '12px', color: '#666', marginBottom: '16px' }}>Dear Sir/Madam,</div>
-        <Lines n={12} />
+      <div style={{ padding: '32px 32px', minHeight: '480px' }}>
+        <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '28px' }}>{TODAY}</div>
+        <div style={{ fontSize: '12px', color: '#555' }}>Dear Sir/Madam,</div>
       </div>
       <div style={{ display: 'flex', height: '28px' }}>
         <div style={{ flex: '0 0 45%', background: '#1f2937', display: 'flex', alignItems: 'center', paddingLeft: '24px' }}>
@@ -287,7 +278,7 @@ function TemplatePreview({ id, d }: { id: TemplateId; d: LetterheadData }) {
 
 /* ── HTML Export ────────────────────────────────────────────────────── */
 const TODAY_STR = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-const LINES_HTML = (n: number) => Array.from({ length: n }, () => '<div style="height:1px;background:#e5e7eb;margin:10px 0"></div>').join('');
+const BODY_HTML = (pad = '40px') => `<div style="padding:48px ${pad} 40px;min-height:200mm"><div style="font-size:11px;color:#aaa;margin-bottom:28px">${TODAY_STR}</div><div style="font-size:13px;color:#555;margin-bottom:20px">Dear Sir/Madam,</div></div>`;
 
 function wrapDoc(body: string, title: string, forWord: boolean) {
   const ns = forWord ? `xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'` : '';
@@ -311,11 +302,7 @@ function buildBoldHTML(d: LetterheadData, fw: boolean) {
   </div>
   <div style="height:5px;background:linear-gradient(to right,${d.accentColor}cc,${d.accentColor}22)"></div>
   ${(d.address || d.cityStateZip) ? `<div style="padding:8px 40px;background:#f9fafb;border-bottom:1px solid #e5e7eb;font-size:11px;color:#666">${[d.address,d.cityStateZip].filter(Boolean).map(esc).join(' &bull; ')}</div>` : ''}
-  <div style="padding:48px 40px 40px;min-height:180mm">
-    <div style="font-size:11px;color:#aaa;margin-bottom:28px">${TODAY_STR}</div>
-    <div style="font-size:13px;color:#555;margin-bottom:20px">Dear Sir/Madam,</div>
-    ${LINES_HTML(22)}
-  </div>
+  ${BODY_HTML()}
   <div style="border-top:3px solid ${d.accentColor};padding:12px 40px;display:flex;align-items:center;justify-content:space-between;font-size:10px;color:#999">
     <span style="font-weight:700;color:#555">${esc(d.companyName)}</span>
     <span>${[d.address,d.cityStateZip].filter(Boolean).map(esc).join(', ')}</span>
@@ -336,11 +323,7 @@ function buildClassicHTML(d: LetterheadData, fw: boolean) {
     </div>
   </div>
   <div style="height:1px;background:#e5e7eb;margin:0 40px"></div>
-  <div style="padding:48px 40px 40px;min-height:180mm">
-    <div style="font-size:11px;color:#aaa;margin-bottom:28px">${TODAY_STR}</div>
-    <div style="font-size:13px;color:#555;margin-bottom:20px">Dear Sir/Madam,</div>
-    ${LINES_HTML(22)}
-  </div>
+  ${BODY_HTML()}
   <div style="border-top:2px solid ${d.accentColor};padding:12px 40px;text-align:center;font-size:10px;color:#999">
     ${esc(d.companyName)}${d.website ? ` &middot; ${esc(d.website)}` : ''}
   </div>
@@ -364,11 +347,7 @@ function buildMinimalHTML(d: LetterheadData, fw: boolean) {
     </div>
   </div>
   <div style="height:1px;background:#e5e7eb;margin:0 40px"></div>
-  <div style="padding:48px 40px 40px;min-height:180mm">
-    <div style="font-size:11px;color:#aaa;margin-bottom:28px">${TODAY_STR}</div>
-    <div style="font-size:13px;color:#555;margin-bottom:20px">Dear Sir/Madam,</div>
-    ${LINES_HTML(22)}
-  </div>
+  ${BODY_HTML()}
   <div style="height:2px;background:${d.accentColor}"></div>
   <div style="padding:8px 40px;font-size:10px;color:#aaa;text-align:right">
     ${[d.companyName,d.phone,d.email].filter(Boolean).map(esc).join(' &middot; ')}
@@ -389,11 +368,7 @@ function buildCorporateHTML(d: LetterheadData, fw: boolean) {
     </div>
     ${(d.address||d.cityStateZip)?`<div style="font-size:9px;color:rgba(255,255,255,0.55);text-align:center;margin-top:auto;padding-top:16px">${d.address?`<div>${esc(d.address)}</div>`:''}${d.cityStateZip?`<div>${esc(d.cityStateZip)}</div>`:''}</div>`:''}
   </div>
-  <div style="flex:1;padding:32px 28px">
-    <div style="font-size:11px;color:#aaa;margin-bottom:28px">${TODAY_STR}</div>
-    <div style="font-size:13px;color:#555;margin-bottom:20px">Dear Sir/Madam,</div>
-    ${LINES_HTML(22)}
-  </div>
+  ${BODY_HTML('28px')}
 </div>`, d.companyName || 'Letterhead', fw);
 }
 
@@ -417,11 +392,7 @@ function buildModernHTML(d: LetterheadData, fw: boolean) {
   </div>
   <div style="display:flex;flex:1">
     <div style="width:6px;background:${d.accentColor}33;flex-shrink:0"></div>
-    <div style="flex:1;padding:48px 28px 40px">
-      <div style="font-size:11px;color:#aaa;margin-bottom:28px">${TODAY_STR}</div>
-      <div style="font-size:13px;color:#555;margin-bottom:20px">Dear Sir/Madam,</div>
-      ${LINES_HTML(22)}
-    </div>
+    ${BODY_HTML('28px')}
   </div>
   <div style="display:flex">
     <div style="width:6px;background:${d.accentColor};flex-shrink:0"></div>
@@ -452,11 +423,7 @@ function buildExecutiveHTML(d: LetterheadData, fw: boolean) {
     <div style="height:2px;background:#111;margin-bottom:3px"></div>
     <div style="height:4px;background:${d.accentColor}"></div>
   </div>
-  <div style="padding:48px 40px 40px;min-height:180mm">
-    <div style="font-size:11px;color:#aaa;margin-bottom:28px">${TODAY_STR}</div>
-    <div style="font-size:13px;color:#555;margin-bottom:20px">Dear Sir/Madam,</div>
-    ${LINES_HTML(22)}
-  </div>
+  ${BODY_HTML()}
   <div style="padding:8px 40px;display:flex;justify-content:space-between;font-size:10px;color:#999;border-top:1px solid #e5e7eb">
     <span style="font-weight:700;color:#555">${esc(d.companyName)}</span>
     <span>${esc(d.website)}</span>
@@ -479,11 +446,7 @@ function buildSplitHTML(d: LetterheadData, fw: boolean) {
     </div>
   </div>
   ${(d.address||d.cityStateZip)?`<div style="padding:6px 28px;background:#f9fafb;font-size:10px;color:#666;border-bottom:1px solid #e5e7eb">${[d.address,d.cityStateZip].filter(Boolean).map(esc).join(' &bull; ')}</div>`:''}
-  <div style="padding:48px 40px 40px;min-height:180mm">
-    <div style="font-size:11px;color:#aaa;margin-bottom:28px">${TODAY_STR}</div>
-    <div style="font-size:13px;color:#555;margin-bottom:20px">Dear Sir/Madam,</div>
-    ${LINES_HTML(22)}
-  </div>
+  ${BODY_HTML()}
   <div style="display:flex;height:30px">
     <div style="flex:0 0 45%;background:#1f2937;display:flex;align-items:center;padding-left:28px">
       <span style="font-size:9px;color:rgba(255,255,255,0.6)">${esc(d.companyName)}</span>
@@ -700,15 +663,30 @@ const LetterheadPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Right: live preview */}
+          {/* Right: live preview — A4 document viewer */}
           <div className="flex-1 min-w-0">
             <p className={`text-xs font-bold uppercase tracking-widest mb-3 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Live Preview</p>
-            <div className="w-full rounded-xl overflow-hidden shadow-xl">
-              <TemplatePreview id={template} d={data} />
+
+            {/* Document viewer chrome */}
+            <div className="rounded-xl overflow-hidden" style={{ background: '#3a3a3a', padding: '24px 24px 16px' }}>
+              {/* A4 page: 794px wide × 1123px tall at 96dpi — shown full width, scrollable */}
+              <div
+                style={{
+                  background: '#fff',
+                  width: '100%',
+                  maxWidth: '794px',
+                  minHeight: '1123px',
+                  margin: '0 auto',
+                  boxShadow: '0 4px 32px rgba(0,0,0,0.5)',
+                  position: 'relative',
+                }}
+              >
+                <TemplatePreview id={template} d={data} />
+              </div>
+              <p className="text-xs mt-4 text-center" style={{ color: '#888' }}>
+                Preview updates live · PDF uses your browser print dialog · Word opens in Microsoft Word, LibreOffice, or Pages
+              </p>
             </div>
-            <p className={`text-xs mt-3 text-center ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>
-              Preview updates live · PDF uses your browser print dialog · Word opens in Microsoft Word, LibreOffice, or Pages
-            </p>
           </div>
         </div>
       </div>
