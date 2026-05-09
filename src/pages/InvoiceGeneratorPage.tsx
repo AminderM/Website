@@ -870,18 +870,18 @@ const InvoiceGeneratorPage: React.FC = () => {
 
           {/* ═══ RIGHT: LIVE PREVIEW ══════════════════════════════════════════ */}
           <div className="hidden lg:block lg:col-span-3 sticky top-24">
-            <div className={`rounded-xl border overflow-hidden ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+            <div className="rounded-xl overflow-hidden" style={{ background: '#3a3a3a', padding: '24px 24px 16px' }}>
               {/* Preview toolbar */}
-              <div className={`px-4 py-3 flex items-center justify-between border-b ${isDark ? 'bg-dark-300 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
-                <span className={`text-xs font-bold uppercase tracking-widest ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Live Preview</span>
+              <div style={{ padding: '0 0 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ color: '#888', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '4px' }}>Live Preview</span>
                 {finalized && (
                   <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-green-500/20 text-green-400">Finalized</span>
                 )}
               </div>
 
               {/* Scaled preview container — A4 ratio: width × 1.414 */}
-              <div ref={previewRef} className={`overflow-hidden ${isDark ? 'bg-gray-900' : 'bg-gray-200'}`}
-                style={{ height: `${900 * previewScale * 1.414}px` }}>
+              <div ref={previewRef}
+                style={{ overflow: 'hidden', height: `${900 * previewScale * 1.414}px`, background: '#fff', boxShadow: '0 4px 32px rgba(0,0,0,0.5)' }}>
                 <div style={{ transform: `scale(${previewScale})`, transformOrigin: 'top left', width: 900, height: 900 * 1.414 }}>
                   {/* ── Invoice Document (900px wide source of truth) ── */}
                   <div id="invoice-print-doc" style={{ width: 900, background: 'white', fontFamily: "'Inter', system-ui, sans-serif", color: '#111' }}>
@@ -1000,6 +1000,7 @@ const InvoiceGeneratorPage: React.FC = () => {
                   </div>
                 </div>
               </div>
+              <p style={{ color: '#888', textAlign: 'center', marginTop: '12px', fontSize: '12px' }}>Preview updates as you type</p>
             </div>
 
             {/* AI suggestions below preview */}

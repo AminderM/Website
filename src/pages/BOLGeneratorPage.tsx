@@ -778,9 +778,8 @@ const BOLGeneratorPage: React.FC = () => {
           </div>
 
           {/* ===== PREVIEW PANEL ===== */}
-          <div className={`hidden lg:block lg:col-span-3 bol-preview-container rounded-lg border overflow-hidden sticky top-24 ${
-            isDark ? 'bg-white border-gray-200' : 'bg-white border-gray-200'
-          } shadow-lg`} ref={previewRef} style={{ width: '100%', aspectRatio: '2480 / 3508', position: 'relative', overflow: 'hidden' }}>
+          <div className="hidden lg:block lg:col-span-3 sticky top-24 rounded-xl overflow-hidden" style={{ background: '#3a3a3a', padding: '24px 24px 16px' }}>
+            <div className="bol-preview-container" ref={previewRef} style={{ width: '100%', aspectRatio: '2480 / 3508', position: 'relative', overflow: 'hidden', background: '#fff', boxShadow: '0 4px 32px rgba(0,0,0,0.5)' }}>
             
             <div className="pdf-native-wrapper" style={{ width: '2480px', height: '3508px', transformOrigin: 'top left', transform: `scale(${previewScale})`, backgroundColor: '#fff' }}>
 {/* BOL with watermark stripes */}
@@ -1096,6 +1095,8 @@ const BOLGeneratorPage: React.FC = () => {
                 </div>
               </div>
             </div>
+            </div>
+            <p style={{ color: '#888', textAlign: 'center', marginTop: '12px', fontSize: '12px' }}>Preview updates as you type</p>
           </div>
         </div>
       </div>
