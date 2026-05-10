@@ -28,17 +28,10 @@ const defaults: LetterheadData = {
   phone: '', email: '', website: '', accentColor: '#dc2626', logo: '',
 };
 
-const TODAY = new Date().toLocaleDateString('en-US', {
-  weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-});
-
 /* ── Shared preview body ────────────────────────────────────────────── */
 function BodySection({ pad = '32px' }: { pad?: string }) {
   return (
-    <div style={{ padding: `36px ${pad}`, flex: 1, minHeight: '200px' }}>
-      <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '28px' }}>{TODAY}</div>
-      <div style={{ fontSize: '12px', color: '#555', marginBottom: '0' }}>Dear Sir/Madam,</div>
-    </div>
+    <div style={{ padding: `36px ${pad}`, flex: 1, minHeight: '200px' }} />
   );
 }
 
@@ -148,10 +141,7 @@ function CorporatePreview({ d }: { d: LetterheadData }) {
           </div>
         )}
       </div>
-      <div style={{ flex: 1, padding: '28px 24px', minHeight: '480px' }}>
-        <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '28px' }}>{TODAY}</div>
-        <div style={{ fontSize: '12px', color: '#555' }}>Dear Sir/Madam,</div>
-      </div>
+      <div style={{ flex: 1, padding: '28px 24px', minHeight: '480px' }} />
     </div>
   );
 }
@@ -181,10 +171,7 @@ function ModernPreview({ d }: { d: LetterheadData }) {
       </div>
       <div style={{ display: 'flex', flex: 1 }}>
         <div style={{ width: '6px', background: `${d.accentColor}33`, flexShrink: 0 }} />
-        <div style={{ flex: 1, padding: '32px 28px', minHeight: '480px' }}>
-          <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '28px' }}>{TODAY}</div>
-          <div style={{ fontSize: '12px', color: '#555' }}>Dear Sir/Madam,</div>
-        </div>
+        <div style={{ flex: 1, padding: '32px 28px', minHeight: '480px' }} />
       </div>
       <div style={{ display: 'flex' }}>
         <div style={{ width: '6px', background: d.accentColor, flexShrink: 0 }} />
@@ -248,10 +235,7 @@ function SplitPreview({ d }: { d: LetterheadData }) {
           {[d.address, d.cityStateZip].filter(Boolean).join(' · ')}
         </div>
       )}
-      <div style={{ padding: '32px 32px', flex: 1, minHeight: '200px' }}>
-        <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '28px' }}>{TODAY}</div>
-        <div style={{ fontSize: '12px', color: '#555' }}>Dear Sir/Madam,</div>
-      </div>
+      <div style={{ padding: '32px 32px', flex: 1, minHeight: '200px' }} />
       <div style={{ display: 'flex', height: '28px' }}>
         <div style={{ flex: '0 0 45%', background: '#1f2937', display: 'flex', alignItems: 'center', paddingLeft: '24px' }}>
           <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.6)' }}>{d.companyName}</span>
@@ -277,8 +261,7 @@ function TemplatePreview({ id, d }: { id: TemplateId; d: LetterheadData }) {
 }
 
 /* ── HTML Export ────────────────────────────────────────────────────── */
-const TODAY_STR = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-const BODY_HTML = (pad = '40px') => `<div style="flex:1;padding:48px ${pad} 40px;min-height:200mm"><div style="font-size:11px;color:#aaa;margin-bottom:28px">${TODAY_STR}</div><div style="font-size:13px;color:#555;margin-bottom:20px">Dear Sir/Madam,</div></div>`;
+const BODY_HTML = (pad = '40px') => `<div style="flex:1;padding:48px ${pad} 40px;min-height:200mm"></div>`;
 
 function wrapDoc(body: string, title: string, forWord: boolean) {
   const ns = forWord ? `xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'` : '';
@@ -501,10 +484,7 @@ function buildWordHTML(id: TemplateId, d: LetterheadData): string {
 
   const body = `
 <table width="100%" cellpadding="0" cellspacing="0" border="0">
-  <tr><td valign="top" style="padding:48px 32px 40px;font-family:Arial,sans-serif;height:580pt;mso-height-source:userset;vertical-align:top">
-    <div style="font-size:10pt;color:#aaaaaa;margin-bottom:24px">${TODAY_STR}</div>
-    <div style="font-size:12pt;color:#555555">Dear Sir/Madam,</div>
-  </td></tr>
+  <tr><td valign="top" style="padding:48px 32px 40px;font-family:Arial,sans-serif;height:580pt;mso-height-source:userset;vertical-align:top">&nbsp;</td></tr>
 </table>`;
 
   const footer = `
