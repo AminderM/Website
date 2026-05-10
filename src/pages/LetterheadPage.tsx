@@ -698,6 +698,10 @@ const LetterheadPage: React.FC = () => {
               <button onClick={downloadPDF} className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold text-sm py-2.5 rounded-lg transition-colors">
                 <Printer className="w-4 h-4" /> Print / Save as PDF
               </button>
+              {/* Print tip */}
+              <div className={`rounded-lg px-3 py-2 text-[11px] leading-relaxed ${isDark ? 'bg-yellow-950/40 border border-yellow-800/50 text-yellow-400' : 'bg-yellow-50 border border-yellow-200 text-yellow-700'}`}>
+                <span className="font-bold">For edge-to-edge printing:</span> In the print dialog → More settings → Margins: <span className="font-bold">None</span> → enable <span className="font-bold">Background graphics</span>.
+              </div>
               <button onClick={downloadWord} className={`w-full flex items-center justify-center gap-2 font-bold text-sm py-2.5 rounded-lg transition-colors border ${isDark ? 'border-gray-600 text-gray-200 hover:bg-white/10' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}>
                 <Download className="w-4 h-4" /> Download Word (.doc)
               </button>
