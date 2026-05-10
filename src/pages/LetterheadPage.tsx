@@ -35,7 +35,7 @@ const TODAY = new Date().toLocaleDateString('en-US', {
 /* ── Shared preview body ────────────────────────────────────────────── */
 function BodySection({ pad = '32px' }: { pad?: string }) {
   return (
-    <div style={{ padding: `36px ${pad}`, minHeight: '480px' }}>
+    <div style={{ padding: `36px ${pad}`, flex: 1, minHeight: '200px' }}>
       <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '28px' }}>{TODAY}</div>
       <div style={{ fontSize: '12px', color: '#555', marginBottom: '0' }}>Dear Sir/Madam,</div>
     </div>
@@ -45,7 +45,7 @@ function BodySection({ pad = '32px' }: { pad?: string }) {
 /* ── 7 Preview Components ───────────────────────────────────────────── */
 function BoldPreview({ d }: { d: LetterheadData }) {
   return (
-    <div style={{ background: '#fff', fontFamily: 'Arial, sans-serif' }}>
+    <div style={{ background: '#fff', fontFamily: 'Arial, sans-serif', display: 'flex', flexDirection: 'column', flex: 1 }}>
       <div style={{ background: d.accentColor, padding: '24px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
           {d.logo && <img src={d.logo} alt="" style={{ height: '48px', objectFit: 'contain' }} />}
@@ -78,7 +78,7 @@ function BoldPreview({ d }: { d: LetterheadData }) {
 
 function ClassicPreview({ d }: { d: LetterheadData }) {
   return (
-    <div style={{ background: '#fff', fontFamily: 'Georgia, serif' }}>
+    <div style={{ background: '#fff', fontFamily: 'Georgia, serif', display: 'flex', flexDirection: 'column', flex: 1 }}>
       <div style={{ padding: '32px 32px 20px', textAlign: 'center' }}>
         {d.logo && <img src={d.logo} alt="" style={{ height: '52px', objectFit: 'contain', display: 'block', margin: '0 auto 12px' }} />}
         <div style={{ fontSize: '26px', fontWeight: 700, color: d.companyName ? '#111' : '#bbb', fontStyle: d.companyName ? 'normal' : 'italic' }}>
@@ -101,7 +101,7 @@ function ClassicPreview({ d }: { d: LetterheadData }) {
 
 function MinimalPreview({ d }: { d: LetterheadData }) {
   return (
-    <div style={{ background: '#fff', fontFamily: 'Arial, sans-serif' }}>
+    <div style={{ background: '#fff', fontFamily: 'Arial, sans-serif', display: 'flex', flexDirection: 'column', flex: 1 }}>
       <div style={{ height: '4px', background: d.accentColor }} />
       <div style={{ padding: '28px 32px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -130,7 +130,7 @@ function MinimalPreview({ d }: { d: LetterheadData }) {
 
 function CorporatePreview({ d }: { d: LetterheadData }) {
   return (
-    <div style={{ background: '#fff', fontFamily: 'Arial, sans-serif', display: 'flex', minHeight: '600px' }}>
+    <div style={{ background: '#fff', fontFamily: 'Arial, sans-serif', display: 'flex', flex: 1, minHeight: '600px' }}>
       <div style={{ width: '155px', minWidth: '155px', background: d.accentColor, padding: '28px 18px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
         {d.logo && <img src={d.logo} alt="" style={{ height: '48px', objectFit: 'contain', marginBottom: '4px' }} />}
         <div style={{ height: '1px', background: 'rgba(255,255,255,0.3)', width: '100%' }} />
@@ -158,7 +158,7 @@ function CorporatePreview({ d }: { d: LetterheadData }) {
 
 function ModernPreview({ d }: { d: LetterheadData }) {
   return (
-    <div style={{ background: '#fff', fontFamily: 'Arial, sans-serif', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ background: '#fff', fontFamily: 'Arial, sans-serif', display: 'flex', flexDirection: 'column', flex: 1 }}>
       <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb' }}>
         <div style={{ width: '6px', background: d.accentColor, flexShrink: 0 }} />
         <div style={{ flex: 1, padding: '28px 28px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px' }}>
@@ -199,7 +199,7 @@ function ModernPreview({ d }: { d: LetterheadData }) {
 
 function ExecutivePreview({ d }: { d: LetterheadData }) {
   return (
-    <div style={{ background: '#fff', fontFamily: 'Arial, sans-serif' }}>
+    <div style={{ background: '#fff', fontFamily: 'Arial, sans-serif', display: 'flex', flexDirection: 'column', flex: 1 }}>
       <div style={{ padding: '32px 32px 0' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -230,7 +230,7 @@ function ExecutivePreview({ d }: { d: LetterheadData }) {
 
 function SplitPreview({ d }: { d: LetterheadData }) {
   return (
-    <div style={{ background: '#fff', fontFamily: 'Arial, sans-serif' }}>
+    <div style={{ background: '#fff', fontFamily: 'Arial, sans-serif', display: 'flex', flexDirection: 'column', flex: 1 }}>
       <div style={{ display: 'flex', height: '120px' }}>
         <div style={{ flex: '0 0 45%', background: '#1f2937', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '20px 24px' }}>
           {d.logo && <img src={d.logo} alt="" style={{ height: '32px', objectFit: 'contain', objectPosition: 'left', marginBottom: '8px' }} />}
@@ -248,7 +248,7 @@ function SplitPreview({ d }: { d: LetterheadData }) {
           {[d.address, d.cityStateZip].filter(Boolean).join(' · ')}
         </div>
       )}
-      <div style={{ padding: '32px 32px', minHeight: '480px' }}>
+      <div style={{ padding: '32px 32px', flex: 1, minHeight: '200px' }}>
         <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '28px' }}>{TODAY}</div>
         <div style={{ fontSize: '12px', color: '#555' }}>Dear Sir/Madam,</div>
       </div>
@@ -282,14 +282,14 @@ const BODY_HTML = (pad = '40px') => `<div style="flex:1;padding:48px ${pad} 40px
 
 function wrapDoc(body: string, title: string, forWord: boolean) {
   const ns = forWord ? `xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'` : '';
-  const meta = forWord ? `<xml><w:WordDocument><w:View>Print</w:View><w:Zoom>90</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml>` : '';
+  const meta = forWord ? `<xml><w:WordDocument><w:View>Print</w:View><w:Zoom>90</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument><w:Sect><w:pgSz w:w="11907" w:h="16839"/><w:pgMar w:top="0" w:right="0" w:bottom="0" w:left="0" w:header="0" w:footer="0" w:gutter="0"/></w:Sect></xml>` : '';
   return `<!DOCTYPE html><html ${ns}><head><meta charset="utf-8"><title>${esc(title)}</title>${meta}
 <style>@page{size:A4;margin:0}*{box-sizing:border-box;margin:0;padding:0}html,body{margin:0;padding:0;width:100%}body{font-family:Arial,sans-serif;background:#fff;color:#111}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style>
 </head><body>${body}</body></html>`;
 }
 
 function buildBoldHTML(d: LetterheadData, fw: boolean) {
-  return wrapDoc(`<div style="background:#fff;display:flex;flex-direction:column;min-height:297mm">
+  return wrapDoc(`<div style="background:#fff;display:flex;flex-direction:column;min-height:297mm;width:100%">
   <div style="background:${d.accentColor};padding:24px 40px;display:flex;align-items:center;justify-content:space-between;gap:20px">
     <div style="display:flex;align-items:center;gap:14px">
       ${d.logo ? `<img src="${d.logo}" style="height:52px;width:auto;object-fit:contain">` : ''}
@@ -312,7 +312,7 @@ function buildBoldHTML(d: LetterheadData, fw: boolean) {
 }
 
 function buildClassicHTML(d: LetterheadData, fw: boolean) {
-  return wrapDoc(`<div style="background:#fff;font-family:Georgia,serif;display:flex;flex-direction:column;min-height:297mm">
+  return wrapDoc(`<div style="background:#fff;font-family:Georgia,serif;display:flex;flex-direction:column;min-height:297mm;width:100%">
   <div style="padding:32px 40px 20px;text-align:center">
     ${d.logo ? `<img src="${d.logo}" style="height:56px;width:auto;object-fit:contain;display:block;margin:0 auto 12px">` : ''}
     <div style="font-size:28px;font-weight:700;color:#111;letter-spacing:0.02em">${esc(d.companyName)}</div>
@@ -331,7 +331,7 @@ function buildClassicHTML(d: LetterheadData, fw: boolean) {
 }
 
 function buildMinimalHTML(d: LetterheadData, fw: boolean) {
-  return wrapDoc(`<div style="background:#fff;display:flex;flex-direction:column;min-height:297mm">
+  return wrapDoc(`<div style="background:#fff;display:flex;flex-direction:column;min-height:297mm;width:100%">
   <div style="height:4px;background:${d.accentColor}"></div>
   <div style="padding:28px 40px 16px;display:flex;align-items:flex-start;justify-content:space-between;gap:20px">
     <div style="display:flex;align-items:center;gap:12px">
@@ -356,7 +356,7 @@ function buildMinimalHTML(d: LetterheadData, fw: boolean) {
 }
 
 function buildCorporateHTML(d: LetterheadData, fw: boolean) {
-  return wrapDoc(`<div style="background:#fff;display:flex;min-height:297mm">
+  return wrapDoc(`<div style="background:#fff;display:flex;min-height:297mm;width:100%">
   <div style="width:160px;min-width:160px;background:${d.accentColor};padding:32px 18px;display:flex;flex-direction:column;align-items:center;gap:12px">
     ${d.logo?`<img src="${d.logo}" style="height:52px;width:auto;object-fit:contain;margin-bottom:4px">`:''}
     <div style="height:1px;background:rgba(255,255,255,0.3);width:100%"></div>
@@ -373,7 +373,7 @@ function buildCorporateHTML(d: LetterheadData, fw: boolean) {
 }
 
 function buildModernHTML(d: LetterheadData, fw: boolean) {
-  return wrapDoc(`<div style="background:#fff;display:flex;flex-direction:column;min-height:297mm">
+  return wrapDoc(`<div style="background:#fff;display:flex;flex-direction:column;min-height:297mm;width:100%">
   <div style="display:flex;border-bottom:1px solid #e5e7eb">
     <div style="width:6px;background:${d.accentColor};flex-shrink:0"></div>
     <div style="flex:1;padding:28px 28px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px">
@@ -405,7 +405,7 @@ function buildModernHTML(d: LetterheadData, fw: boolean) {
 }
 
 function buildExecutiveHTML(d: LetterheadData, fw: boolean) {
-  return wrapDoc(`<div style="background:#fff;display:flex;flex-direction:column;min-height:297mm">
+  return wrapDoc(`<div style="background:#fff;display:flex;flex-direction:column;min-height:297mm;width:100%">
   <div style="padding:32px 40px 0">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
       <div style="display:flex;align-items:center;gap:14px">
@@ -432,7 +432,7 @@ function buildExecutiveHTML(d: LetterheadData, fw: boolean) {
 }
 
 function buildSplitHTML(d: LetterheadData, fw: boolean) {
-  return wrapDoc(`<div style="background:#fff;display:flex;flex-direction:column;min-height:297mm">
+  return wrapDoc(`<div style="background:#fff;display:flex;flex-direction:column;min-height:297mm;width:100%">
   <div style="display:flex;height:130px">
     <div style="flex:0 0 45%;background:#1f2937;display:flex;flex-direction:column;justify-content:center;padding:20px 28px">
       ${d.logo?`<img src="${d.logo}" style="height:34px;width:auto;object-fit:contain;object-position:left;margin-bottom:8px">`:''}
@@ -501,7 +501,7 @@ function buildWordHTML(id: TemplateId, d: LetterheadData): string {
 
   const body = `
 <table width="100%" cellpadding="0" cellspacing="0" border="0">
-  <tr><td style="padding:48px 32px 40px;font-family:Arial,sans-serif">
+  <tr><td valign="top" style="padding:48px 32px 40px;font-family:Arial,sans-serif;height:580pt;mso-height-source:userset;vertical-align:top">
     <div style="font-size:10pt;color:#aaaaaa;margin-bottom:24px">${TODAY_STR}</div>
     <div style="font-size:12pt;color:#555555">Dear Sir/Madam,</div>
   </td></tr>
@@ -739,7 +739,8 @@ const LetterheadPage: React.FC = () => {
                   minHeight: '1123px',
                   margin: '0 auto',
                   boxShadow: '0 4px 32px rgba(0,0,0,0.5)',
-                  position: 'relative',
+                  display: 'flex',
+                  flexDirection: 'column',
                 }}
               >
                 <TemplatePreview id={template} d={data} />
