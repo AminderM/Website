@@ -278,18 +278,18 @@ function TemplatePreview({ id, d }: { id: TemplateId; d: LetterheadData }) {
 
 /* ── HTML Export ────────────────────────────────────────────────────── */
 const TODAY_STR = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-const BODY_HTML = (pad = '40px') => `<div style="padding:48px ${pad} 40px;min-height:200mm"><div style="font-size:11px;color:#aaa;margin-bottom:28px">${TODAY_STR}</div><div style="font-size:13px;color:#555;margin-bottom:20px">Dear Sir/Madam,</div></div>`;
+const BODY_HTML = (pad = '40px') => `<div style="flex:1;padding:48px ${pad} 40px;min-height:200mm"><div style="font-size:11px;color:#aaa;margin-bottom:28px">${TODAY_STR}</div><div style="font-size:13px;color:#555;margin-bottom:20px">Dear Sir/Madam,</div></div>`;
 
 function wrapDoc(body: string, title: string, forWord: boolean) {
   const ns = forWord ? `xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'` : '';
   const meta = forWord ? `<xml><w:WordDocument><w:View>Print</w:View><w:Zoom>90</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml>` : '';
   return `<!DOCTYPE html><html ${ns}><head><meta charset="utf-8"><title>${esc(title)}</title>${meta}
-<style>@page{size:A4;margin:0}*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;background:#fff;color:#111}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style>
+<style>@page{size:A4;margin:0}*{box-sizing:border-box;margin:0;padding:0}html,body{margin:0;padding:0;width:100%}body{font-family:Arial,sans-serif;background:#fff;color:#111}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style>
 </head><body>${body}</body></html>`;
 }
 
 function buildBoldHTML(d: LetterheadData, fw: boolean) {
-  return wrapDoc(`<div style="background:#fff">
+  return wrapDoc(`<div style="background:#fff;display:flex;flex-direction:column;min-height:297mm">
   <div style="background:${d.accentColor};padding:24px 40px;display:flex;align-items:center;justify-content:space-between;gap:20px">
     <div style="display:flex;align-items:center;gap:14px">
       ${d.logo ? `<img src="${d.logo}" style="height:52px;width:auto;object-fit:contain">` : ''}
@@ -312,7 +312,7 @@ function buildBoldHTML(d: LetterheadData, fw: boolean) {
 }
 
 function buildClassicHTML(d: LetterheadData, fw: boolean) {
-  return wrapDoc(`<div style="background:#fff;font-family:Georgia,serif">
+  return wrapDoc(`<div style="background:#fff;font-family:Georgia,serif;display:flex;flex-direction:column;min-height:297mm">
   <div style="padding:32px 40px 20px;text-align:center">
     ${d.logo ? `<img src="${d.logo}" style="height:56px;width:auto;object-fit:contain;display:block;margin:0 auto 12px">` : ''}
     <div style="font-size:28px;font-weight:700;color:#111;letter-spacing:0.02em">${esc(d.companyName)}</div>
@@ -331,7 +331,7 @@ function buildClassicHTML(d: LetterheadData, fw: boolean) {
 }
 
 function buildMinimalHTML(d: LetterheadData, fw: boolean) {
-  return wrapDoc(`<div style="background:#fff">
+  return wrapDoc(`<div style="background:#fff;display:flex;flex-direction:column;min-height:297mm">
   <div style="height:4px;background:${d.accentColor}"></div>
   <div style="padding:28px 40px 16px;display:flex;align-items:flex-start;justify-content:space-between;gap:20px">
     <div style="display:flex;align-items:center;gap:12px">
@@ -405,7 +405,7 @@ function buildModernHTML(d: LetterheadData, fw: boolean) {
 }
 
 function buildExecutiveHTML(d: LetterheadData, fw: boolean) {
-  return wrapDoc(`<div style="background:#fff">
+  return wrapDoc(`<div style="background:#fff;display:flex;flex-direction:column;min-height:297mm">
   <div style="padding:32px 40px 0">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
       <div style="display:flex;align-items:center;gap:14px">
@@ -432,7 +432,7 @@ function buildExecutiveHTML(d: LetterheadData, fw: boolean) {
 }
 
 function buildSplitHTML(d: LetterheadData, fw: boolean) {
-  return wrapDoc(`<div style="background:#fff">
+  return wrapDoc(`<div style="background:#fff;display:flex;flex-direction:column;min-height:297mm">
   <div style="display:flex;height:130px">
     <div style="flex:0 0 45%;background:#1f2937;display:flex;flex-direction:column;justify-content:center;padding:20px 28px">
       ${d.logo?`<img src="${d.logo}" style="height:34px;width:auto;object-fit:contain;object-position:left;margin-bottom:8px">`:''}
@@ -458,15 +458,76 @@ function buildSplitHTML(d: LetterheadData, fw: boolean) {
 </div>`, d.companyName || 'Letterhead', fw);
 }
 
+function buildWordHTML(id: TemplateId, d: LetterheadData): string {
+  const ac = d.accentColor;
+  const isSplit = id === 'split';
+
+  const header = isSplit
+    ? `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse">
+  <tr>
+    <td bgcolor="#1f2937" width="45%" valign="middle" style="background:#1f2937;padding:22px 28px">
+      ${d.logo ? `<img src="${d.logo}" height="36" style="display:block;margin-bottom:6px">` : ''}
+      <div style="font-size:18pt;font-weight:bold;color:#ffffff;font-family:Arial,sans-serif">${esc(d.companyName)}</div>
+      ${d.tagline ? `<div style="font-size:8pt;color:#ffffffaa;margin-top:3px;text-transform:uppercase;font-family:Arial">${esc(d.tagline)}</div>` : ''}
+    </td>
+    <td bgcolor="${ac}" valign="middle" style="background:${ac};padding:22px 28px;text-align:right">
+      <div style="font-size:11pt;color:#ffffff;font-family:Arial,sans-serif;line-height:1.7">
+        ${d.phone ? `${esc(d.phone)}<br>` : ''}${d.email ? `${esc(d.email)}<br>` : ''}${d.website ? esc(d.website) : ''}
+      </div>
+    </td>
+  </tr>
+</table>`
+    : `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse">
+  <tr>
+    <td bgcolor="${ac}" valign="middle" style="background:${ac};padding:22px 32px">
+      ${d.logo ? `<img src="${d.logo}" height="44" style="display:block;margin-bottom:8px">` : ''}
+      <div style="font-size:22pt;font-weight:bold;color:#ffffff;font-family:Arial,sans-serif">${esc(d.companyName)}</div>
+      ${d.tagline ? `<div style="font-size:9pt;color:#ffffffcc;margin-top:3px;text-transform:uppercase;font-family:Arial">${esc(d.tagline)}</div>` : ''}
+    </td>
+    <td bgcolor="${ac}" valign="middle" style="background:${ac};padding:22px 32px;text-align:right">
+      <div style="font-size:11pt;color:#ffffff;font-family:Arial,sans-serif;line-height:1.8">
+        ${d.phone ? `${esc(d.phone)}<br>` : ''}${d.email ? `${esc(d.email)}<br>` : ''}${d.website ? esc(d.website) : ''}
+      </div>
+    </td>
+  </tr>
+</table>`;
+
+  const addressRow = (d.address || d.cityStateZip) ? `
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;background:#f9fafb;border-bottom:1px solid #e5e7eb">
+  <tr><td style="padding:7px 32px;font-size:10pt;color:#666;font-family:Arial,sans-serif">
+    ${[d.address, d.cityStateZip].filter(Boolean).map(esc).join(' &bull; ')}
+  </td></tr>
+</table>` : '';
+
+  const body = `
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr><td style="padding:48px 32px 40px;font-family:Arial,sans-serif">
+    <div style="font-size:10pt;color:#aaaaaa;margin-bottom:24px">${TODAY_STR}</div>
+    <div style="font-size:12pt;color:#555555">Dear Sir/Madam,</div>
+  </td></tr>
+</table>`;
+
+  const footer = `
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:2px solid ${ac}">
+  <tr>
+    <td style="padding:8px 32px;font-size:9pt;font-family:Arial,sans-serif;font-weight:bold;color:#555555">${esc(d.companyName)}</td>
+    <td style="padding:8px 32px;font-size:9pt;font-family:Arial,sans-serif;color:#999999;text-align:right">${[d.phone, d.email].filter(Boolean).map(esc).join(' | ')}</td>
+  </tr>
+</table>`;
+
+  return wrapDoc(`${header}${addressRow}${body}${footer}`, d.companyName || 'Letterhead', true);
+}
+
 function buildHTML(id: TemplateId, d: LetterheadData, forWord: boolean): string {
+  if (forWord) return buildWordHTML(id, d);
   switch (id) {
-    case 'bold':      return buildBoldHTML(d, forWord);
-    case 'classic':   return buildClassicHTML(d, forWord);
-    case 'minimal':   return buildMinimalHTML(d, forWord);
-    case 'corporate': return buildCorporateHTML(d, forWord);
-    case 'modern':    return buildModernHTML(d, forWord);
-    case 'executive': return buildExecutiveHTML(d, forWord);
-    case 'split':     return buildSplitHTML(d, forWord);
+    case 'bold':      return buildBoldHTML(d, false);
+    case 'classic':   return buildClassicHTML(d, false);
+    case 'minimal':   return buildMinimalHTML(d, false);
+    case 'corporate': return buildCorporateHTML(d, false);
+    case 'modern':    return buildModernHTML(d, false);
+    case 'executive': return buildExecutiveHTML(d, false);
+    case 'split':     return buildSplitHTML(d, false);
   }
 }
 
