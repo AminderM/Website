@@ -536,12 +536,29 @@ const LetterheadPage: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
-  const downloadPDF = () => {
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  const downloadPDF = async () => {
     const html = buildHTML(template, data, false);
-    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const win = window.open(url, '_blank');
-    setTimeout(() => { win?.print(); URL.revokeObjectURL(url); }, 500);
+    setPdfLoading(true);
+    try {
+      const res = await fetch('https://api.staging.integratedtech.ca/api/web-tools/letterhead/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ html }),
+      });
+      if (!res.ok) throw new Error('PDF generation failed');
+      const blob = await res.blob();
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `${(data.companyName || 'letterhead').replace(/\s+/g, '_')}_letterhead.pdf`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    } catch {
+      alert('PDF generation failed. Please try again.');
+    } finally {
+      setPdfLoading(false);
+    }
   };
 
   const downloadWord = () => {
@@ -695,13 +712,11 @@ const LetterheadPage: React.FC = () => {
 
             {/* Download buttons */}
             <div className="pt-2 space-y-2">
-              <button onClick={downloadPDF} className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold text-sm py-2.5 rounded-lg transition-colors">
-                <Printer className="w-4 h-4" /> Print / Save as PDF
+              <button onClick={downloadPDF} disabled={pdfLoading} className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold text-sm py-2.5 rounded-lg transition-colors">
+                {pdfLoading
+                  ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Generating PDF…</>
+                  : <><Printer className="w-4 h-4" /> Download PDF</>}
               </button>
-              {/* Print tip */}
-              <div className={`rounded-lg px-3 py-2 text-[11px] leading-relaxed ${isDark ? 'bg-yellow-950/40 border border-yellow-800/50 text-yellow-400' : 'bg-yellow-50 border border-yellow-200 text-yellow-700'}`}>
-                <span className="font-bold">For edge-to-edge printing:</span> In the print dialog → More settings → Margins: <span className="font-bold">None</span> → enable <span className="font-bold">Background graphics</span>.
-              </div>
               <button onClick={downloadWord} className={`w-full flex items-center justify-center gap-2 font-bold text-sm py-2.5 rounded-lg transition-colors border ${isDark ? 'border-gray-600 text-gray-200 hover:bg-white/10' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}>
                 <Download className="w-4 h-4" /> Download Word (.doc)
               </button>
