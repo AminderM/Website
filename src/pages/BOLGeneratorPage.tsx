@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
+import SEO from '../components/SEO';
 import { useAuth } from '../contexts/AuthContext';
 import { Save, CheckCircle, Lock } from 'lucide-react';
 import { isPaidUser } from '../types/auth';
@@ -302,6 +303,12 @@ const BOLGeneratorPage: React.FC = () => {
 
   return (
     <>
+      <SEO
+        title="BOL Generator | Integra AI"
+        description="Generate professional Bills of Lading instantly with Integra AI's BOL generator."
+        canonical="https://integratedtech.ca/bol-generator"
+        noIndex={true}
+      />
       <style type="text/css" media="print">
         {`
           @page { size: 2480px 3508px; margin: 0; }

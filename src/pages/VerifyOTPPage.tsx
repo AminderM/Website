@@ -3,6 +3,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Mail, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import SEO from '../components/SEO';
 
 const RESEND_COOLDOWN = 60;
 
@@ -140,6 +141,12 @@ const VerifyOTPPage: React.FC = () => {
 
   return (
     <div className={`min-h-screen pt-32 pb-16 px-4 ${isDark ? 'bg-dark-400' : 'bg-gray-50'}`}>
+      <SEO
+        title="Verify Your Account | Integra AI"
+        description="Enter your verification code to complete your Integra AI account setup."
+        canonical="https://integratedtech.ca/verify-otp"
+        noIndex={true}
+      />
       <div className="max-w-md mx-auto">
         {/* Header */}
         <div className="text-center mb-8">

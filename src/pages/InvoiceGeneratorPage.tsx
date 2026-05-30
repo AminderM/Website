@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
+import SEO from '../components/SEO';
 import { useAuth } from '../contexts/AuthContext';
 import {
   FileText, Upload, Wand2, Plus, Trash2, CheckCircle,
@@ -455,6 +456,12 @@ const InvoiceGeneratorPage: React.FC = () => {
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <>
+      <SEO
+        title="Invoice Generator | Integra AI"
+        description="Create professional freight invoices with PDF export using Integra AI's invoice generator."
+        canonical="https://integratedtech.ca/invoice-generator"
+        noIndex={true}
+      />
       {/* Print-only invoice content — rendered off-screen for reference */}
       <div style={{ position: 'absolute', left: -9999, top: 0, width: 0, height: 0, overflow: 'hidden' }}>
         <div style={{ fontFamily: "'Inter', system-ui, sans-serif", color: '#111', width: '100%' }}>

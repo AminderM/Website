@@ -28,6 +28,7 @@ import {
   Star,
 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import SEO from '../components/SEO';
 import { useAuth } from '../contexts/AuthContext';
 import { isPaidUser, isEnterpriseUser } from '../types/auth';
 
@@ -179,6 +180,11 @@ const ProductPage: React.FC = () => {
 
   return (
     <div className={`pt-20 ${isDark ? 'bg-dark' : 'bg-white'}`}>
+      <SEO
+        title="TMS Features & Pricing | Integra AI Logistics Platform"
+        description="Explore Integra AI's TMS built for carriers, freight brokers, and dispatchers. Agentic AI workflows, real-time tracking, rate con builder, and more. View plans."
+        canonical="https://integratedtech.ca/product"
+      />
 
       {/* ════════════════════════════════════════════════════════════════════
           PAGE HEADER

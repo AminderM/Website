@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Mail, AlertCircle, ArrowLeft, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
+import SEO from '../components/SEO';
 
 const ForgotPasswordPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -29,6 +30,12 @@ const ForgotPasswordPage: React.FC = () => {
 
   return (
     <div className={`relative min-h-screen flex items-center justify-center px-4 py-24 overflow-hidden ${isDark ? 'bg-dark' : 'bg-gray-50'}`}>
+      <SEO
+        title="Reset Password | Integra AI"
+        description="Reset your Integra AI account password."
+        canonical="https://integratedtech.ca/forgot-password"
+        noIndex={true}
+      />
 
       <div className={`absolute inset-0 bg-grid-pattern ${isDark ? 'opacity-30' : 'opacity-[0.04]'}`} />
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-primary-600/10 rounded-full blur-[120px] pointer-events-none" />

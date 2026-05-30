@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
+import SEO from '../components/SEO';
 import {
   Upload, PenLine, Type, Download, X,
   CheckCircle, AlertCircle, FileText, RotateCcw, MousePointer
@@ -319,6 +320,12 @@ const ESignaturePage: React.FC = () => {
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <div className={`min-h-screen px-4 sm:px-6 py-6 sm:py-10 ${isDark ? 'bg-dark text-white' : 'bg-gray-50 text-gray-900'}`}>
+      <SEO
+        title="E-Signature | Integra AI"
+        description="Sign and annotate PDF documents digitally with Integra AI's e-signature tool."
+        canonical="https://integratedtech.ca/e-signature"
+        noIndex={true}
+      />
       <div className="max-w-5xl mx-auto">
         <BackToTools />
 

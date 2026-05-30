@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
+import SEO from '../components/SEO';
 import { useAuth } from '../contexts/AuthContext';
 import { FileText, Upload, Download, AlertCircle, CheckCircle, X } from 'lucide-react';
 import BackToTools from '../components/BackToTools';
@@ -84,6 +85,12 @@ const PdfToWordPage: React.FC = () => {
 
   return (
     <div className={`min-h-screen px-4 sm:px-6 py-6 sm:py-10 ${isDark ? 'bg-dark text-white' : 'bg-gray-50 text-gray-900'}`}>
+      <SEO
+        title="PDF to Word | Integra AI"
+        description="Convert PDF documents to editable Word files with Integra AI's PDF to Word converter."
+        canonical="https://integratedtech.ca/pdf-to-word"
+        noIndex={true}
+      />
       <div className="max-w-2xl mx-auto">
         <BackToTools />
 

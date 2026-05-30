@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Truck, Users, Globe, TrendingUp, Clock, Shield, CheckCircle, BarChart3, DollarSign } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import SEO from '../components/SEO';
 
 const UseCasesPage: React.FC = () => {
   const { theme } = useTheme();
@@ -48,6 +49,11 @@ const UseCasesPage: React.FC = () => {
 
   return (
     <div className={`pt-20 ${isDark ? 'bg-dark' : 'bg-white'}`}>
+      <SEO
+        title="Logistics Use Cases | Integra AI for Brokers & Fleets"
+        description="See how freight brokers save 50% admin time, fleet owners improve utilization 25%, and dispatchers automate load assignments with Integra AI's TMS platform."
+        canonical="https://integratedtech.ca/use-cases"
+      />
       {/* Hero Section */}
       <section className="section">
         <div className="container-custom">

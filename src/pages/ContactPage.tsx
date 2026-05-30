@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Send, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import SEO from '../components/SEO';
 
 interface FormData {
   firstName: string; lastName: string; email: string; company: string; phone: string; role: string; fleetSize: string; message: string;
@@ -67,6 +68,11 @@ const ContactPage: React.FC = () => {
 
   return (
     <div className={`pt-20 ${isDark ? 'bg-dark' : 'bg-white'}`}>
+      <SEO
+        title="Contact Integra AI | Book a Demo or Get Support"
+        description="Ready to transform your logistics operations? Contact Integra AI to book a personalized demo, ask about pricing, or talk to our team. We respond within one business day."
+        canonical="https://integratedtech.ca/contact"
+      />
       <section className="section">
         <div className="container-custom">
           <div className="max-w-3xl mx-auto text-center">

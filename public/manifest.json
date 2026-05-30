@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Integra AI",
+  "name": "Integra AI — Logistics TMS",
   "icons": [
     {
       "src": "favicon.ico",
@@ -18,8 +18,9 @@
       "sizes": "512x512"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#1d4ed8",
+  "background_color": "#ffffff",
+  "description": "AI-powered Transportation Management System for freight brokers, fleet owners, and dispatchers."
 }

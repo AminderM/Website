@@ -10,6 +10,7 @@ import {
   TrendingUp, Brain, Bot, Layers,
 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import SEO from '../components/SEO';
 
 /* ─────────────────────────────────────────────
    Shared animation variants
@@ -221,6 +222,11 @@ const HomePage: React.FC = () => {
 
   return (
     <div className={isDark ? 'bg-dark' : 'bg-white'}>
+      <SEO
+        title="Integra AI | AI-Powered TMS for Freight Brokers & Fleet Owners"
+        description="Transform your logistics with Integra AI's Transportation Management System. Trusted by 500+ companies, 1M+ loads managed. Cut costs 50%, save 80% admin time. Try free."
+        canonical="https://integratedtech.ca/"
+      />
 
       {/* ═══════════════════════════════════════
           HERO

@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, ArrowRight } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import SEO from '../components/SEO';
 import { useAuth } from '../contexts/AuthContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
@@ -29,6 +30,12 @@ const CheckoutSuccessPage: React.FC = () => {
 
   return (
     <div className={`min-h-[60vh] flex items-center justify-center px-4 ${isDark ? 'bg-dark' : 'bg-white'}`}>
+      <SEO
+        title="Payment Successful | Integra AI"
+        description="Your Integra AI subscription is confirmed."
+        canonical="https://integratedtech.ca/checkout/success"
+        noIndex={true}
+      />
       <div className="text-center max-w-md">
         <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-6">
           <CheckCircle className="w-9 h-9 text-green-500" />

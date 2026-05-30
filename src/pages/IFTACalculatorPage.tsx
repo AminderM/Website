@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
+import SEO from '../components/SEO';
 import BackToTools from '../components/BackToTools';
 import IftaWizard from '../components/ifta/IftaWizard';
 
@@ -31,6 +32,12 @@ const IFTACalculatorPage: React.FC = () => {
 
   return (
     <div className={`min-h-screen pt-24 pb-16 px-4 ${isDark ? 'bg-dark-400' : 'bg-gray-50'}`}>
+      <SEO
+        title="IFTA Tax Calculator | Integra AI"
+        description="Calculate your quarterly IFTA fuel tax by jurisdiction with Integra AI's IFTA calculator."
+        canonical="https://integratedtech.ca/ifta-calculator"
+        noIndex={true}
+      />
       <div className="max-w-5xl mx-auto">
         <BackToTools />
 

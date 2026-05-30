@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
+import SEO from '../components/SEO';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -288,6 +289,12 @@ const AccountPage: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+      <SEO
+        title="Account Settings | Integra AI"
+        description="Manage your Integra AI account settings, subscription, and profile."
+        canonical="https://integratedtech.ca/account"
+        noIndex={true}
+      />
 
       {/* Page header */}
       <div className="flex items-center gap-4 mb-8">

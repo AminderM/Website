@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, User, Phone, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import SEO from '../components/SEO';
 
 const SignupPage: React.FC = () => {
   const [name, setName] = useState('');
@@ -80,6 +81,12 @@ const SignupPage: React.FC = () => {
 
   return (
     <div className={`min-h-screen pt-32 pb-16 px-4 ${isDark ? 'bg-dark-400' : 'bg-gray-50'}`}>
+      <SEO
+        title="Create Account | Integra AI"
+        description="Sign up for Integra AI and start managing your freight operations with AI-powered tools."
+        canonical="https://integratedtech.ca/signup"
+        noIndex={true}
+      />
       <div className="max-w-md mx-auto">
         {/* Header */}
         <div className="text-center mb-8">

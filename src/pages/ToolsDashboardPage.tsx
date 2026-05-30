@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import SEO from '../components/SEO';
 import { isPaidUser } from '../types/auth';
 
 /* ── Variants ─────────────────────────────────────────────────── */
@@ -171,6 +172,12 @@ const ToolsDashboardPage: React.FC = () => {
 
   return (
     <div className={`min-h-screen relative ${isDark ? 'bg-dark' : 'bg-gray-50'}`}>
+      <SEO
+        title="My Tools | Integra AI"
+        description="Access your Integra AI logistics tools — BOL Generator, IFTA Calculator, Invoice Generator, and more."
+        canonical="https://integratedtech.ca/tools"
+        noIndex={true}
+      />
 
       {/* Background */}
       <div className={`absolute inset-0 bg-grid-pattern pointer-events-none ${isDark ? 'opacity-25' : 'opacity-[0.03]'}`} />

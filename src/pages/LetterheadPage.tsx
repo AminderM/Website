@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
+import SEO from '../components/SEO';
 import { Printer, Download, Upload, X, LayoutTemplate, RefreshCw, Check } from 'lucide-react';
 import BackToTools from '../components/BackToTools';
 
@@ -599,6 +600,12 @@ const LetterheadPage: React.FC = () => {
 
   return (
     <div className={`min-h-screen py-8 px-4 ${isDark ? 'bg-dark-300' : 'bg-gray-50'}`}>
+      <SEO
+        title="Letterhead Generator | Integra AI"
+        description="Design and download professional company letterhead with Integra AI's letterhead generator."
+        canonical="https://integratedtech.ca/letterhead"
+        noIndex={true}
+      />
       <div className="max-w-7xl mx-auto">
         <BackToTools />
 

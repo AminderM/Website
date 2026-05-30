@@ -1,3 +1,19 @@
-# https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /verify-otp
+Disallow: /checkout/
+Disallow: /tools
+Disallow: /bol-generator
+Disallow: /fuel-surcharge
+Disallow: /ifta-calculator
+Disallow: /invoice-generator
+Disallow: /pdf-to-word
+Disallow: /word-to-pdf
+Disallow: /e-signature
+Disallow: /letterhead
+Disallow: /freight-calculator
+Disallow: /account
+
+Sitemap: https://integratedtech.ca/sitemap.xml

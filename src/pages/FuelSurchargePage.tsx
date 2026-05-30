@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
+import SEO from '../components/SEO';
 import { useAuth } from '../contexts/AuthContext';
 import { Fuel, Save, CheckCircle, Lock } from 'lucide-react';
 import { isPaidUser } from '../types/auth';
@@ -110,6 +111,12 @@ const FuelSurchargePage: React.FC = () => {
 
   return (
     <div className={`min-h-screen pt-20 sm:pt-28 pb-20 px-4 ${isDark ? 'bg-dark-400' : 'bg-gray-50'}`} data-testid="fuel-surcharge-page">
+      <SEO
+        title="Fuel Surcharge Calculator | Integra AI"
+        description="Calculate fuel surcharges based on DOE standards with Integra AI's free fuel surcharge calculator."
+        canonical="https://integratedtech.ca/fuel-surcharge"
+        noIndex={true}
+      />
       <div className="max-w-2xl mx-auto">
         <BackToTools />
         {/* Header */}

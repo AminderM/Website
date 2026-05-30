@@ -10,6 +10,7 @@ import {
 import { parseApiError } from '../utils/apiFetch';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import SEO from '../components/SEO';
 import { isPaidUser } from '../types/auth';
 import BackToTools from '../components/BackToTools';
 
@@ -440,6 +441,12 @@ const FreightCalculatorPage: React.FC = () => {
 
   return (
     <div className={`min-h-screen pt-20 sm:pt-28 pb-16 px-4 ${isDark ? 'bg-dark-300' : 'bg-gray-100'}`}>
+      <SEO
+        title="Freight Calculator | Integra AI"
+        description="Estimate freight costs across USA and Canada with Integra AI's freight rate calculator."
+        canonical="https://integratedtech.ca/freight-calculator"
+        noIndex={true}
+      />
       <div className="max-w-6xl mx-auto">
         <BackToTools />
 

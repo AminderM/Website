@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Target, Users, Award, Heart, Truck, Globe, Zap, Shield } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import SEO from '../components/SEO';
 
 const AboutPage: React.FC = () => {
   const { theme } = useTheme();
@@ -22,6 +23,11 @@ const AboutPage: React.FC = () => {
 
   return (
     <div className={`pt-20 ${isDark ? 'bg-dark' : 'bg-white'}`}>
+      <SEO
+        title="About Integra AI | Building the Future of Logistics"
+        description="Founded in July 2024 in Canada, Integra AI is modernizing freight operations for 500+ companies with AI-powered tools built on reliability, innovation, and partnership."
+        canonical="https://integratedtech.ca/about"
+      />
       {/* Hero Section */}
       <section className="section">
         <div className="container-custom">

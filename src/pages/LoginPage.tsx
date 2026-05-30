@@ -5,6 +5,7 @@ import { GoogleLogin } from '@react-oauth/google';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import SEO from '../components/SEO';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -71,6 +72,12 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className={`relative min-h-screen flex items-center justify-center px-4 py-24 overflow-hidden ${isDark ? 'bg-dark' : 'bg-gray-50'}`}>
+      <SEO
+        title="Log In | Integra AI"
+        description="Sign in to your Integra AI account to access your TMS dashboard and logistics tools."
+        canonical="https://integratedtech.ca/login"
+        noIndex={true}
+      />
 
       {/* Background grid */}
       <div className={`absolute inset-0 bg-grid-pattern ${isDark ? 'opacity-30' : 'opacity-[0.04]'}`} />

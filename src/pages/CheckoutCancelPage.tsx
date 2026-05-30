@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { XCircle, ArrowLeft } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import SEO from '../components/SEO';
 
 const CheckoutCancelPage: React.FC = () => {
   const { theme } = useTheme();
@@ -10,6 +11,12 @@ const CheckoutCancelPage: React.FC = () => {
 
   return (
     <div className={`min-h-[60vh] flex items-center justify-center px-4 ${isDark ? 'bg-dark' : 'bg-white'}`}>
+      <SEO
+        title="Payment Cancelled | Integra AI"
+        description="Your payment was cancelled. Return to pricing to try again."
+        canonical="https://integratedtech.ca/checkout/cancel"
+        noIndex={true}
+      />
       <div className="text-center max-w-md">
         <div className="w-16 h-16 rounded-full bg-gray-500/20 flex items-center justify-center mx-auto mb-6">
           <XCircle className={`w-9 h-9 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
